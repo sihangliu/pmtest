@@ -1,19 +1,19 @@
 #include "nvmveri.hh"
 
-static void* NVMVeri::VeriWorker(void* a) {
-	tid_t tid = *((int*) a);	
-	
+void* NVMVeri::VeriWorker(void* a) {
+	tid_t tid = *((int*) a);
+	return NULL;
 }
 
-static void* NVMVeri::VeriMaster(void* a) {
-	
+void* NVMVeri::VeriMaster(void* a) {
+	return NULL;
 }
 
 bool NVMVeri::init() {
 	// create master
 	pthread_t MasterThread;
 	pthread_create(&MasterThread, NULL, &VeriMaster, (void*)0);
-	
+
 	// create worker
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE) {
 		pthread_t VeriThread;
@@ -25,13 +25,13 @@ bool NVMVeri::init() {
 }
 
 bool NVMVeri::readMetadata() {
-		
+
 }
 
 bool NVMVeri::writeMetadata() {
-	
+
 }
 
 bool NVMVeri::assignTask(tid_t VeriWorkerID) {
-	
+
 }

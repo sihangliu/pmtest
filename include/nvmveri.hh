@@ -8,21 +8,20 @@
 #include <mqueue.h>
 #include <pthread.h>
 #include <queue>
-using namespace std::queue;
+using std::queue;
 #include <unordered_map>
-using namespace std::unordered_map;
+using std::unordered_map;
 #include <string>
-using namespace std::string;
+using std::string;
 
 #define MAX_THREAD_POOL_SIZE 1
-typedef tid_t unsigned int;
+typedef unsigned int tid_t;
 
-
-struct State;
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
 
-struct NVMVeri {
+class NVMVeri {
+public:
 	/* Initialize each worker */
 	bool initVeri();
 	/* Terminate each worker
@@ -33,11 +32,11 @@ struct NVMVeri {
 	/* Read data passed from the master thread */
 	bool readMetadata();
 	/* Write data passed from the master thread */
-	bool writeMetadata();	
+	bool writeMetadata();
 
-	/* Worker function. 
+	/* Worker function.
 	 * If state is IDLE, busy waiting
-	 * If state is BUSY, read metadata and verify. 
+	 * If state is BUSY, read metadata and verify.
 	 * When verification completes, send result to master
 	 */
 	static void* VeriMaster(void*);
@@ -45,26 +44,28 @@ struct NVMVeri {
 	static VeriWorkerState VeriWorkerStateMap[MAX_THREAD_POOL_SIZE];
 	static pthread_mutex_t VeriWorkerLock[MAX_THREAD_POOL_SIZE];
 
-	bool assignTask(tid_t);	
-	
+	bool assignTask(tid_t);
+
 	// call init
 	NVMVeri();
 };
 
-struct Metadata {
+class State {
+public:
+	enum StateVal {INIT, COMMIT};
+	const std::string StateChar[2] = {"init", "commit"};
+	void tranState();
+};
+
+class Metadata {
+public:
 	State state;
 	// ...
 };
 
-struct VeriResult {
+class VeriResult {
+public:
 	ResultType result;
-}
-
-struct State {
-	enum StateVal {INIT, COMMIT};
-	char StateChar[] = {"init", "commit"};
-	void tranState();
 };
-
 
 #endif
