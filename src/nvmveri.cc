@@ -1,37 +1,89 @@
 #include "nvmveri.hh"
 
-void* NVMVeri::VeriWorker(void* a) {
-	tid_t tid = *((int*) a);
-	return NULL;
+NVMVeri::NVMVeri()
+{
+	initVeri();
 }
 
-void* NVMVeri::VeriMaster(void* a) {
-	return NULL;
+
+NVMVeri::~NVMVeri()
+{
+	termVeri();
 }
 
-bool NVMVeri::init() {
-	// create master
-	pthread_t MasterThread;
-	pthread_create(&MasterThread, NULL, &VeriMaster, (void*)0);
+
+bool NVMVeri::initVeri()
+{
+    std::promise<void> master_termSignal;
+    std::future<void> futureObj = master_termSignal.get_future();
+    std::thread MasterThread(&VeriMaster, std::move(futureObj));
 
 	// create worker
-	for (int i = 0; i < MAX_THREAD_POOL_SIZE) {
-		pthread_t VeriThread;
-		tid_t VeriWorkerID = i;
-		VeriWorkerStateMap[VeriWorkerID] = IDLE;
-		VeriWorkerLock[i] = PTHREAD_MUTEX_INITIALIZER;
-		pthread_create(&VeriThread, NULL, &VeriWorker, VeriWorkerID);
+    std::promise<void> worker_termSignal[MAX_THREAD_POOL_SIZE];
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+        futureObj = worker_termSignal[i].get_future();
+        VeriWorkerStateMap[VeriWorkerID] = IDLE;
+        std::thread WorkerThread(&VeriWorker, std::move(futureObj));
 	}
+
+	return true;
 }
 
-bool NVMVeri::readMetadata() {
 
+bool NVMVeri::termVeri()
+{
+    printf("ask to stop\n");
+    master_termSignal.set_value();
+    MasterThread.join();
+    printf("stopped\n");
+	return true;
 }
 
-bool NVMVeri::writeMetadata() {
 
+bool execVeri(vector<Metadata> *input)
+{
+
+    return true;
 }
 
-bool NVMVeri::assignTask(tid_t VeriWorkerID) {
 
+bool getVeri(vector<Metadata> *input, VeriResult *output)
+{
+    return true;
+}
+
+
+bool NVMVeri::readMetadata()
+{
+	return true;
+}
+
+
+bool NVMVeri::writeMetadata()
+{
+	return true;
+}
+
+
+static void NVMVeri::VeriMaster(std::future<void> termSignal)
+{
+    printf("a\n");
+    while (futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
+        printf("b\n");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+    printf("c\n");
+	return NULL;
+}
+
+
+static void NVMVeri::VeriWorker(std::future<void> termSignal)
+{
+	return NULL;
+}
+
+
+bool NVMVeri::assignTask(tid_t VeriWorkerID)
+{
+	return true;
 }
