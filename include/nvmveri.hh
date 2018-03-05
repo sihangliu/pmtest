@@ -2,11 +2,13 @@
 #define NVMVERI_HH
 // Libary for verification
 
-#include <cstdlib>
-#include <cstring>
-
 #include <stdio.h>
 #include <assert.h>
+
+#include <sys/mman.h>
+#include <sys/shm.h>
+#include <mqueue.h>
+//#include <pthread.h>
 
 #include <thread>
 using std::thread;
@@ -14,11 +16,6 @@ using std::thread;
 #include <chrono>
 #include <future>
 using std::future;
-
-#include <sys/mman.h>
-#include <sys/shm.h>
-#include <mqueue.h>
-//#include <pthread.h>
 
 #include <queue>
 using std::queue;
@@ -28,6 +25,9 @@ using std::unordered_map;
 using std::string;
 #include <vector>
 using std::vector;
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 
 #define MAX_THREAD_POOL_SIZE 1
 typedef unsigned int tid_t;
@@ -46,6 +46,7 @@ public:
 class Metadata {
 public:
 	State state;
+	string teststr;
 	// ...
 };
 
@@ -56,15 +57,21 @@ public:
 
 class NVMVeri {
 public:
+	/* master and worker thread */
 	VeriWorkerState VeriWorkerStateMap[MAX_THREAD_POOL_SIZE];
 	static std::mutex VeriWorkerLock[MAX_THREAD_POOL_SIZE];
-
 	thread *MasterThreadPtr;
 	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
+	/* terminate signal */
 	std::promise<void> master_termSignal;
 	std::promise<void> worker_termSignal[MAX_THREAD_POOL_SIZE];
-	// Default constructor, call init/term
+
+	/* master managed working queue */
+	static queue<Metadata> VeriQueue;
+	static std::mutex VeriQueueLock;
+
+	/* Default constructor, call init/term */
 	NVMVeri();
 	~NVMVeri();
 
@@ -76,9 +83,9 @@ public:
 	 */
 	bool termVeri();
 
-  bool execVeri(vector<Metadata> *);
+	bool execVeri(vector<Metadata> *);
 
-  bool getVeri(vector<Metadata> *, VeriResult *);
+	bool getVeri(vector<Metadata> *, VeriResult *);
 
 	/* Read data passed from the master thread */
 	bool readMetadata();
@@ -90,8 +97,8 @@ public:
 	 * If state is BUSY, read metadata and verify.
 	 * When verification completes, send result to master
 	 */
-  static void VeriMaster(future<void>);
-  static void VeriWorker(future<void>, int id);
+	 static void VeriMaster(future<void>);
+	 static void VeriWorker(future<void>, int id);
 
 	bool assignTask(tid_t);
 };
