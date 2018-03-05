@@ -9,9 +9,11 @@
 #include <assert.h>
 
 #include <thread>
+using std::thread;
 #include <mutex>
 #include <chrono>
 #include <future>
+using std::future;
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -54,9 +56,14 @@ public:
 
 class NVMVeri {
 public:
-	static VeriWorkerState VeriWorkerStateMap[MAX_THREAD_POOL_SIZE];
+	VeriWorkerState VeriWorkerStateMap[MAX_THREAD_POOL_SIZE];
 	static std::mutex VeriWorkerLock[MAX_THREAD_POOL_SIZE];
 
+	thread *MasterThreadPtr;
+	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
+
+	std::promise<void> master_termSignal;
+	std::promise<void> worker_termSignal[MAX_THREAD_POOL_SIZE];
 	// Default constructor, call init/term
 	NVMVeri();
 	~NVMVeri();
@@ -69,9 +76,9 @@ public:
 	 */
 	bool termVeri();
 
-    bool execVeri(vector<Metadata> *);
+  bool execVeri(vector<Metadata> *);
 
-    bool getVeri(vector<Metadata> *, VeriResult *);
+  bool getVeri(vector<Metadata> *, VeriResult *);
 
 	/* Read data passed from the master thread */
 	bool readMetadata();
@@ -83,10 +90,8 @@ public:
 	 * If state is BUSY, read metadata and verify.
 	 * When verification completes, send result to master
 	 */
-	//static void *VeriMaster(void *);
-	//static void *VeriWorker(void *);
-    static void VeriMaster(std::future<void>);
-    static void VeriWorker(std::future<void>);
+  static void VeriMaster(future<void>);
+  static void VeriWorker(future<void>, int id);
 
 	bool assignTask(tid_t);
 };
