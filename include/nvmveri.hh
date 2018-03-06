@@ -56,7 +56,7 @@ public:
 class VeriResult {
 public:
 	ResultType result;
-    string teststr;
+	string teststr;
 };
 
 
@@ -72,35 +72,35 @@ public:
 	/* terminate signal */
 	std::promise<void> master_termSignal;
 	std::promise<void> worker_termSignal[MAX_THREAD_POOL_SIZE];
-    future<void> futureObj[MAX_THREAD_POOL_SIZE];
+	future<void> futureObj[MAX_THREAD_POOL_SIZE];
 
 	/* Main program works as the producer,
-     * workers works as the consumers,
-     * implement this like a semaphore
-     */
-    static size_t VeriNumber;
+	* workers works as the consumers,
+	* implement this like a semaphore
+	*/
+	static size_t VeriNumber;
 	static queue<vector<Metadata> *> VeriQueue;
 	static mutex VeriQueueMutex;
-    static condition_variable VeriQueueCV;
+	static condition_variable VeriQueueCV;
 
 
 	/* Result queue
-     */
-    static vector<VeriResult> ResultVector;
-    static mutex ResultVectorMutex;
-    //static condition_variable ResultVectorCV;
+	*/
+	static vector<VeriResult> ResultVector;
+	static mutex ResultVectorMutex;
+	//static condition_variable ResultVectorCV;
 
-    
-    /* Default constructor, call init/term */
+
+	/* Default constructor, call init/term */
 	NVMVeri();
 	~NVMVeri();
 
 	/* Initialize each worker */
 	bool initVeri();
 	/* Terminate each worker
-	 * Check state has become IDLE
-	 * Join all worker/master threads
-	 */
+	* Check state has become IDLE
+	* Join all worker/master threads
+	*/
 	bool termVeri();
 
 	bool execVeri(vector<Metadata> *);
@@ -113,12 +113,12 @@ public:
 	bool writeMetadata();
 
 	/* Worker function.
-	 * If state is IDLE, busy waiting
-	 * If state is BUSY, read metadata and verify.
-	 * When verification completes, send result to master
-	 */
-	 static void VeriMaster(future<void>);
-	 static void VeriWorker(future<void>, int id);
+	* If state is IDLE, busy waiting
+	* If state is BUSY, read metadata and verify.
+	* When verification completes, send result to master
+	*/
+	static void VeriMaster(future<void>);
+	static void VeriWorker(future<void>, int id);
 
 	bool assignTask(tid_t);
 };

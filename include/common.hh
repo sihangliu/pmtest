@@ -12,14 +12,14 @@ using std::unique_lock;
 template<typename T>
 class ConcurrentQueue {
 private:
-    mutex QueueMutex;
-    queue<T> q;
+	mutex QueueMutex;
+	queue<T> q;
 public:
-    inline size_t size();
-    inline T& front();
-    inline T& back();
-    inline void pop();
-    inline void push(const T&);
+	inline size_t size();
+	inline T& front();
+	inline T& back();
+	inline void pop();
+	inline void push(const T&);
 };
 
 

@@ -121,14 +121,19 @@ void NVMVeri::VeriMaster(future<void> termSignal)
 
 void NVMVeri::VeriWorker(future<void> termSignal, int id)
 {
-	while (termSignal.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
+	while (termSignal.wait_for(std::chrono::nanoseconds(1)) == std::future_status::timeout) {
 	    printf("startVeriWorkerloop\n");
+        fflush(stdout);
         unique_lock<mutex> veri_lock(VeriQueueMutex);
         while (VeriQueue.size() == 0) {
-	        if (termSignal.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
+            printf("a\n");
+	        if (termSignal.wait_for(std::chrono::nanoseconds(1)) != std::future_status::timeout) {
+                printf("b\n");
                 break;
             }
+            printf("c\n");
             VeriQueueCV.wait(veri_lock);
+            printf("d\n");
         }
         printf("semaphore > 0\n");
         if (VeriQueue.size() != 0) {
