@@ -1,5 +1,5 @@
-#ifndef NVMVERI_HH
-#define NVMVERI_HH
+#ifndef __NVMVERI_HH__
+#define __NVMVERI_HH__
 // Libary for verification
 
 #include <stdio.h>
@@ -13,9 +13,13 @@
 #include <thread>
 using std::thread;
 #include <mutex>
+using std::mutex;
+using std::unique_lock;
 #include <chrono>
 #include <future>
 using std::future;
+#include <condition_variable>
+using std::condition_variable;
 
 #include <queue>
 using std::queue;
@@ -29,12 +33,11 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
-#define MAX_THREAD_POOL_SIZE 1
+#define MAX_THREAD_POOL_SIZE 2
 typedef unsigned int tid_t;
 
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
-
 
 class State {
 public:
@@ -53,25 +56,42 @@ public:
 class VeriResult {
 public:
 	ResultType result;
+    string teststr;
 };
+
+
 
 class NVMVeri {
 public:
 	/* master and worker thread */
 	VeriWorkerState VeriWorkerStateMap[MAX_THREAD_POOL_SIZE];
-	static std::mutex VeriWorkerLock[MAX_THREAD_POOL_SIZE];
+	static mutex VeriWorkerMutex[MAX_THREAD_POOL_SIZE];
 	thread *MasterThreadPtr;
 	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
 	/* terminate signal */
 	std::promise<void> master_termSignal;
 	std::promise<void> worker_termSignal[MAX_THREAD_POOL_SIZE];
+    future<void> futureObj[MAX_THREAD_POOL_SIZE];
 
-	/* master managed working queue */
-	static queue<Metadata> VeriQueue;
-	static std::mutex VeriQueueLock;
+	/* Main program works as the producer,
+     * workers works as the consumers,
+     * implement this like a semaphore
+     */
+    static size_t VeriNumber;
+	static queue<vector<Metadata> *> VeriQueue;
+	static mutex VeriQueueMutex;
+    static condition_variable VeriQueueCV;
 
-	/* Default constructor, call init/term */
+
+	/* Result queue
+     */
+    static vector<VeriResult> ResultVector;
+    static mutex ResultVectorMutex;
+    //static condition_variable ResultVectorCV;
+
+    
+    /* Default constructor, call init/term */
 	NVMVeri();
 	~NVMVeri();
 
@@ -85,7 +105,7 @@ public:
 
 	bool execVeri(vector<Metadata> *);
 
-	bool getVeri(vector<Metadata> *, VeriResult *);
+	bool getVeri(vector<VeriResult> &);
 
 	/* Read data passed from the master thread */
 	bool readMetadata();
@@ -102,4 +122,6 @@ public:
 
 	bool assignTask(tid_t);
 };
+
+
 #endif

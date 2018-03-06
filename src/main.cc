@@ -21,8 +21,13 @@ int main()
 	m.push_back(dat);
 	nvm_instance.execVeri(&m);
 
-	VeriResult r;
-	nvm_instance.getVeri(&m, &r);
+	vector<VeriResult> r;
+	nvm_instance.getVeri(r);
+    
+    printf("OUT\n");
+
+    for(auto i = r.begin(); i < r.end(); i++)
+        printf("%s\n", i->teststr.c_str());
 
 	return 0;
 }
