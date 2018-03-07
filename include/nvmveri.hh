@@ -35,7 +35,7 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
-#define MAX_THREAD_POOL_SIZE 1
+#define MAX_THREAD_POOL_SIZE 2
 typedef unsigned int tid_t;
 
 enum VeriWorkerState {IDLE, BUSY};
@@ -69,21 +69,27 @@ public:
 	/* terminate signal */
 	static atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
 
+	/* get result signal */
+	static atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
+	static atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
+	static atomic<int> completedThread;
+
+	int assignTo;
 
 	/* Main program works as the producer,
 	* workers works as the consumers,
 	* implement this like a semaphore
 	*/
-	static size_t VeriNumber;
-	static queue<vector<Metadata> *> VeriQueue;
-	static mutex VeriQueueMutex;
-	static condition_variable VeriQueueCV;
+	// static size_t VeriNumber;
+	static queue<vector<Metadata> *> VeriQueue[MAX_THREAD_POOL_SIZE];
+	static mutex VeriQueueMutex[MAX_THREAD_POOL_SIZE];
+	static condition_variable VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
 
 	/* Result queue
 	*/
-	static vector<VeriResult> ResultVector;
-	static mutex ResultVectorMutex;
+	static vector<VeriResult> ResultVector[MAX_THREAD_POOL_SIZE];
+	static mutex ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 	//static condition_variable ResultVectorCV;
 
 

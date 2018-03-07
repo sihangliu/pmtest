@@ -1,14 +1,18 @@
 #include "nvmveri.hh"
 
-size_t NVMVeri::VeriNumber;
-queue<vector<Metadata> *> NVMVeri::VeriQueue;
-mutex NVMVeri::VeriQueueMutex;
-condition_variable NVMVeri::VeriQueueCV;
+//size_t NVMVeri::VeriNumber;
+queue<vector<Metadata> *> NVMVeri::VeriQueue[MAX_THREAD_POOL_SIZE];
+mutex NVMVeri::VeriQueueMutex[MAX_THREAD_POOL_SIZE];
+condition_variable NVMVeri::VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
-vector<VeriResult> NVMVeri::ResultVector;
-mutex NVMVeri::ResultVectorMutex;
+vector<VeriResult> NVMVeri::ResultVector[MAX_THREAD_POOL_SIZE];
+mutex NVMVeri::ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 
 atomic<bool> NVMVeri::termSignal[MAX_THREAD_POOL_SIZE];
+
+atomic<bool> NVMVeri::getResultSignal[MAX_THREAD_POOL_SIZE];
+atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
+atomic<int> NVMVeri::completedThread;
 
 NVMVeri::NVMVeri()
 {
@@ -37,14 +41,23 @@ bool NVMVeri::initVeri()
 		termSignal[i] = false;
 	}
 
-	VeriNumber = 0;
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		completedStateMap[i] = false;
+	}
+
+	completedThread = 0;
+	assignTo = 0;
+
+	//VeriNumber = 0;
+
+
 	return true;
 }
 
 
 bool NVMVeri::termVeri()
 {
-	// printf("ask to stop\n");
+	printf("ask to stop\n");
 	//master_termSignal.set_value();
 	//MasterThreadPtr->join();
 
@@ -52,16 +65,18 @@ bool NVMVeri::termVeri()
 		termSignal[i] = true;
 	}
 
-	unique_lock<mutex> lock(VeriQueueMutex);
-	VeriQueueCV.notify_all();
-	lock.unlock();
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		unique_lock<mutex> lock(VeriQueueMutex[i]);
+		VeriQueueCV[i].notify_all();
+		lock.unlock();
+	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		// printf("fck%d\n", i);
+		printf("fck%d\n", i);
 		WorkerThreadPool[i]->join();
-		// printf("stop thread %d\n", i);
+		printf("stop thread %d\n", i);
 	}
-	// printf("stopped\n");
+	printf("stopped\n");
 	return true;
 }
 
@@ -69,11 +84,16 @@ bool NVMVeri::termVeri()
 // execute verification of input
 bool NVMVeri::execVeri(vector<Metadata> *input)
 {
-	unique_lock<mutex> lock(VeriQueueMutex);
-	VeriNumber++;
-	VeriQueue.push(input);
-	// printf("pushed\n");
-	VeriQueueCV.notify_one();
+
+	unique_lock<mutex> lock(VeriQueueMutex[assignTo]);
+	//VeriNumber++;
+	VeriQueue[assignTo].push(input);
+	printf("Queue %d size = %d\n", assignTo, int(VeriQueue[assignTo].size()));
+	VeriQueueCV[assignTo].notify_one();
+
+	assignTo = (assignTo + 1) % MAX_THREAD_POOL_SIZE;
+	//if(assignTo >= MAX_THREAD_POOL_SIZE)
+	//	assignTo = 0;
 
 	return true;
 }
@@ -83,21 +103,41 @@ bool NVMVeri::execVeri(vector<Metadata> *input)
 //
 bool NVMVeri::getVeri(vector<VeriResult> &output)
 {
-	// printf("start getVeri\n");
+	printf("start getVeri\n");
 	//MasterThreadPtr->join();
-	while(true) {
-		unique_lock<mutex> veri_lock(VeriQueueMutex);
-		unique_lock<mutex> result_lock(ResultVectorMutex);
-		//// printf("@");
-		if (VeriNumber == ResultVector.size()) {
-			output = ResultVector;
-			VeriNumber = 0;
-			ResultVector.clear();
-			break;
-		}
-	}
-	// printf("end getVeri\n");
 
+	for (int i = 0 ; i < MAX_THREAD_POOL_SIZE; i++) {
+		getResultSignal[i] = true;
+	}
+
+
+	while (completedThread != MAX_THREAD_POOL_SIZE) {
+		//printf("comp = %d\n", int(completedThread));
+	};
+
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		unique_lock<mutex> lock(VeriQueueMutex[i]);
+		printf("waking\n");
+		VeriQueueCV[i].notify_all();
+		lock.unlock();
+		printf("waked\n");
+	}
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		unique_lock<mutex> result_lock(ResultVectorMutex[i]);
+		output.insert( output.end(), ResultVector[i].begin(), ResultVector[i].end() );
+	}
+
+	//VeriNumber = 0;
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		completedStateMap[i] = false;
+	}
+
+	completedThread = 0;
+
+	printf("end getVeri\n");
 	return true;
 }
 
@@ -117,44 +157,56 @@ bool NVMVeri::writeMetadata()
 void NVMVeri::VeriWorker(int id)
 {
 	while (true) {
-		// printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
-		fflush(stdout);
-		unique_lock<mutex> veri_lock(VeriQueueMutex);
-		// printf("size = %lu\n", VeriQueue.size());
+		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
+		unique_lock<mutex> veri_lock(VeriQueueMutex[id]);
 
-		// while (VeriQueue.size() == 0 && !termSignal[id]) {
-		// 	VeriQueueCV.wait(veri_lock);
+
+		// while (VeriQueue[id].size() == 0 && !termSignal[id]) {
+		// 	VeriQueueCV[id].wait(veri_lock);
 		// }
-		while (!termSignal[id]) {
-			if(VeriQueue.size() != 0) break;
-			VeriQueueCV.wait(veri_lock);
+		while (!termSignal[id] && !getResultSignal[id] && VeriQueue[id].size() == 0) {
+		//	printf("c %d\n", id);
+			VeriQueueCV[id].wait(veri_lock);
+		//	printf("d %d\n", id);
 		}
 
+		if (id > 0) printf("a %d\n", id);
 		if (termSignal[id]) break;
 
-		// VeriQueueCV.wait(
+		printf("id = %d, %d, %d, %d\n", id, int(!completedStateMap[id]), int(getResultSignal[id]), int(VeriQueue[id].size()));
+		//fflush(stdout);
+		if (!completedStateMap[id] && getResultSignal[id] && VeriQueue[id].size() == 0) {
+			completedThread++;
+			completedStateMap[id] = true;
+			continue;
+		}
+
+		// VeriQueueCV[id].wait(
 		// 	veri_lock,
 		// 	[id] {
 		// 		if (termSignal[id])
 		// 			return false;
-		// 		return (VeriQueue.size() != 0);
+		// 		return (VeriQueue[id].size() != 0);
 		// 	}
 		// );
 
-		// printf("semaphore > 0\n");
+		//printf("read\n");
 
-		// printf("read\n");
-		for(int i = 0; i < 4; i++) {
+
+		if (id > 0) printf("%d size = %d\n", id, int(VeriQueue[id].size()));
+		if(VeriQueue[id].size() > 0) {
+			VeriQueue[id].pop();
+			veri_lock.unlock();
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			VeriResult temp;
+			unique_lock<mutex> result_lock(ResultVectorMutex[id]);
+			ResultVector[id].push_back(temp);
 		}
-		VeriQueue.pop();
-		veri_lock.unlock();
-		VeriResult temp;
-		unique_lock<mutex> result_lock(ResultVectorMutex);
-		ResultVector.push_back(temp);
-		result_lock.unlock();
 
-		// printf("processed\n");
+		//printf("wowowowowow %d\n", int(getResultSignal[id]));
+
+
+		//printf("processed\n");
 	}
 
 	return;
