@@ -27,17 +27,17 @@ int main()
 	printf("OUT\n");
 
 	for(auto i = r.begin(); i < r.end(); i++)
-		printf("%s\n", i->teststr.c_str());
+	printf("%s\n", i->teststr.c_str());
 
-	 m.clear();
-	 dat.teststr = "test5";
-	 m.push_back(dat);
-	 dat.teststr = "test6";
-	 m.push_back(dat);
-	 nvm_instance.execVeri(&m);
-	
-	 r.clear();
-	 nvm_instance.getVeri(r);
+	m.clear();
+	dat.teststr = "test5";
+	m.push_back(dat);
+	dat.teststr = "test6";
+	m.push_back(dat);
+	nvm_instance.execVeri(&m);
+
+	r.clear();
+	nvm_instance.getVeri(r);
 
 	return 0;
 }

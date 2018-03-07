@@ -20,6 +20,8 @@ using std::unique_lock;
 using std::future;
 #include <condition_variable>
 using std::condition_variable;
+#include <atomic>
+using std::atomic;
 
 #include <queue>
 using std::queue;
@@ -64,15 +66,11 @@ public:
 class NVMVeri {
 public:
 	/* master and worker thread */
-	VeriWorkerState VeriWorkerStateMap[MAX_THREAD_POOL_SIZE];
-	static mutex VeriWorkerMutex[MAX_THREAD_POOL_SIZE];
-	thread *MasterThreadPtr;
 	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
 	/* terminate signal */
-	std::promise<void> master_termSignal;
-	std::promise<void> worker_termSignal[MAX_THREAD_POOL_SIZE];
-	future<void> futureObj[MAX_THREAD_POOL_SIZE];
+	static atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
+
 
 	/* Main program works as the producer,
 	* workers works as the consumers,
@@ -117,8 +115,7 @@ public:
 	* If state is BUSY, read metadata and verify.
 	* When verification completes, send result to master
 	*/
-	static void VeriMaster(future<void>);
-	static void VeriWorker(future<void>, int id);
+	static void VeriWorker(int id);
 
 	bool assignTask(tid_t);
 };
