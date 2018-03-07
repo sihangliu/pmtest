@@ -67,12 +67,12 @@ public:
 	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
 	/* terminate signal */
-	static atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
+	static volatile atomic<int> termSignal[MAX_THREAD_POOL_SIZE];
 
 	/* get result signal */
-	static atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
-	static atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
-	static atomic<int> completedThread;
+	static volatile atomic<int> getResultSignal[MAX_THREAD_POOL_SIZE];
+	static volatile atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
+	static volatile atomic<int> completedThread;
 
 	int assignTo;
 

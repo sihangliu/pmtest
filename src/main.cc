@@ -1,7 +1,7 @@
 #include "nvmveri.hh"
 #include "common.hh"
 
-const int LOOP_CNT = 3;
+const int LOOP_CNT = 20;
 
 int main()
 {
