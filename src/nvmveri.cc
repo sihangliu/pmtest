@@ -44,7 +44,7 @@ bool NVMVeri::initVeri()
 
 bool NVMVeri::termVeri()
 {
-	printf("ask to stop\n");
+	// printf("ask to stop\n");
 	//master_termSignal.set_value();
 	//MasterThreadPtr->join();
 
@@ -57,11 +57,11 @@ bool NVMVeri::termVeri()
 	lock.unlock();
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		printf("fck%d\n", i);
+		// printf("fck%d\n", i);
 		WorkerThreadPool[i]->join();
-		printf("stop thread %d\n", i);
+		// printf("stop thread %d\n", i);
 	}
-	printf("stopped\n");
+	// printf("stopped\n");
 	return true;
 }
 
@@ -72,7 +72,7 @@ bool NVMVeri::execVeri(vector<Metadata> *input)
 	unique_lock<mutex> lock(VeriQueueMutex);
 	VeriNumber++;
 	VeriQueue.push(input);
-	printf("pushed\n");
+	// printf("pushed\n");
 	VeriQueueCV.notify_one();
 
 	return true;
@@ -83,12 +83,12 @@ bool NVMVeri::execVeri(vector<Metadata> *input)
 //
 bool NVMVeri::getVeri(vector<VeriResult> &output)
 {
-	printf("start getVeri\n");
+	// printf("start getVeri\n");
 	//MasterThreadPtr->join();
 	while(true) {
 		unique_lock<mutex> veri_lock(VeriQueueMutex);
 		unique_lock<mutex> result_lock(ResultVectorMutex);
-		//printf("@");
+		//// printf("@");
 		if (VeriNumber == ResultVector.size()) {
 			output = ResultVector;
 			VeriNumber = 0;
@@ -96,7 +96,7 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 			break;
 		}
 	}
-	printf("end getVeri\n");
+	// printf("end getVeri\n");
 
 	return true;
 }
@@ -117,21 +117,17 @@ bool NVMVeri::writeMetadata()
 void NVMVeri::VeriWorker(int id)
 {
 	while (true) {
-		printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
+		// printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
 		fflush(stdout);
 		unique_lock<mutex> veri_lock(VeriQueueMutex);
-		printf("size = %lu\n", VeriQueue.size());
+		// printf("size = %lu\n", VeriQueue.size());
 
 		// while (VeriQueue.size() == 0 && !termSignal[id]) {
 		// 	VeriQueueCV.wait(veri_lock);
 		// }
-		printf("a\n");
 		while (!termSignal[id]) {
-			printf("b\n");
 			if(VeriQueue.size() != 0) break;
-			printf("c\n");
 			VeriQueueCV.wait(veri_lock);
-			printf("d\n");
 		}
 
 		if (termSignal[id]) break;
@@ -145,22 +141,20 @@ void NVMVeri::VeriWorker(int id)
 		// 	}
 		// );
 
-		printf("semaphore > 0\n");
+		// printf("semaphore > 0\n");
 
-		printf("read\n");
+		// printf("read\n");
 		for(int i = 0; i < 4; i++) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			printf("zzz %d\n", id);
 		}
 		VeriQueue.pop();
 		veri_lock.unlock();
 		VeriResult temp;
-		temp.teststr = "result_";
 		unique_lock<mutex> result_lock(ResultVectorMutex);
 		ResultVector.push_back(temp);
 		result_lock.unlock();
 
-		printf("processed\n");
+		// printf("processed\n");
 	}
 
 	return;

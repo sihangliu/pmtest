@@ -1,43 +1,29 @@
 #include "nvmveri.hh"
+#include "common.hh"
+
+const int LOOP_CNT = 100;
 
 int main()
 {
-
 	NVMVeri nvm_instance;
 
 	vector<Metadata> m;
 	Metadata dat;
-	dat.teststr = "test1";
-	m.push_back(dat);
-	dat.teststr = "test2";
-	m.push_back(dat);
-	nvm_instance.execVeri(&m);
 
+	Timer timer;
 
-	m.clear();
-	dat.teststr = "test3";
-	m.push_back(dat);
-	dat.teststr = "test4";
-	m.push_back(dat);
-	nvm_instance.execVeri(&m);
+	timer.startTimer();
+	for (int i = 0; i < LOOP_CNT; i++) {
+		printf("%d\n", i);
+		m.push_back(dat);
+		nvm_instance.execVeri(&m);
+	}
 
 	vector<VeriResult> r;
 	nvm_instance.getVeri(r);
 
-	printf("OUT\n");
+	timer.endTimer();
 
-	for(auto i = r.begin(); i < r.end(); i++)
-	printf("%s\n", i->teststr.c_str());
-
-	m.clear();
-	dat.teststr = "test5";
-	m.push_back(dat);
-	dat.teststr = "test6";
-	m.push_back(dat);
-	nvm_instance.execVeri(&m);
-
-	r.clear();
-	nvm_instance.getVeri(r);
-
+	printf("Total time for %d tasks = %llu(us)\n", LOOP_CNT, timer.getTime());
 	return 0;
 }

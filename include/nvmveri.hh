@@ -35,7 +35,7 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
-#define MAX_THREAD_POOL_SIZE 2
+#define MAX_THREAD_POOL_SIZE 1
 typedef unsigned int tid_t;
 
 enum VeriWorkerState {IDLE, BUSY};
@@ -44,21 +44,19 @@ enum ResultType {PASS, FAIL};
 class State {
 public:
 	enum StateVal {INIT, COMMIT};
-	const std::string StateChar[2] = {"init", "commit"};
+	const char StateChar[2][10] = {"init", "commit"};
 	void tranState();
 };
 
 class Metadata {
 public:
 	State state;
-	string teststr;
 	// ...
 };
 
 class VeriResult {
 public:
 	ResultType result;
-	string teststr;
 };
 
 
