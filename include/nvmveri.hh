@@ -35,7 +35,7 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
-#define MAX_THREAD_POOL_SIZE 2
+#define MAX_THREAD_POOL_SIZE 4
 typedef unsigned int tid_t;
 
 enum VeriWorkerState {IDLE, BUSY};
@@ -67,12 +67,12 @@ public:
 	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
 	/* terminate signal */
-	static volatile atomic<int> termSignal[MAX_THREAD_POOL_SIZE];
+	static atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
 
 	/* get result signal */
-	static volatile atomic<int> getResultSignal[MAX_THREAD_POOL_SIZE];
-	static volatile atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
-	static volatile atomic<int> completedThread;
+	static atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
+	static atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
+	static atomic<int> completedThread;
 
 	int assignTo;
 

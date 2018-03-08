@@ -8,11 +8,11 @@ condition_variable NVMVeri::VeriQueueCV[MAX_THREAD_POOL_SIZE];
 vector<VeriResult> NVMVeri::ResultVector[MAX_THREAD_POOL_SIZE];
 mutex NVMVeri::ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 
-volatile atomic<int> NVMVeri::termSignal[MAX_THREAD_POOL_SIZE];
-volatile atomic<int> NVMVeri::getResultSignal[MAX_THREAD_POOL_SIZE];
+atomic<bool> NVMVeri::termSignal[MAX_THREAD_POOL_SIZE];
+atomic<bool> NVMVeri::getResultSignal[MAX_THREAD_POOL_SIZE];
 
-volatile atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
-volatile atomic<int> NVMVeri::completedThread;
+atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
+atomic<int> NVMVeri::completedThread;
 
 
 
@@ -40,7 +40,11 @@ bool NVMVeri::initVeri()
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		termSignal[i] = 2;
+		termSignal[i] = false;
+	}
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		getResultSignal[i] = false;
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -66,8 +70,7 @@ bool NVMVeri::termVeri()
 
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		termSignal[i] = 10;
-		printf("wwawwww %d", int(termSignal[i]));
+		termSignal[i] = true;
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -92,6 +95,7 @@ bool NVMVeri::execVeri(vector<Metadata> *input)
 	unique_lock<mutex> lock(VeriQueueMutex[assignTo]);
 	//VeriNumber++;
 	VeriQueue[assignTo].push(input);
+	lock.unlock();
 	// printf("Queue %d size = %d\n", assignTo, int(VeriQueue[assignTo].size()));
 	VeriQueueCV[assignTo].notify_one();
 
@@ -109,8 +113,15 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 	//MasterThreadPtr->join();
 
 	for (int i = 0 ; i < MAX_THREAD_POOL_SIZE; i++) {
-		//unique_lock<mutex> lock(VeriQueueMutex[i]);
-		getResultSignal[i] = 5;
+		// unique_lock<mutex> lock(VeriQueueMutex[i]);
+		getResultSignal[i] = true;
+	}
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		unique_lock<mutex> lock(VeriQueueMutex[i]);
+		// printf("waking\n");
+		VeriQueueCV[i].notify_all();
+		// printf("waked\n");
 	}
 
 //	printf("suck1\n");
@@ -120,13 +131,7 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 	};
 	//printf("suck2\n");
 
-	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		unique_lock<mutex> lock(VeriQueueMutex[i]);
-		// printf("waking\n");
-		VeriQueueCV[i].notify_all();
-		lock.unlock();
-		// printf("waked\n");
-	}
+
 
 	// Merge results
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -136,8 +141,20 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 
 	// Reset worker state
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		getResultSignal[i] = false;
+	}
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+		unique_lock<mutex> lock(VeriQueueMutex[i]);
+		// printf("waking\n");
+		VeriQueueCV[i].notify_all();
+		// printf("waked\n");
+	}
+
+	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
 		completedStateMap[i] = false;
 	}
+
 	completedThread = 0;
 
 	// printf("end getVeri\n");
@@ -163,22 +180,22 @@ void NVMVeri::VeriWorker(int id)
 		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
 		unique_lock<mutex> veri_lock(VeriQueueMutex[id]);
 
-		//printf("id = %d, %d, %d, %d\n", id, int(termSignal[id]), int(getResultSignal[id]), int(VeriQueue[id].size()));
+		// printf("id = %d, %d, %d, %d\n", id, int(termSignal[id]), int(getResultSignal[id]), int(VeriQueue[id].size()));
 		// when no termSignal and no getResultSignal and VeriQueue is empty
-		while (termSignal[id] != 10 && getResultSignal[id] != 5 && VeriQueue[id].size() == 0) {
+		while (!termSignal[id] && !getResultSignal[id] && VeriQueue[id].size() == 0) {
 			printf("c %d\n", id);
-			assert(completedStateMap[id] != true);
+		//	assert(completedStateMap[id] != true);
 			VeriQueueCV[id].wait(veri_lock);
 			printf("d %d\n", id);
 		}
 		//printf("id = %d, %d\n", id, int(termSignal[id]));
 		//if (id > 0) printf("a %d\n", id);
-		if (termSignal[id] == 10) break;
+		if (termSignal[id]) break;
 
-		//printf("id = %d, %d, %d, %d\n", id, int(!completedStateMap[id]), int(getResultSignal[id]), int(VeriQueue[id].size()));
+
 		//fflush(stdout);
 		// when getResultSignal and this thread is not completed yet and VeriQueue is empty
-		if (!completedStateMap[id] && getResultSignal[id] == 5 && VeriQueue[id].size() == 0) {
+		if (!completedStateMap[id] && getResultSignal[id] && VeriQueue[id].size() == 0) {
 			completedThread++;
 			printf("complete %d\n", id);
 			completedStateMap[id] = true;

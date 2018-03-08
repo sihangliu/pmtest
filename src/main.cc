@@ -1,7 +1,7 @@
 #include "nvmveri.hh"
 #include "common.hh"
 
-const int LOOP_CNT = 20;
+const int LOOP_CNT = 50;
 
 int main()
 {
@@ -20,6 +20,14 @@ int main()
 	}
 
 	vector<VeriResult> r;
+	nvm_instance.getVeri(r);
+
+	for (int i = 0; i < LOOP_CNT; i++) {
+		printf("%d\n", i);
+		m.push_back(dat);
+		nvm_instance.execVeri(&m);
+	}
+
 	nvm_instance.getVeri(r);
 
 	timer.endTimer();
