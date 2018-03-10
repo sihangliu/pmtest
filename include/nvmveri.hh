@@ -124,5 +124,9 @@ public:
 	bool assignTask(tid_t);
 };
 
+extern "C" void *C_createVeriInstance();
+extern "C" void *C_deleteVeriInstance(void *);
+extern "C" void C_execVeri(void *, void **);
+extern "C" void C_getVeri(void *, void **);
 
 #endif

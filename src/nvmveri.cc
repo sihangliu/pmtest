@@ -58,6 +58,10 @@ bool NVMVeri::termVeri()
 {
 	// printf("ask to stop\n");
 
+	// for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+	// 	delete WorkerThreadPool[i];
+	// }
+
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
 		termSignal[i] = true;
@@ -190,4 +194,33 @@ void NVMVeri::VeriWorker(int id)
 bool NVMVeri::assignTask(tid_t VeriWorkerID)
 {
 	return true;
+}
+
+
+void *C_createVeriInstance()
+{
+	NVMVeri *result = new NVMVeri();
+	return (void *)result;
+}
+
+void *C_deleteVeriInstance(void *veriInstance)
+{
+	NVMVeri *in = (NVMVeri *)veriInstance;
+	delete in;
+}
+
+void C_execVeri(void *veriInstance, void **metadata)
+{
+	NVMVeri *in = (NVMVeri *)veriInstance;
+	// TODO: cast Metadata
+	vector<Metadata> m;
+	in->execVeri(&m);
+}
+
+void C_getVeri(void *veriInstance, void **veriResult)
+{
+	NVMVeri *in = (NVMVeri *)veriInstance;
+	vector<VeriResult> r;
+	in->getVeri(r);
+	// TODO: cast veriResult
 }
