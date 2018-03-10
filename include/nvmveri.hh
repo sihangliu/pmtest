@@ -35,7 +35,7 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
-#define MAX_THREAD_POOL_SIZE 4
+#define MAX_THREAD_POOL_SIZE 5
 typedef unsigned int tid_t;
 
 enum VeriWorkerState {IDLE, BUSY};
