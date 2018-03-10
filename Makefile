@@ -1,29 +1,34 @@
-CC       := -gcc
-CXX      := -g++-4.8
-CXXFLAGS := -std=c++11 #-pedantic-errors -Wall -Wextra -Werror
-LDFLAGS  := -L/usr/lib -lstdc++ -lm -pthread
-BUILD    := ./build
-OBJ_DIR  := $(BUILD)/objects
-APP_DIR  := $(BUILD)/apps
-TARGET   := nvmveri
-INCLUDE  := -Iinclude/
-SRC      := $(wildcard src/*.cc)
+CC        := -gcc
+CXX       := -g++-4.8
+CFLAGS    :=
+CXXFLAGS  := -std=c++11 #-pedantic-errors -Wall -Wextra -Werror
+LDFLAGS   := -L/usr/lib -lstdc++ -lm -pthread
+BUILD     := ./build
+OBJ_DIR   := $(BUILD)/objects
+APP_DIR   := $(BUILD)/apps
+TARGET    := nvmveri
+INCLUDE   := -Iinclude/
+SRC       := $(wildcard src/*.cc)
+C_SRC     := $(wildcard src/*.c)
 
-OBJECTS := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
+OBJECTS   := $(SRC:%.cc=$(OBJ_DIR)/%.o)
+C_OBJECTS := $(SRC:%.c=$(OBJ_DIR)/%.o)
 
 all: build $(APP_DIR)/$(TARGET)
 
-cc: build $(APP_DIR)/$(CTARGET)
+cc: build $(OBJECTS) $(C_OBJECTS)
+	@mkdir -p $(@D)
+	$(CC) $(INCLUDE) -o $(APP_DIR)/$(TARGET) $(OBJECTS) $(LDFLAGS)
 
-$(OBJ_DIR)/%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cc
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
 
-$(APP_DIR)/$(TARGET): $(OBJECTS)
+$(OBJ_DIR)/%.o: %.c
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $(APP_DIR)/$(TARGET) $(OBJECTS)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
-$(APP_DIR)/$(CTARGET): $(OBJECTS)
+$(APP_DIR)/$(TARGET): $(OBJECTS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $(APP_DIR)/$(TARGET) $(OBJECTS)
 
