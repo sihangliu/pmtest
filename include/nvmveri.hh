@@ -35,30 +35,39 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
-#define MAX_THREAD_POOL_SIZE 5
+#define MAX_THREAD_POOL_SIZE 1
+#define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
 
-class State {
+//class State {
+//public:
+	//enum StateVal {NONE, WORK, COMMIT, ABORT, FINAL};
+	//const char StateChar[2][10] = {"init", "commit"};
+	//void tranState();
+//};
+
+enum State {NONE, WORK, COMMIT, ABORT, FINAL};
+
+class OpInfo {
 public:
-	enum StateVal {INIT, COMMIT};
-	const char StateChar[2][10] = {"init", "commit"};
-	void tranState();
+	char opName[MAX_OP_NAME_SIZE]; // function name
+	unsigned long long address;		 // address of object being operated
+	int size;											 // size of object
 };
 
 class Metadata {
 public:
 	State state;
-	// ...
+	OpInfo op;
 };
 
 class VeriResult {
 public:
 	ResultType result;
 };
-
 
 
 class NVMVeri {
@@ -81,7 +90,7 @@ public:
 	* implement this like a semaphore
 	*/
 	// static size_t VeriNumber;
-	static queue<vector<Metadata> *> VeriQueue[MAX_THREAD_POOL_SIZE];
+	static queue<vector<Metadata *> *> VeriQueue[MAX_THREAD_POOL_SIZE];
 	static mutex VeriQueueMutex[MAX_THREAD_POOL_SIZE];
 	static condition_variable VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
@@ -105,14 +114,14 @@ public:
 	*/
 	bool termVeri();
 
-	bool execVeri(vector<Metadata> *);
+	bool execVeri(vector<Metadata *> *);
 
 	bool getVeri(vector<VeriResult> &);
 
 	/* Read data passed from the master thread */
-	bool readMetadata();
+	//void readMetadata();
 	/* Write data passed from the master thread */
-	bool writeMetadata();
+	//void writeMetadata();
 
 	/* Worker function.
 	* If state is IDLE, busy waiting
@@ -121,12 +130,16 @@ public:
 	*/
 	static void VeriWorker(int id);
 
-	bool assignTask(tid_t);
+	//bool assignTask(tid_t);
 };
 
 extern "C" void *C_createVeriInstance();
 extern "C" void *C_deleteVeriInstance(void *);
-extern "C" void C_execVeri(void *, void **);
-extern "C" void C_getVeri(void *, void **);
+extern "C" void C_execVeri(void *, void *);
+extern "C" void C_getVeri(void *, void *);
+
+extern "C" void *C_createMetadataVector();
+extern "C" void C_deleteMetadataVector(void *);
+extern "C" void C_createMetadata(void *, char *, void *, int);
 
 #endif

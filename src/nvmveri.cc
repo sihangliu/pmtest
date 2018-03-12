@@ -1,7 +1,7 @@
 #include "nvmveri.hh"
 
 //size_t NVMVeri::VeriNumber;
-queue<vector<Metadata> *> NVMVeri::VeriQueue[MAX_THREAD_POOL_SIZE];
+queue<vector<Metadata *> *> NVMVeri::VeriQueue[MAX_THREAD_POOL_SIZE];
 mutex NVMVeri::VeriQueueMutex[MAX_THREAD_POOL_SIZE];
 condition_variable NVMVeri::VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
@@ -81,7 +81,7 @@ bool NVMVeri::termVeri()
 
 
 // execute verification of input
-bool NVMVeri::execVeri(vector<Metadata> *input)
+bool NVMVeri::execVeri(vector<Metadata *> *input)
 {
 
 	unique_lock<mutex> lock(VeriQueueMutex[assignTo]);
@@ -141,18 +141,18 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 	return true;
 }
 
-
-bool NVMVeri::readMetadata()
+/*
+void NVMVeri::readMetadata()
 {
-	return true;
+
 }
 
 
-bool NVMVeri::writeMetadata()
+void NVMVeri::writeMetadata()
 {
-	return true;
-}
 
+}
+*/
 
 void NVMVeri::VeriWorker(int id)
 {
@@ -178,7 +178,7 @@ void NVMVeri::VeriWorker(int id)
 		if(VeriQueue[id].size() > 0) {
 			VeriQueue[id].pop();
 			veri_lock.unlock();
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			//std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			VeriResult temp;
 			unique_lock<mutex> result_lock(ResultVectorMutex[id]);
 			ResultVector[id].push_back(temp);
@@ -190,12 +190,12 @@ void NVMVeri::VeriWorker(int id)
 	return;
 }
 
-
+/*
 bool NVMVeri::assignTask(tid_t VeriWorkerID)
 {
 	return true;
 }
-
+*/
 
 void *C_createVeriInstance()
 {
@@ -209,18 +209,43 @@ void *C_deleteVeriInstance(void *veriInstance)
 	delete in;
 }
 
-void C_execVeri(void *veriInstance, void **metadata)
+void C_execVeri(void *veriInstance, void *metadata_vector)
 {
 	NVMVeri *in = (NVMVeri *)veriInstance;
-	// TODO: cast Metadata
-	vector<Metadata> m;
-	in->execVeri(&m);
+	in->execVeri((vector<Metadata *> *)metadata_vector);
 }
 
-void C_getVeri(void *veriInstance, void **veriResult)
+void C_getVeri(void *veriInstance, void *veriResult)
 {
 	NVMVeri *in = (NVMVeri *)veriInstance;
 	vector<VeriResult> r;
 	in->getVeri(r);
 	// TODO: cast veriResult
+}
+
+
+void *C_createMetadataVector()
+{
+	return (void *)(new vector<Metadata *>);
+}
+
+
+void C_deleteMetadataVector(void *victim)
+{
+	vector<Metadata *> *temp = (vector<Metadata *> *)victim;
+	for (auto i = temp->begin(); i != temp->end(); i++) {
+		delete (*i);
+	}
+}
+
+
+void C_createMetadata(void *metadata_vector, char *name, void *address, int size)
+{
+	Metadata *m = new Metadata;
+
+	strcpy(m->op.opName, name);
+	m->op.address = (unsigned long long)address;
+	m->op.size = size;
+
+	((vector<Metadata *> *)metadata_vector)->push_back(m);
 }

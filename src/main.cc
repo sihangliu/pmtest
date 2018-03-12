@@ -7,9 +7,9 @@ int main()
 {
 	NVMVeri nvm_instance;
 
-	vector<Metadata> m;
+	vector<Metadata *> m;
 	vector<VeriResult> r;
-	Metadata dat;
+	Metadata *dat;
 
 	Timer timer;
 
@@ -25,6 +25,6 @@ int main()
 
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n", LOOP_CNT, timer.getTime());
-	
+
 	return 0;
 }
