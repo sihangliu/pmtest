@@ -14,7 +14,8 @@ atomic<bool> NVMVeri::getResultSignal[MAX_THREAD_POOL_SIZE];
 atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
 atomic<int> NVMVeri::completedThread;
 
-
+void *metadataPtr;
+int existVeriInstance = 0;
 
 NVMVeri::NVMVeri()
 {
@@ -25,6 +26,15 @@ NVMVeri::NVMVeri()
 NVMVeri::~NVMVeri()
 {
 	termVeri();
+}
+
+
+const bool DEBUG = false;
+
+void log(const char *output)
+{
+	if (DEBUG == true)
+		printf("%s", output);
 }
 
 
@@ -50,6 +60,7 @@ bool NVMVeri::initVeri()
 	completedThread = 0;
 	assignTo = 0;
 
+	existVeriInstance = 0;
 	return true;
 }
 
@@ -75,6 +86,7 @@ bool NVMVeri::termVeri()
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
 		WorkerThreadPool[i]->join();
 	}
+
 	// printf("stopped\n");
 	return true;
 }
@@ -141,18 +153,6 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 	return true;
 }
 
-/*
-void NVMVeri::readMetadata()
-{
-
-}
-
-
-void NVMVeri::writeMetadata()
-{
-
-}
-*/
 
 void NVMVeri::VeriWorker(int id)
 {
@@ -190,12 +190,6 @@ void NVMVeri::VeriWorker(int id)
 	return;
 }
 
-/*
-bool NVMVeri::assignTask(tid_t VeriWorkerID)
-{
-	return true;
-}
-*/
 
 void *C_createVeriInstance()
 {
@@ -239,13 +233,63 @@ void C_deleteMetadataVector(void *victim)
 }
 
 
-void C_createMetadata(void *metadata_vector, char *name, void *address, int size)
+void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, size_t size)
 {
+	if (existVeriInstance) {
 	Metadata *m = new Metadata;
+	m->type = _OPINFO;
 
 	strcpy(m->op.opName, name);
 	m->op.address = (unsigned long long)address;
 	m->op.size = size;
+		
+	log("opinfo_aa)\n");
 
 	((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("opinfo\n");
+	}
+}
+
+
+void C_createMetadata_Assign(void *metadata_vector, void *lhs, size_t lhs_size)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _ASSIGN;
+		
+		log("assign_aa\n");
+
+	((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("assign\n");
+	}
+}
+
+void C_createMetadata_Persist(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _PERSIST;
+
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("persist\n");
+	}
+}
+
+void C_createMetadata_Order(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _ORDER;
+
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("order\n");
+	}
 }

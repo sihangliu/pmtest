@@ -38,6 +38,7 @@ using std::vector;
 #define MAX_THREAD_POOL_SIZE 1
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
+typedef unsigned long long addr_t;
 
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
@@ -49,19 +50,40 @@ enum ResultType {PASS, FAIL};
 	//void tranState();
 //};
 
-enum State {NONE, WORK, COMMIT, ABORT, FINAL};
 
-class OpInfo {
-public:
+enum MetadataType {_OPINFO, _ASSIGN, _PERSIST, _ORDER};
+
+struct Metadata_OpInfo {
+	enum State {NONE, WORK, COMMIT, ABORT, FINAL};
 	char opName[MAX_OP_NAME_SIZE]; // function name
-	unsigned long long address;		 // address of object being operated
-	int size;											 // size of object
+	addr_t address;		    	   // address of object being operated
+	int size;					   // size of object
+};
+
+struct Metadata_Assign {
+	void *lhs;
+	unsigned int lhs_size;
+	void *rhs;
+	unsigned int rhs_size;
+};
+
+struct Metadata_Persist {
+
+};
+
+struct Metadata_Order {
+
 };
 
 class Metadata {
 public:
-	State state;
-	OpInfo op;
+	MetadataType type;
+	union {
+		Metadata_OpInfo op;
+		Metadata_Assign assign;
+		Metadata_Persist persist;
+		Metadata_Order order;
+	};
 };
 
 class VeriResult {
@@ -140,6 +162,10 @@ extern "C" void C_getVeri(void *, void *);
 
 extern "C" void *C_createMetadataVector();
 extern "C" void C_deleteMetadataVector(void *);
-extern "C" void C_createMetadata(void *, char *, void *, int);
+extern "C" void C_createMetadata_OpInfo(void *, char *, void *, size_t);
+extern "C" void C_createMetadata_Assign(void *, void *, size_t);
+extern "C" void C_createMetadata_Persist(void *);
+extern "C" void C_createMetadata_Order(void *);
 
+extern void *metadataPtr;
 #endif
