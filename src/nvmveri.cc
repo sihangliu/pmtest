@@ -17,6 +17,12 @@ atomic<int> NVMVeri::completedThread;
 void *metadataPtr;
 int existVeriInstance = 0;
 
+void Metadata::print()
+{
+	printf("%s ", MetadataTypeStr[type]);
+}
+
+
 NVMVeri::NVMVeri()
 {
 	initVeri();
@@ -176,9 +182,15 @@ void NVMVeri::VeriWorker(int id)
 		}
 
 		if(VeriQueue[id].size() > 0) {
+			vector<Metadata *> *veriptr = VeriQueue[id].front();
 			VeriQueue[id].pop();
 			veri_lock.unlock();
-			//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+			for (auto i = veriptr->begin(); i < veriptr->end(); i++) {
+	//			(*i)->print();
+			}
+
+
 			VeriResult temp;
 			unique_lock<mutex> result_lock(ResultVectorMutex[id]);
 			ResultVector[id].push_back(temp);
@@ -245,7 +257,7 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 		
 	log("opinfo_aa)\n");
 
-	((vector<Metadata *> *)metadata_vector)->push_back(m);
+	//((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
 		log("opinfo\n");
@@ -253,18 +265,78 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 }
 
 
-void C_createMetadata_Assign(void *metadata_vector, void *lhs, size_t lhs_size)
+void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _ASSIGN;
 		
 		log("assign_aa\n");
-
-	((vector<Metadata *> *)metadata_vector)->push_back(m);
+		
+		m->assign.addr = addr;
+		m->assign.size = size;
+	//	((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
 		log("assign\n");
+	}
+}
+
+
+void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _FLUSH;
+		
+		m->flush.addr = addr;
+		m->flush.size = size;
+	//	((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("flush\n");
+	}
+}
+
+
+void C_createMetadata_Commit(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _COMMIT;
+
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("commit\n");
+	}
+}
+
+
+void C_createMetadata_Barrier(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _BARRIER;
+
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("barrier\n");
+	}
+}
+
+
+void C_createMetadata_Fence(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _FENCE;
+
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+	else {
+		log("fence\n");
 	}
 }
 

@@ -51,7 +51,8 @@ enum ResultType {PASS, FAIL};
 //};
 
 
-enum MetadataType {_OPINFO, _ASSIGN, _PERSIST, _ORDER};
+enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER};
+const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER"};
 
 struct Metadata_OpInfo {
 	enum State {NONE, WORK, COMMIT, ABORT, FINAL};
@@ -61,10 +62,25 @@ struct Metadata_OpInfo {
 };
 
 struct Metadata_Assign {
-	void *lhs;
-	unsigned int lhs_size;
-	void *rhs;
-	unsigned int rhs_size;
+	void *addr;
+	size_t size;
+};
+
+struct Metadata_Flush {
+	void *addr;
+	size_t size;
+};
+
+struct Metadata_Commit {
+
+};
+
+struct Metadata_Barrier {
+
+};
+
+struct Metadata_Fence {
+
 };
 
 struct Metadata_Persist {
@@ -81,9 +97,15 @@ public:
 	union {
 		Metadata_OpInfo op;
 		Metadata_Assign assign;
+		Metadata_Flush flush;
+		Metadata_Commit commit;
+		Metadata_Barrier barrier;
+		Metadata_Fence fence;
 		Metadata_Persist persist;
 		Metadata_Order order;
 	};
+
+	void print();
 };
 
 class VeriResult {
@@ -164,6 +186,10 @@ extern "C" void *C_createMetadataVector();
 extern "C" void C_deleteMetadataVector(void *);
 extern "C" void C_createMetadata_OpInfo(void *, char *, void *, size_t);
 extern "C" void C_createMetadata_Assign(void *, void *, size_t);
+extern "C" void C_createMetadata_Flush(void *, void *, size_t);
+extern "C" void C_createMetadata_Commit(void *);
+extern "C" void C_createMetadata_Barrier(void *);
+extern "C" void C_createMetadata_Fence(void *);
 extern "C" void C_createMetadata_Persist(void *);
 extern "C" void C_createMetadata_Order(void *);
 

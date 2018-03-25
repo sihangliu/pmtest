@@ -5,7 +5,7 @@ CXXFLAGS  := -std=c++11 -fPIC#-pedantic-errors -Wall -Wextra -Werror
 LDFLAGS   := -L/usr/lib -lstdc++ -lm -pthread
 BUILD     := ./build
 OBJ_DIR   := $(BUILD)/objects
-APP_DIR   := $(BUILD)/appsi
+APP_DIR   := $(BUILD)/apps
 LIB_DIR   := $(BUILD)/libs
 TARGET    := nvmveri
 INCLUDE   := -Iinclude/

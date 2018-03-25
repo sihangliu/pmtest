@@ -12,6 +12,10 @@ void *C_createMetadataVector();
 void C_deleteMetadataVector(void *);
 void C_createMetadata_OpInfo(void *, char *, void *, size_t);
 void C_createMetadata_Assign(void *, void *, size_t);
+void C_createMetadata_Flush(void *, void *, size_t);
+void C_createMetadata_Commit(void *);
+void C_createMetadata_Barrier(void *);
+void C_createMetadata_Fence(void *);
 void C_createMetadata_Persist(void *);
 void C_createMetadata_Order(void *);
 
