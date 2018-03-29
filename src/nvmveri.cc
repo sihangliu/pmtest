@@ -1,4 +1,5 @@
 #include "nvmveri.hh"
+#include <stdarg.h>
 
 //size_t NVMVeri::VeriNumber;
 queue<vector<Metadata *> *> NVMVeri::VeriQueue[MAX_THREAD_POOL_SIZE];
@@ -20,6 +21,21 @@ int existVeriInstance = 0;
 void Metadata::print()
 {
 	printf("%s ", MetadataTypeStr[type]);
+	if (type == _OPINFO) {
+		printf("\n");
+	}
+	else if (type == _ASSIGN) {
+		printf("%p %lu\n", assign.addr, assign.size);
+	}
+	else if (type == _PERSIST) {
+	}
+	else if (type == _FLUSH) {
+		printf("%p %lu\n", flush.addr, flush.size);
+	}
+	else if (type == _FENCE) {
+		printf("\n");
+	}
+	else {}
 }
 
 
@@ -35,12 +51,15 @@ NVMVeri::~NVMVeri()
 }
 
 
-const bool DEBUG = false;
+const bool _debug = true;
 
-void log(const char *output)
+void log(const char *format, ...)
 {
-	if (DEBUG == true)
-		printf("%s", output);
+	va_list args;
+	va_start(args, format);
+	if (_debug == true)
+		printf(format, args);
+	va_end(args);
 }
 
 
@@ -186,10 +205,7 @@ void NVMVeri::VeriWorker(int id)
 			VeriQueue[id].pop();
 			veri_lock.unlock();
 
-			for (auto i = veriptr->begin(); i < veriptr->end(); i++) {
-	//			(*i)->print();
-			}
-
+			VeriProc(veriptr);
 
 			VeriResult temp;
 			unique_lock<mutex> result_lock(ResultVectorMutex[id]);
@@ -200,6 +216,73 @@ void NVMVeri::VeriWorker(int id)
 	}
 
 	return;
+}
+
+
+void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
+{
+	// usually sizeof(size_t) = 8 on 64-bit system
+	interval_set<size_t> PersistInfo;
+	interval_map<size_t, int> OrderInfo;
+	auto prev = veriptr->begin();
+	auto cur = veriptr->begin();
+	for (; cur != veriptr->end(); cur++) {
+		if ((*cur)->type == _FENCE) {
+			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)	
+			size_t startaddr, endaddr;
+			for (auto i = prev; i != cur; i++) {
+				if ((*i)->type == _ASSIGN) {
+					startaddr = (size_t)((*i)->assign.addr);
+					endaddr = startaddr + (*i)->assign.size;
+					printf("%s %p %lu\n", MetadataTypeStr[_ASSIGN], (*i)->assign.addr, (*i)->assign.size);
+					PersistInfo += interval<size_t>::right_open(startaddr, endaddr);
+
+				}
+				else if ((*i)->type == _FLUSH) {
+					startaddr = (size_t)((*i)->flush.addr);
+					endaddr = startaddr + (*i)->flush.size;
+					printf("%s %p %lu\n", MetadataTypeStr[_FLUSH], (*i)->flush.addr, (*i)->flush.size);
+					PersistInfo -= interval<size_t>::right_open(startaddr, endaddr);
+				}
+				else if ((*i)->type == _PERSIST) {
+					startaddr = (size_t)((*i)->persist.addr);
+					endaddr = startaddr + (*i)->persist.size;
+					printf("%s %p %lu\n", MetadataTypeStr[_PERSIST], (*i)->persist.addr, (*i)->persist.size);
+					for (size_t j = startaddr; j < endaddr; j += 4) {
+						if (within(j, PersistInfo))
+							printf("Addr %lu not persist.\n", j);
+					}
+				
+				}
+				else if ((*i)->type == _ORDER) {
+				
+				}
+				else if ((*i)->type == _FENCE) {
+				
+				}
+				else {
+				
+				}
+			}
+			prev = cur;
+		}
+	}
+	std::cout << PersistInfo << std::endl;
+	// processing tail value of [prev, cur):
+	// prev point to last _FENCE, cur point to veriptr->end
+	// will not execute Assign or Flush because of no Fence at the end
+	for (auto i = prev; i != cur; i++) {
+		
+		if ((*i)->type == _ORDER) {
+		
+		}
+		else if ((*i)->type == _FENCE) {
+		
+		}
+		else {
+		
+		}
+	}
 }
 
 
@@ -255,12 +338,12 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 	m->op.address = (unsigned long long)address;
 	m->op.size = size;
 		
-	log("opinfo_aa)\n");
+	//log("opinfo_aa\n");
 
-	//((vector<Metadata *> *)metadata_vector)->push_back(m);
+	((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("opinfo\n");
+		//log("opinfo\n");
 	}
 }
 
@@ -271,14 +354,14 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 		Metadata *m = new Metadata;
 		m->type = _ASSIGN;
 		
-		log("assign_aa\n");
+		//log("assign_aa\n");
 		
 		m->assign.addr = addr;
 		m->assign.size = size;
-	//	((vector<Metadata *> *)metadata_vector)->push_back(m);
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("assign\n");
+		//log("assign\n");
 	}
 }
 
@@ -291,10 +374,10 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 		
 		m->flush.addr = addr;
 		m->flush.size = size;
-	//	((vector<Metadata *> *)metadata_vector)->push_back(m);
+		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("flush\n");
+		//log("flush\n");
 	}
 }
 
@@ -308,7 +391,7 @@ void C_createMetadata_Commit(void *metadata_vector)
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("commit\n");
+		//log("commit\n");
 	}
 }
 
@@ -322,7 +405,7 @@ void C_createMetadata_Barrier(void *metadata_vector)
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("barrier\n");
+		//log("barrier\n");
 	}
 }
 
@@ -336,24 +419,27 @@ void C_createMetadata_Fence(void *metadata_vector)
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("fence\n");
+		//log("fence\n");
 	}
 }
 
-void C_createMetadata_Persist(void *metadata_vector)
+void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _PERSIST;
 
+		m->persist.addr = addr;
+		m->persist.size = size;
+
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("persist\n");
+		//log("persist\n");
 	}
 }
 
-void C_createMetadata_Order(void *metadata_vector)
+void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t early_size, void *late_addr, size_t late_size)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -362,6 +448,6 @@ void C_createMetadata_Order(void *metadata_vector)
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
-		log("order\n");
+		//log("order\n");
 	}
 }

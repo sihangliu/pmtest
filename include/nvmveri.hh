@@ -35,6 +35,10 @@ using std::vector;
 #include <cstring>
 #include <iostream>
 
+#include <boost/icl/interval_set.hpp>
+#include <boost/icl/interval_map.hpp>
+using namespace boost::icl;
+
 #define MAX_THREAD_POOL_SIZE 1
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
@@ -84,7 +88,8 @@ struct Metadata_Fence {
 };
 
 struct Metadata_Persist {
-
+	void *addr;
+	size_t size;
 };
 
 struct Metadata_Order {
@@ -172,7 +177,9 @@ public:
 	* If state is BUSY, read metadata and verify.
 	* When verification completes, send result to master
 	*/
-	static void VeriWorker(int id);
+	static void VeriWorker(int);
+
+	static void VeriProc(vector<Metadata *> *);
 
 	//bool assignTask(tid_t);
 };
@@ -190,8 +197,8 @@ extern "C" void C_createMetadata_Flush(void *, void *, size_t);
 extern "C" void C_createMetadata_Commit(void *);
 extern "C" void C_createMetadata_Barrier(void *);
 extern "C" void C_createMetadata_Fence(void *);
-extern "C" void C_createMetadata_Persist(void *);
-extern "C" void C_createMetadata_Order(void *);
+extern "C" void C_createMetadata_Persist(void *, void *, size_t);
+extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void *metadataPtr;
 #endif

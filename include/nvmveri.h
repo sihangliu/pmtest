@@ -16,8 +16,8 @@ void C_createMetadata_Flush(void *, void *, size_t);
 void C_createMetadata_Commit(void *);
 void C_createMetadata_Barrier(void *);
 void C_createMetadata_Fence(void *);
-void C_createMetadata_Persist(void *);
-void C_createMetadata_Order(void *);
+void C_createMetadata_Persist(void *, void *, size_t);
+void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
