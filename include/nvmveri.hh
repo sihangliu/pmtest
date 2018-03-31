@@ -93,7 +93,10 @@ struct Metadata_Persist {
 };
 
 struct Metadata_Order {
-
+	void *early_addr;
+	size_t early_size;
+	void *late_addr;
+	size_t late_size;
 };
 
 class Metadata {
@@ -185,7 +188,7 @@ public:
 };
 
 extern "C" void *C_createVeriInstance();
-extern "C" void *C_deleteVeriInstance(void *);
+extern "C" void C_deleteVeriInstance(void *);
 extern "C" void C_execVeri(void *, void *);
 extern "C" void C_getVeri(void *, void *);
 
