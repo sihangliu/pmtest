@@ -54,14 +54,14 @@ NVMVeri::~NVMVeri()
 }
 
 
-const bool _debug = true;
+const bool _debug = false;
 
 void log(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
 	if (_debug == true)
-		printf(format, args);
+		vprintf(format, args);
 	va_end(args);
 }
 
@@ -238,12 +238,12 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 		if ((*cur)->type == _FENCE) {
 			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)	
 			for (auto i = prev; i != cur; i++) {
-				printf("%s\n", MetadataTypeStr[(*i)->type]);
+				//log("%s\n", MetadataTypeStr[(*i)->type]);
 				if ((*i)->type == _ASSIGN) {
 					startaddr = (size_t)((*i)->assign.addr);
 					endaddr = startaddr + (*i)->assign.size;
 					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-					printf(
+					log(
 						"%s %p %lu\n",
 						MetadataTypeStr[_ASSIGN],
 						(*i)->assign.addr,
@@ -256,21 +256,21 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 					startaddr = (size_t)((*i)->flush.addr);
 					endaddr = startaddr + (*i)->flush.size;
 					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-					printf("%s %p %lu\n",
+					log("%s %p %lu\n",
 						MetadataTypeStr[_FLUSH],
 						(*i)->flush.addr,
 						(*i)->flush.size);
 					PersistInfo -= addrinterval; 
 				}
 				else if ((*i)->type == _FENCE) {
-					printf("%s\n", MetadataTypeStr[_FENCE]);
+					log("%s\n", MetadataTypeStr[_FENCE]);
 					timestamp++;
 				}
 				else if ((*i)->type == _PERSIST) {
 					startaddr = (size_t)((*i)->persist.addr);
 					endaddr = startaddr + (*i)->persist.size;
 					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-					printf("%s %p %lu\n",
+					log("%s %p %lu\n",
 						MetadataTypeStr[_PERSIST], 
 						(*i)->persist.addr, 
 						(*i)->persist.size);
@@ -294,7 +294,7 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 					endaddr = startaddr + (*i)->order.late_size;
 					discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
 
-					printf(
+					log(
 						"%s %p %lu %p %lu\n",
 						MetadataTypeStr[_ORDER],
 						(*i)->order.early_addr,
@@ -347,7 +347,7 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 			startaddr = (size_t)((*i)->persist.addr);
 			endaddr = startaddr + (*i)->persist.size;
 			addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-			printf("%s %p %lu\n", MetadataTypeStr[_PERSIST], (*i)->persist.addr, (*i)->persist.size);
+			log("%s %p %lu\n", MetadataTypeStr[_PERSIST], (*i)->persist.addr, (*i)->persist.size);
 			auto iter = PersistInfo.find(addrinterval);
 			
 			if (iter != PersistInfo.end()) {
@@ -370,7 +370,7 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 					endaddr = startaddr + (*i)->order.late_size;
 					discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
 
-					printf(
+					log(
 						"%s %p %lu %p %lu\n",
 						MetadataTypeStr[_ORDER],
 						(*i)->order.early_addr,
