@@ -39,7 +39,7 @@ using std::vector;
 #include <boost/icl/interval_map.hpp>
 using namespace boost::icl;
 
-#define MAX_THREAD_POOL_SIZE 6
+#define MAX_THREAD_POOL_SIZE 2
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 typedef unsigned long long addr_t;
@@ -128,12 +128,12 @@ public:
 	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
 	/* terminate signal */
-	static atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
+	atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
 
 	/* get result signal */
-	static atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
-	static atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
-	static atomic<int> completedThread;
+	atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
+	atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
+	atomic<int> completedThread;
 
 	int assignTo;
 
@@ -142,15 +142,15 @@ public:
 	* implement this like a semaphore
 	*/
 	// static size_t VeriNumber;
-	static queue<vector<Metadata *> *> VeriQueue[MAX_THREAD_POOL_SIZE];
-	static mutex VeriQueueMutex[MAX_THREAD_POOL_SIZE];
-	static condition_variable VeriQueueCV[MAX_THREAD_POOL_SIZE];
+	queue<vector<Metadata *> *> VeriQueue[MAX_THREAD_POOL_SIZE];
+	mutex VeriQueueMutex[MAX_THREAD_POOL_SIZE];
+	condition_variable VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
 
 	/* Result queue
 	*/
-	static vector<VeriResult> ResultVector[MAX_THREAD_POOL_SIZE];
-	static mutex ResultVectorMutex[MAX_THREAD_POOL_SIZE];
+	vector<VeriResult> ResultVector[MAX_THREAD_POOL_SIZE];
+	mutex ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 	//static condition_variable ResultVectorCV;
 
 
@@ -180,9 +180,9 @@ public:
 	* If state is BUSY, read metadata and verify.
 	* When verification completes, send result to master
 	*/
-	static void VeriWorker(int);
+	void VeriWorker(int);
 
-	static void VeriProc(vector<Metadata *> *);
+	void VeriProc(vector<Metadata *> *);
 
 	//bool assignTask(tid_t);
 };

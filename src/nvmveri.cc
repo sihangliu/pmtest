@@ -5,6 +5,7 @@
 #define COLOR_RESET "\x1B[0m"
 
 //size_t NVMVeri::VeriNumber;
+/*
 queue<vector<Metadata *> *> NVMVeri::VeriQueue[MAX_THREAD_POOL_SIZE];
 mutex NVMVeri::VeriQueueMutex[MAX_THREAD_POOL_SIZE];
 condition_variable NVMVeri::VeriQueueCV[MAX_THREAD_POOL_SIZE];
@@ -17,6 +18,7 @@ atomic<bool> NVMVeri::getResultSignal[MAX_THREAD_POOL_SIZE];
 
 atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
 atomic<int> NVMVeri::completedThread;
+*/
 
 void *metadataPtr;
 int existVeriInstance = 0;
@@ -70,7 +72,7 @@ bool NVMVeri::initVeri()
 {
 	// create worker
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		WorkerThreadPool[i] = new thread(&VeriWorker, i);
+		WorkerThreadPool[i] = new thread(&NVMVeri::VeriWorker, this, i);
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
