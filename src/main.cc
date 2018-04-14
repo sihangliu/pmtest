@@ -68,7 +68,7 @@ int main()
 
 	C_deleteVeriInstance(p);
 	timer.endTimer();
-	printf("Total time for %d tasks = %llu(us)\n", LOOP_CNT, timer.getTime());
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test1*****************************/
 
 
@@ -89,7 +89,6 @@ int main()
 	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
 
-
 	C_execVeri(p, metadataPtr);
 
 	existVeriInstance = 0;
@@ -100,7 +99,7 @@ int main()
 
 	C_deleteVeriInstance(p);
 	timer.endTimer();
-	printf("Total time for %d tasks = %llu(us)\n", LOOP_CNT, timer.getTime());
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test2*****************************/
 
 
@@ -119,7 +118,7 @@ int main()
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
 	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
+	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
 	C_execVeri(p, metadataPtr);
@@ -132,7 +131,66 @@ int main()
 
 	C_deleteVeriInstance(p);
 	timer.endTimer();
-	printf("Total time for %d tasks = %llu(us)\n", LOOP_CNT, timer.getTime());
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test3*****************************/
+
+
+/****************************test4*****************************/
+	timer.startTimer();
+
+	p = C_createVeriInstance();
+	metadataVectorPtr = C_createMetadataVector();
+	metadataPtr = metadataVectorPtr;
+	existVeriInstance = 1;
+
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	C_createMetadata_Fence(metadataPtr);
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	C_createMetadata_Persist(metadataPtr, (void *)(&arr[4]), 4);
+	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+
+
+	C_execVeri(p, metadataPtr);
+
+	existVeriInstance = 0;
+
+	C_getVeri(p, (void *)(0));
+	C_deleteMetadataVector(metadataVectorPtr);
+
+
+	C_deleteVeriInstance(p);
+	timer.endTimer();
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
+/****************************test4*****************************/
+
+/****************************test5*****************************/
+	timer.startTimer();
+
+	p = C_createVeriInstance();
+	metadataVectorPtr = C_createMetadataVector();
+	metadataPtr = metadataVectorPtr;
+	existVeriInstance = 1;
+
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	C_createMetadata_Fence(metadataPtr);
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
+	C_createMetadata_Order(metadataPtr, (void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
+
+
+	C_execVeri(p, metadataPtr);
+
+	existVeriInstance = 0;
+
+	C_getVeri(p, (void *)(0));
+	C_deleteMetadataVector(metadataVectorPtr);
+
+
+	C_deleteVeriInstance(p);
+	timer.endTimer();
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
+/****************************test5*****************************/
 	return 0;
 }

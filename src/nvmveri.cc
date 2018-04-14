@@ -56,7 +56,7 @@ NVMVeri::~NVMVeri()
 }
 
 
-const bool _debug = false;
+const bool _debug = true;
 
 void log(const char *format, ...)
 {
@@ -188,13 +188,18 @@ void NVMVeri::VeriWorker(int id)
 {
 	while (true) {
 		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
+		if (id == 0)
+printf("a%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		unique_lock<mutex> veri_lock(VeriQueueMutex[id]);
-
 		// when no termSignal and no getResultSignal and VeriQueue is empty
+		if (id == 0)
+printf("b%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		while (!termSignal[id] && !getResultSignal[id] && VeriQueue[id].size() == 0) {
 		//	assert(completedStateMap[id] != true);
 			VeriQueueCV[id].wait(veri_lock);
 		}
+		if (id == 0)
+printf("c%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		if (termSignal[id]) break;
 
 
@@ -223,12 +228,112 @@ void NVMVeri::VeriWorker(int id)
 	return;
 }
 
+inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+{
+	size_t startaddr = (size_t)(cur->assign.addr);
+	size_t endaddr = startaddr + cur->assign.size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	log(
+		"%s %p %lu\n",
+		MetadataTypeStr[_ASSIGN],
+		cur->assign.addr,
+		cur->assign.size);
+	PersistInfo += addrinterval;
+	OrderInfo += make_pair(addrinterval, timestamp);
+}
+
+inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+{
+	size_t startaddr = (size_t)(cur->flush.addr);
+	size_t endaddr = startaddr + cur->flush.size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	log("%s %p %lu\n",
+		MetadataTypeStr[_FLUSH],
+		cur->flush.addr,
+		cur->flush.size);
+	PersistInfo -= addrinterval;
+}
+
+inline void VeriProc_Fence(int &timestamp)
+{
+	log("%s\n", MetadataTypeStr[_FENCE]);
+	timestamp++;
+}
+
+inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+{
+	size_t startaddr = (size_t)(cur->persist.addr);
+	size_t endaddr = startaddr + cur->persist.size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	log("%s %p %lu\n",
+		MetadataTypeStr[_PERSIST],
+		cur->persist.addr,
+		cur->persist.size);
+	auto iter = PersistInfo.find(addrinterval);
+
+	if (iter != PersistInfo.end()) {
+		addrinterval = addrinterval & (*iter);
+		printf(
+			COLOR_RED "PERSIST ERROR: " COLOR_RESET
+			"Address range [0x%lx, 0x%lx) not persisted.\n",
+			addrinterval.lower(),
+			addrinterval.upper());
+	}
+}
+
+void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+{
+	size_t startaddr = (size_t)(cur->order.early_addr);
+	size_t endaddr = startaddr + cur->order.early_size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+
+	startaddr = (size_t)(cur->order.late_addr);
+	endaddr = startaddr + cur->order.late_size;
+	discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
+
+	log(
+		"%s %p %lu %p %lu\n",
+		MetadataTypeStr[_ORDER],
+		cur->order.early_addr,
+		cur->order.early_size,
+		cur->order.late_addr,
+		cur->order.late_size);
+
+	// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestampe of the "late" address range
+	if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
+		auto intersec = addrinterval & OrderInfo;
+		auto intersec_late = addrinterval_late & OrderInfo;
+		int early_max = 0, late_min = std::numeric_limits<int>::max();
+
+		for (auto j = intersec.begin(); j != intersec.end(); j++) {
+			early_max = std::max(early_max, j->second);
+		}
+		for (auto j = intersec_late.begin(); j != intersec_late.end(); j++) {
+			late_min = std::min(late_min, j->second);
+		}
+
+		if (early_max >= late_min) {
+			printf(
+				COLOR_RED "ORDER ERROR: " COLOR_RESET
+				"Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+				(size_t)(cur->order.early_addr),
+				(size_t)(cur->order.early_addr) + cur->order.early_size,
+				(size_t)(cur->order.late_addr),
+				(size_t)(cur->order.late_addr) + cur->order.late_size);
+		}
+	}
+	else {
+		printf(
+			COLOR_RED "ORDER ERROR: " COLOR_RESET
+			"Queried address range not yet assigned.\n");
+	}
+}
 
 void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 {
 	// usually sizeof(size_t) = 8 on 64-bit system
-	interval_set<size_t> PersistInfo;
-	interval_map<size_t, int, partial_enricher, std::less, inplace_max> OrderInfo;
+	interval_set_addr PersistInfo;
+	interval_map_addr_timestamp OrderInfo;
 	int timestamp = 0;
 	size_t startaddr, endaddr;
 	discrete_interval<size_t> addrinterval;
@@ -238,103 +343,24 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 
 	for (; cur != veriptr->end(); cur++) {
 		if ((*cur)->type == _FENCE) {
-			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)	
+			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)
 			for (auto i = prev; i != cur; i++) {
-				//log("%s\n", MetadataTypeStr[(*i)->type]);
 				if ((*i)->type == _ASSIGN) {
-					startaddr = (size_t)((*i)->assign.addr);
-					endaddr = startaddr + (*i)->assign.size;
-					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-					log(
-						"%s %p %lu\n",
-						MetadataTypeStr[_ASSIGN],
-						(*i)->assign.addr,
-						(*i)->assign.size);
-					PersistInfo += addrinterval;
-					OrderInfo += make_pair(addrinterval, timestamp);
-
+					VeriProc_Assign(*i, PersistInfo, OrderInfo, timestamp);
 				}
 				else if ((*i)->type == _FLUSH) {
-					startaddr = (size_t)((*i)->flush.addr);
-					endaddr = startaddr + (*i)->flush.size;
-					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-					log("%s %p %lu\n",
-						MetadataTypeStr[_FLUSH],
-						(*i)->flush.addr,
-						(*i)->flush.size);
-					PersistInfo -= addrinterval; 
+					VeriProc_Flush(*i, PersistInfo, OrderInfo, timestamp);
 				}
 				else if ((*i)->type == _FENCE) {
-					log("%s\n", MetadataTypeStr[_FENCE]);
-					timestamp++;
+					VeriProc_Fence(timestamp);
 				}
 				else if ((*i)->type == _PERSIST) {
-					startaddr = (size_t)((*i)->persist.addr);
-					endaddr = startaddr + (*i)->persist.size;
-					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-					log("%s %p %lu\n",
-						MetadataTypeStr[_PERSIST], 
-						(*i)->persist.addr, 
-						(*i)->persist.size);
-					auto iter = PersistInfo.find(addrinterval);
-				
-					if (iter != PersistInfo.end()) {
-						addrinterval = addrinterval & (*iter);
-						printf(
-							COLOR_RED "PERSIST ERROR: " COLOR_RESET
-							"Address range [0x%lx, 0x%lx) not persisted.\n",
-							addrinterval.lower(),
-							addrinterval.upper());
-					}	
+					VeriProc_Persist(*i, PersistInfo, OrderInfo, timestamp);
 				}
 				else if ((*i)->type == _ORDER) {
-					startaddr = (size_t)((*i)->order.early_addr);
-					endaddr = startaddr + (*i)->order.early_size;
-					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-
-					startaddr = (size_t)((*i)->order.late_addr);
-					endaddr = startaddr + (*i)->order.late_size;
-					discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
-
-					log(
-						"%s %p %lu %p %lu\n",
-						MetadataTypeStr[_ORDER],
-						(*i)->order.early_addr,
-						(*i)->order.early_size,
-						(*i)->order.late_addr,
-						(*i)->order.late_size);
-
-					// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestampe of the "late" address range
-					if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
-						auto intersec = addrinterval & OrderInfo;
-						auto intersec_late = addrinterval_late & OrderInfo;
-						int early_max = 0, late_min = std::numeric_limits<int>::max();
-						
-						for (auto j = intersec.begin(); j != intersec.end(); j++) {
-							early_max = std::max(early_max, j->second);
-						}
-						for (auto j = intersec_late.begin(); j != intersec_late.end(); j++) {
-							late_min = std::min(late_min, j->second);
-						}
-						
-						if (early_max >= late_min) {
-							printf(
-								COLOR_RED "ORDER ERROR: " COLOR_RESET
-								"Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
-								(size_t)((*i)->order.early_addr),
-								(size_t)((*i)->order.early_addr) + (*i)->order.early_size,
-								(size_t)((*i)->order.late_addr),
-								(size_t)((*i)->order.late_addr) + (*i)->order.late_size);
-						}
-					}
-					else {
-						printf(
-							COLOR_RED "ORDER ERROR: " COLOR_RESET
-							"Queried address range not yet assigned.\n");
-					}
+					VeriProc_Order(*i, PersistInfo, OrderInfo, timestamp);
 				}
 				else {
-				
 				}
 			}
 			prev = cur;
@@ -342,75 +368,25 @@ void NVMVeri::VeriProc(vector<Metadata *> *veriptr)
 	}
 	// processing tail value of [prev, cur):
 	// prev point to last _FENCE, cur point to veriptr->end
-	// will not execute Assign or Flush because of no Fence at the end
 	for (auto i = prev; i != cur; i++) {
-		
-		if ((*i)->type == _PERSIST) {
-			startaddr = (size_t)((*i)->persist.addr);
-			endaddr = startaddr + (*i)->persist.size;
-			addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-			log("%s %p %lu\n", MetadataTypeStr[_PERSIST], (*i)->persist.addr, (*i)->persist.size);
-			auto iter = PersistInfo.find(addrinterval);
-			
-			if (iter != PersistInfo.end()) {
-				addrinterval = addrinterval & (*iter);
-				printf(
-					COLOR_RED "PERSIST ERROR: " COLOR_RESET
-					"Address range [0x%lx, 0x%lx) not persisted.\n",
-					addrinterval.lower(),
-					addrinterval.upper());
-			}	
-		
+
+		if ((*i)->type == _ASSIGN) {
+			VeriProc_Assign(*i, PersistInfo, OrderInfo, timestamp);
+		}
+		else if ((*i)->type == _FLUSH) {
+			VeriProc_Flush(*i, PersistInfo, OrderInfo, timestamp);
+		}
+		else if ((*i)->type == _FENCE) {
+			VeriProc_Fence(timestamp);
+		}
+		else if ((*i)->type == _PERSIST) {
+			VeriProc_Persist(*i, PersistInfo, OrderInfo, timestamp);
 		}
 		else if ((*i)->type == _ORDER) {
-		
-					startaddr = (size_t)((*i)->order.early_addr);
-					endaddr = startaddr + (*i)->order.early_size;
-					addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-
-					startaddr = (size_t)((*i)->order.late_addr);
-					endaddr = startaddr + (*i)->order.late_size;
-					discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
-
-					log(
-						"%s %p %lu %p %lu\n",
-						MetadataTypeStr[_ORDER],
-						(*i)->order.early_addr,
-						(*i)->order.early_size,
-						(*i)->order.late_addr,
-						(*i)->order.late_size);
-
-					// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestampe of the "late" address range
-					if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
-						auto intersec = addrinterval & OrderInfo;
-						auto intersec_late = addrinterval_late & OrderInfo;
-						int early_max = 0, late_min = std::numeric_limits<int>::max();
-						
-						for (auto j = intersec.begin(); j != intersec.end(); j++) {
-							early_max = std::max(early_max, j->second);
-						}
-						for (auto j = intersec_late.begin(); j != intersec_late.end(); j++) {
-							late_min = std::min(late_min, j->second);
-						}
-						
-						if (early_max >= late_min) {
-							printf(
-								COLOR_RED "ORDER ERROR: " COLOR_RESET
-								"Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
-								(size_t)((*i)->order.early_addr),
-								(size_t)((*i)->order.early_addr) + (*i)->order.early_size,
-								(size_t)((*i)->order.late_addr),
-								(size_t)((*i)->order.late_addr) + (*i)->order.late_size);
-						}
-					}
-					else {
-						printf(
-							COLOR_RED "ORDER ERROR: " COLOR_RESET
-							"Queried address range not yet assigned.\n");
-					}
+			VeriProc_Order(*i, PersistInfo, OrderInfo, timestamp);
 		}
 		else {
-		
+
 		}
 	}
 }
@@ -467,7 +443,7 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 	strcpy(m->op.opName, name);
 	m->op.address = (unsigned long long)address;
 	m->op.size = size;
-		
+
 	//log("opinfo_aa\n");
 
 	((vector<Metadata *> *)metadata_vector)->push_back(m);
@@ -483,9 +459,9 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _ASSIGN;
-		
+
 		//log("assign_aa\n");
-		
+
 		m->assign.addr = addr;
 		m->assign.size = size;
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
@@ -501,7 +477,8 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _FLUSH;
-		
+
+		//log("flush_aa\n");
 		m->flush.addr = addr;
 		m->flush.size = size;
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
@@ -532,6 +509,7 @@ void C_createMetadata_Barrier(void *metadata_vector)
 		Metadata *m = new Metadata;
 		m->type = _BARRIER;
 
+		//log("flush_aa\n");
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
@@ -545,6 +523,7 @@ void C_createMetadata_Fence(void *metadata_vector)
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _FENCE;
+		//log("fence_aa\n");
 
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
@@ -559,6 +538,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 		Metadata *m = new Metadata;
 		m->type = _PERSIST;
 
+		//log("persist_aa\n");
 		m->persist.addr = addr;
 		m->persist.size = size;
 
@@ -579,6 +559,7 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		m->order.late_addr = late_addr;
 		m->order.late_size = late_size;
 
+		//log("order_aa\n");
 		((vector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	else {
