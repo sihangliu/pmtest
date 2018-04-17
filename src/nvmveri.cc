@@ -56,7 +56,7 @@ NVMVeri::~NVMVeri()
 }
 
 
-const bool _debug = true;
+const bool _debug = false;
 
 void log(const char *format, ...)
 {
@@ -188,18 +188,18 @@ void NVMVeri::VeriWorker(int id)
 {
 	while (true) {
 		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
-		if (id == 0)
-printf("a%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
+//		if (id == 0)
+//printf("a%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		unique_lock<mutex> veri_lock(VeriQueueMutex[id]);
 		// when no termSignal and no getResultSignal and VeriQueue is empty
-		if (id == 0)
-printf("b%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
+//		if (id == 0)
+//printf("b%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		while (!termSignal[id] && !getResultSignal[id] && VeriQueue[id].size() == 0) {
 		//	assert(completedStateMap[id] != true);
 			VeriQueueCV[id].wait(veri_lock);
 		}
-		if (id == 0)
-printf("c%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
+//		if (id == 0)
+//printf("c%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		if (termSignal[id]) break;
 
 

@@ -19,6 +19,7 @@ all: build $(APP_DIR)/$(TARGET) buildlib
 
 buildlib: $(OBJECTS)
 	@mkdir -p $(@D)
+	ar -cvq $(LIB_DIR)/libnvmveri.a $(<D)/nvmveri.o
 	$(CXX) -shared -o $(LIB_DIR)/libnvmveri.so $(<D)/nvmveri.o
 
 

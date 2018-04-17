@@ -39,7 +39,7 @@ using std::vector;
 #include <boost/icl/interval_map.hpp>
 using namespace boost::icl;
 
-#define MAX_THREAD_POOL_SIZE 2
+#define MAX_THREAD_POOL_SIZE 6
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 typedef unsigned long long addr_t;
