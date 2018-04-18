@@ -186,6 +186,8 @@ bool NVMVeri::getVeri(vector<VeriResult> &output)
 
 void NVMVeri::VeriWorker(int id)
 {
+	while (termSignal[id] == true);
+
 	while (true) {
 		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
 //		if (id == 0)
@@ -210,7 +212,7 @@ void NVMVeri::VeriWorker(int id)
 			continue;
 		}
 
-		if(VeriQueue[id].size() > 0) {
+		while (VeriQueue[id].size() > 0) {
 			vector<Metadata *> *veriptr = VeriQueue[id].front();
 			VeriQueue[id].pop();
 			veri_lock.unlock();
