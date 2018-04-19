@@ -212,7 +212,7 @@ void NVMVeri::VeriWorker(int id)
 			continue;
 		}
 
-		while (VeriQueue[id].size() > 0) {
+		if (VeriQueue[id].size() > 0) {
 			vector<Metadata *> *veriptr = VeriQueue[id].front();
 			VeriQueue[id].pop();
 			veri_lock.unlock();
