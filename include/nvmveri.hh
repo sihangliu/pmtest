@@ -39,7 +39,7 @@ using std::vector;
 #include <boost/icl/interval_map.hpp>
 using namespace boost::icl;
 
-#include <common.hh>
+#include "common.hh"
 
 #define MAX_THREAD_POOL_SIZE 5
 #define MAX_OP_NAME_SIZE 50
@@ -153,7 +153,7 @@ public:
 
 	/* Result queue
 	*/
-	vector<VeriResult> ResultVector[MAX_THREAD_POOL_SIZE];
+	FastVector<VeriResult> ResultVector[MAX_THREAD_POOL_SIZE];
 	mutex ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 	//static condition_variable ResultVectorCV;
 

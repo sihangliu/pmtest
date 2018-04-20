@@ -1,6 +1,5 @@
 #include "nvmveri.hh"
 #include "nvmveri.h"
-#include "common.hh"
 
 const int LOOP_CNT = 3;
 

@@ -56,7 +56,7 @@ NVMVeri::~NVMVeri()
 }
 
 
-const bool _debug = false;
+const bool _debug = true;
 
 void log(const char *format, ...)
 {
@@ -160,7 +160,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 	// Merge results
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
 		unique_lock<mutex> result_lock(ResultVectorMutex[i]);
-		output.insert(output.end(), ResultVector[i].begin(), ResultVector[i].end());
+		output.insert(output.size(), ResultVector[i], 0, ResultVector[i].size() - 1);
 	}
 
 	// Reset worker state
@@ -341,10 +341,10 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	discrete_interval<size_t> addrinterval;
 
 	int prev = 0;
-	int cur = veriptr->size();
+	int cur = 0;
 
 	for (; cur != veriptr->size(); cur++) {
-		if ((*cur)->type == _FENCE) {
+		if (((*veriptr)[cur])->type == _FENCE) {
 			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)
 			for (int i = prev; i != cur; i++) {
 				if (((*veriptr)[i])->type == _ASSIGN) {
@@ -357,7 +357,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 					VeriProc_Fence(timestamp);
 				}
 				else if (((*veriptr)[i])->type == _PERSIST) {
-					VeriProc_Persist(((*veritrp)[i]), PersistInfo, OrderInfo, timestamp);
+					VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
 				else if (((*veriptr)[i])->type == _ORDER) {
 					VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
@@ -381,7 +381,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 			VeriProc_Fence(timestamp);
 		}
 		else if (((*veriptr)[i])->type == _PERSIST) {
-			VeriProc_Persist(((*veriptrp)[i]), PersistInfo, OrderInfo, timestamp);
+			VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 		}
 		else if (((*veriptr)[i])->type == _ORDER) {
 			VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
@@ -422,7 +422,7 @@ void C_getVeri(void *veriInstance, void *veriResult)
 void *C_createMetadataVector()
 {
 	FastVector<Metadata *> *vec= new FastVector<Metadata *>;
-	vec->reserve(100);
+	//vec->reserve(100);
 	return (void *)(vec);
 }
 
@@ -430,8 +430,8 @@ void *C_createMetadataVector()
 void C_deleteMetadataVector(void *victim)
 {
 	FastVector<Metadata *> *temp = (FastVector<Metadata *> *)victim;
-	for (int i = 0; i != temp->size; i++) {
-		delete (temp[i]);
+	for (int i = 0; i != temp->size(); i++) {
+		delete ((*temp)[i]);
 	}
 }
 
