@@ -423,7 +423,9 @@ void C_getVeri(void *veriInstance, void *veriResult)
 
 void *C_createMetadataVector()
 {
-	return (void *)(new vector<Metadata *>);
+	vector<Metadata *> *vec= new vector<Metadata *>;
+	vec->reserve(100);
+	return (void *)(vec);
 }
 
 
