@@ -10,19 +10,6 @@ using std::unique_lock;
 
 #include <cstdlib>
 
-template<typename T>
-class ConcurrentQueue {
-private:
-	mutex QueueMutex;
-	queue<T> q;
-public:
-	size_t size();
-	T& front();
-	T& back();
-	void pop();
-	void push(const T&);
-};
-
 class Timer {
 public:
 	void startTimer();
@@ -32,5 +19,22 @@ private:
 	timeval start_tv;
 	timeval end_tv;
 };
+
+
+template<class T>
+class FastVector {
+public:
+	FastVector();
+	~FastVector();
+	void push_back(T);
+	int size();
+	void insert(int pos, int begin, int end);
+	const T& operator[](int idx) const { return arr_vector[idx]; }
+private:
+	T* arr_vector;
+	int curr_size;
+	int vector_max_size = 200;
+};
+
 
 #endif

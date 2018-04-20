@@ -39,6 +39,8 @@ using std::vector;
 #include <boost/icl/interval_map.hpp>
 using namespace boost::icl;
 
+#include <common.hh>
+
 #define MAX_THREAD_POOL_SIZE 5
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
@@ -144,7 +146,7 @@ public:
 	* implement this like a semaphore
 	*/
 	// static size_t VeriNumber;
-	queue<vector<Metadata *> *> VeriQueue[MAX_THREAD_POOL_SIZE];
+	queue<FastVector<Metadata *> *> VeriQueue[MAX_THREAD_POOL_SIZE];
 	mutex VeriQueueMutex[MAX_THREAD_POOL_SIZE];
 	condition_variable VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
@@ -168,9 +170,9 @@ public:
 	*/
 	bool termVeri();
 
-	bool execVeri(vector<Metadata *> *);
+	bool execVeri(FastVector<Metadata *> *);
 
-	bool getVeri(vector<VeriResult> &);
+	bool getVeri(FastVector<VeriResult> &);
 
 	/* Read data passed from the master thread */
 	//void readMetadata();
@@ -184,7 +186,7 @@ public:
 	*/
 	void VeriWorker(int);
 
-	void VeriProc(vector<Metadata *> *);
+	void VeriProc(FastVector<Metadata *> *);
 
 	//bool assignTask(tid_t);
 };
