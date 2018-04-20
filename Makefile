@@ -1,7 +1,7 @@
 CC        := -gcc
 CXX       := -g++-4.8
-CFLAGS    := -fPIC
-CXXFLAGS  := -std=c++11 -fPIC#-pedantic-errors -Wall -Wextra -Werror
+CFLAGS    := -O3 -fPIC 
+CXXFLAGS  := -O3 -std=c++11 -fPIC#-pedantic-errors -Wall -Wextra -Werror
 LDFLAGS   := -L/usr/lib -lstdc++ -lm -pthread
 BUILD     := ./build
 OBJ_DIR   := $(BUILD)/objects
