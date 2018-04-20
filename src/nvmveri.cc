@@ -56,7 +56,7 @@ NVMVeri::~NVMVeri()
 }
 
 
-const bool _debug = true;
+const bool _debug = DEBUG_FLAG;
 
 void log(const char *format, ...)
 {
@@ -160,7 +160,8 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 	// Merge results
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
 		unique_lock<mutex> result_lock(ResultVectorMutex[i]);
-		output.insert(output.size(), ResultVector[i], 0, ResultVector[i].size() - 1);
+		//output.insert(output.size(), ResultVector[i], 0, ResultVector[i].size() - 1);
+		output.append(ResultVector[i]);
 	}
 
 	// Reset worker state

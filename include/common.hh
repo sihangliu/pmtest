@@ -28,7 +28,8 @@ public:
 	~FastVector();
 	void push_back(T);
 	int size();
-	void insert(int pos, FastVector<T> &inputFV, int begin, int end);
+	//void insert(int pos, FastVector<T> &inputFV, int begin, int end);
+	void append(FastVector<T> &input);
 	const T& operator[](int idx) const { return arr_vector[idx]; }
 private:
 	T* arr_vector;
@@ -63,15 +64,29 @@ void FastVector<T>::push_back(T input)
 }
 
 template <class T>
+void FastVector<T>::append(FastVector<T> &input)
+{
+	if (input.size() + cur_size >= vector_max_size) {
+		vector_max_size = (cur_size + input.size()) * 10;
+		arr_vector = (T*) realloc(arr_vector, vector_max_size * sizeof(T));
+	}
+		
+	memcpy(arr_vector + cur_size, input.arr_vector, input.size());
+}
+
+/*
+template <class T>
 void FastVector<T>::insert(int pos, FastVector<T> &inputFV, int begin, int end)
 {
 	//TODO: memcpy the covered part to the end
 	if (end - begin + 1 + cur_size >= vector_max_size) {
-		vector_max_size = (cur_size + end - begin + 1) * 2;
+		vector_max_size = (cur_size + end - begin + 1) * 10;
 		arr_vector = (T*) realloc(arr_vector, vector_max_size * sizeof(T));
 	}
+	memcpy(arr_vector + cur_size, arr_vector + pos + 1, end - begin + 1);
 	memcpy(arr_vector + pos, inputFV.arr_vector + begin, end - begin + 1);
 }
+*/
 
 template <class T>
 int FastVector<T>::size() 
