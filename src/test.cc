@@ -13,6 +13,7 @@ void transaction()
 
 	const int LOOP_CNT = 3;
 
+
 /****************************test1*****************************/
 	timer.startTimer();
 
@@ -165,19 +166,23 @@ void transaction()
 /****************************test5*****************************/
 }
 
+
 void fastvector()
 {
 	FastVector<std::pair<int, double>> fv;
 	FastVector<std::pair<int, double>> fv2;
 	for (int i = 0; i < 10; i++) {
-		fv.push_back(std::make_pair(i, (double)i / 97.0));
+		fv.push_back(std::pair<int, double>(i, (double)i / 97.0));
 	}
-	for (int i = 0; i < 998; i++) {
+
+
+	for (int i = 0; i < 300; i++) {
 		std::pair<int, double> tmp = std::make_pair(i, (double)i / 97.0);
 		printf("%d %f\n", tmp.first, tmp.second);
 		fv2.push_back(tmp);
 	}
-
+	
+	
 	for (int i = 0; i < fv.size(); i++) {
 		printf("%d %f\n", fv[i].first, fv[i].second);
 	}
@@ -185,14 +190,19 @@ void fastvector()
 	for (int i = 0; i < fv.size(); i++) {
 		printf("%d %f\n", fv2[i].first, fv2[i].second);
 	}
-
+	
 	fv.append(fv2);
 
+	printf("fv size = %d\n", fv.size());
+	printf("fv last item is %d %f\n", fv[fv.size()-1].first, fv[fv.size()-1].second);
+
+	
 	for (int i = 0; i < fv.size(); i++) {
 		printf("%d %f\n", fv[i].first, fv[i].second);
 	}
-
+	
+	
 	for (int i = 0; i < 200; i++)
 		fv.append(fv2);
-
+	
 }
