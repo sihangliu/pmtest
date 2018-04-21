@@ -43,7 +43,8 @@ FastVector<T>::FastVector()
 {
 	cur_size = 0;
 	vector_max_size = 200;
-	arr_vector = (T*) malloc (vector_max_size * sizeof(T));
+	arr_vector = (T *) malloc(vector_max_size * sizeof(T));
+	printf("%lu\n", vector_max_size * sizeof(T));
 }
 
 template <class T>
@@ -57,7 +58,7 @@ void FastVector<T>::push_back(T input)
 {
 	if (cur_size >= vector_max_size) {
 		vector_max_size *= 10;
-		arr_vector = (T*) realloc(arr_vector, vector_max_size * sizeof(T));
+		arr_vector = (T *) realloc(arr_vector, vector_max_size * sizeof(T));
 	}
 	arr_vector[cur_size] = input;
 	++cur_size;
@@ -68,10 +69,11 @@ void FastVector<T>::append(FastVector<T> &input)
 {
 	if (input.size() + cur_size >= vector_max_size) {
 		vector_max_size = (cur_size + input.size()) * 10;
-		arr_vector = (T*) realloc(arr_vector, vector_max_size * sizeof(T));
+		arr_vector = (T *) realloc(arr_vector, vector_max_size * sizeof(T));
 	}
-		
+
 	memcpy(arr_vector + cur_size, input.arr_vector, input.size());
+	cur_size += input.cur_size;
 }
 
 /*
@@ -89,7 +91,7 @@ void FastVector<T>::insert(int pos, FastVector<T> &inputFV, int begin, int end)
 */
 
 template <class T>
-int FastVector<T>::size() 
+int FastVector<T>::size()
 {
 	return cur_size;
 }
