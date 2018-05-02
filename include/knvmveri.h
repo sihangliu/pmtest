@@ -19,7 +19,8 @@ struct NetlinkMetadata {
 
 struct kNVMVeri {
 	struct NetlinkMetadata connection;
-	
+
 	bool initVeri();
 
+	void termVeri();
 };
