@@ -38,13 +38,12 @@ static void send_to_user(void)
     }
 
     nlh = nlmsg_put(skb, 0, 0, NLMSG_DONE, MAX_MSG_LENGTH, 0);
-	NETLINK_CB(skb).dst_group = 0; /* not in mcast group */
     memcpy(nlmsg_data(nlh), &send_buffer, MAX_MSG_LENGTH);
 
     pr_info("@ Sending skb.\n");
-    res = nlmsg_unicast(nl_sk, skb, 0);
+    res = nlmsg_multicast(nl_sk, skb, 0, MYGRP, GFP_KERNEL);
     if (res < 0)
-        pr_info("@ nlmsg_unicast() error: %d\n", res);
+        pr_info("@ nlmsg_multicast() error: %d\n", res);
     else
         pr_info("@ Success.\n");
 }
@@ -53,7 +52,7 @@ static int __init hello_init(void)
 {
     pr_info("@ Inserting hello module.\n");
 
-    nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, NULL);
+    nl_sk = netlink_kernel_create(&init_net, MYPROTO, NULL);
     if (!nl_sk) {
         pr_err("@ Error creating socket.\n");
         return -10;

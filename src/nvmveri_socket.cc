@@ -8,7 +8,7 @@
 #include "nvmveri.hh"
 
 /* Protocol family, consistent in both kernel prog and user prog. */
-#define NETLINK_USER 31
+#define NETLINK_USER 10
 
 #define MAX_MSG_LENGTH 65536
 

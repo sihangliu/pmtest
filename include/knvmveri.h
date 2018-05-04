@@ -3,8 +3,9 @@
 #include <linux/slab.h>
 #include <stddef.h>
 
-#define NETLINK_USER 31
-#define MAX_MSG_LENGTH 65536
+#define MYPROTO NETLINK_USERSOCK
+#define MYGRP 21
+#define MAX_MSG_LENGTH 1024
 
 /*
 struct NetlinkMetadata {
