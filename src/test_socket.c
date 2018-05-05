@@ -25,36 +25,37 @@ static void send_to_user(void)
 	metadata.assign.size = 4;
 
 	send_buffer = (char*) kmalloc (MAX_MSG_LENGTH, GFP_KERNEL);
+	memset(send_buffer, 0, MAX_MSG_LENGTH);
 
-	*send_buffer = 1;
-	*((int*)(send_buffer + sizeof(char))) = num_metadata;
-	*((struct Metadata*)(send_buffer + sizeof(int))) = metadata;
+	*((int*)send_buffer) = 1;
+	*((int*)(send_buffer + sizeof(int))) = num_metadata;
+	*((struct Metadata*)(send_buffer + 2 * sizeof(int))) = metadata;
 
-    pr_info("@ Creating skb.\n");
+    printk("@ Creating skb.\n");
     skb = nlmsg_new(MAX_MSG_LENGTH, GFP_KERNEL);
     if (!skb) {
-        pr_err("@ Allocation failure.\n");
+        printk("@ Allocation failure.\n");
         return;
     }
 
-    nlh = nlmsg_put(skb, 0, 0, NLMSG_DONE, MAX_MSG_LENGTH, 0);
+    nlh = nlmsg_put(skb, 0, 1, NLMSG_DONE, MAX_MSG_LENGTH, 0);
     memcpy(nlmsg_data(nlh), &send_buffer, MAX_MSG_LENGTH);
 
-    pr_info("@ Sending skb.\n");
-    res = nlmsg_multicast(nl_sk, skb, 0, MYGRP, GFP_KERNEL);
+    printk("@ Sending skb.\n");
+    res = nlmsg_multicast(nl_sk, skb, 0, MYMGRP, GFP_KERNEL);
     if (res < 0)
-        pr_info("@ nlmsg_multicast() error: %d\n", res);
+        printk("@ nlmsg_multicast() error: %d\n", res);
     else
-        pr_info("@ Success.\n");
+        printk("@ Success.\n");
 }
 
 static int __init hello_init(void)
 {
-    pr_info("@ Inserting hello module.\n");
+    printk("@ Inserting hello module.\n");
 
     nl_sk = netlink_kernel_create(&init_net, MYPROTO, NULL);
     if (!nl_sk) {
-        pr_err("@ Error creating socket.\n");
+        printk("@ Error creating socket.\n");
         return -10;
     }
 
@@ -66,7 +67,7 @@ static int __init hello_init(void)
 
 static void __exit hello_exit(void)
 {
-    pr_info("@ Exiting hello module.\n");
+    printk("@ Exiting hello module.\n");
 }
 
 module_init(hello_init);
