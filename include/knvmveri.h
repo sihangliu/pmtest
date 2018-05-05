@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #define MYPROTO NETLINK_USERSOCK
-#define MYGRP 21
+#define MYMGRP 21
 #define MAX_MSG_LENGTH 1024
 
 /*
@@ -95,7 +95,7 @@ struct Metadata {
 	};
 };
 
-
+/*
 struct Vector {
 	struct Metadata* arr_vector;
 	int cur_size;
@@ -122,3 +122,4 @@ void pushVector(struct Vector* vec, struct Metadata input) {
 void deleteVector(struct Vector* vec) {
 	kfree(vec->arr_vector);
 }
+*/
