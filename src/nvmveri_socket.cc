@@ -8,7 +8,8 @@
 #include "nvmveri.hh"
 
 /* Protocol family, consistent in both kernel prog and user prog. */
-#define NETLINK_USER 10
+#define MYPROTO NETLINK_USERSOCK
+#define MYMGRP 21
 
 #define MAX_MSG_LENGTH 65536
 
@@ -25,7 +26,7 @@ msghdr msg;
 
 int open_netlink()
 {
-    sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_USER);
+    sock = socket(AF_NETLINK, SOCK_RAW, MYPROTO);
     if (sock < 0) {
         printf("sock < 0.\n");
         return -1;
