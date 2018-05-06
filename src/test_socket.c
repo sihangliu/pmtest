@@ -17,6 +17,7 @@ static void send_to_user(int flag)
 	int res;
 	struct Metadata metadata;
 	int num_metadata = 1;
+	int err;
 
 	if (flag < 0) num_metadata = -1;
 
@@ -46,11 +47,12 @@ static void send_to_user(int flag)
         printk("@ nlmsg_multicast() error: %d\n", res);
     else
         printk("@ Success.\n");
+	skb = skb_recv_datagram(nl_sk, 0, 0, &err);
 }
 
 static int __init hello_init(void)
 {
-	int i;
+	int i, j;
 	printk("@ Metadata size = %lu\n", sizeof(struct Metadata));
 
 	send_buffer = (char*) kmalloc (MAX_MSG_LENGTH, GFP_KERNEL);
@@ -62,8 +64,10 @@ static int __init hello_init(void)
         return -10;
     }
 	
-	for (i = 0; i < 10; ++i)
+	for (i = 0; i < 10; ++i) {
 		send_to_user(i);
+		for (j = 0; j < 10000000; ++j);
+	}
 
 	//send_to_user(-1);
 	

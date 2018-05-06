@@ -76,6 +76,7 @@ int open_netlink()
 }
 
 int close_netlink() {
+	free(buffer);
 	close(sock);
 	free(nlh);
 }
@@ -91,6 +92,7 @@ int read_event(struct Vector *MetadataVectorPtr)
 	int num_metadata;
     
 	printf("Ok, listening.\n");
+	memset(buffer, 0, MAX_MSG_LENGTH);
     msg_size = recvmsg(sock, &msg, 0);
 
     if (msg_size < 0) return -1;
@@ -125,8 +127,6 @@ int read_event(struct Vector *MetadataVectorPtr)
         pos += sizeof(struct Metadata);
     }
 	
-	free(buffer);
-
 	return last_packet;
 }
 
@@ -166,14 +166,16 @@ int main(int argc, char *argv[])
 		}
 
         last_packet = read_event(MetadataVectorPtr);
+		if (last_packet < 0) {
+			printf("Receive error\n");
+			return 0;
+		}
 
         // Check termination signal
         if (termSignal) {
 			printf("Terminate\n");
 			break;
-		}
-        
-        if (getResultSignal) {
+		} else if (getResultSignal) {
 			printf("get result\n");
 			//send_ack("VERI_COMPLETE");
 		} else {
