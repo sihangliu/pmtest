@@ -5,7 +5,7 @@
 
 #define MYPROTO NETLINK_USERSOCK
 #define MYMGRP 21
-#define MAX_MSG_LENGTH 1024
+#define MAX_MSG_LENGTH 65536
 
 /*
 struct NetlinkMetadata {

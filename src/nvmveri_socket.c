@@ -5,11 +5,11 @@
 #include <linux/netlink.h>
 #include <unistd.h>
 
-#include "nvmveri.h"
+#include "nvmveri_socket.h"
 
 #define MYPROTO NETLINK_USERSOCK
 #define MYMGRP 21
-#define MAX_MSG_LENGTH 1024
+#define MAX_MSG_LENGTH 65536
 
 // nvmveri
 int termSignal;
@@ -61,6 +61,7 @@ int open_netlink()
     nlh->nlmsg_pid = getpid();
     nlh->nlmsg_flags = 0;
 	*/
+	
 	buffer = (char*) malloc(sizeof(char) * MAX_MSG_LENGTH);
 	memset(buffer, 0, MAX_MSG_LENGTH);
 
@@ -70,7 +71,7 @@ int open_netlink()
     msg.msg_namelen = sizeof(remote_addr);
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
-
+	
     return sock;
 }
 
@@ -89,24 +90,21 @@ int read_event(struct Vector *MetadataVectorPtr)
     char* data;
 	int num_metadata;
     
-	//memset(nlh, 0, NLMSG_SPACE(MAX_MSG_LENGTH));
-    
 	printf("Ok, listening.\n");
     msg_size = recvmsg(sock, &msg, 0);
 
     if (msg_size < 0) return -1;
 
-	data = (char*) NLMSG_DATA((struct nlmsghdr *) &buffer);
-    //data = (char*)NLMSG_DATA(nlh);
+	data = (char*) NLMSG_DATA((struct nlmsghdr *) buffer);
     // Read tx flag
-    last_packet = *(data + pos);
+    last_packet = *(int*)(data + pos);
 	printf("last_packet=%d\n", last_packet);
-    pos += sizeof(char);
-    // Read number of metadata packets
-    // num_metadata < 0  -  terminate
-    // num_metadata = 0  -  getVeri
-    // otherwise, regular packets
-    num_metadata = *(int *)(data + pos);
+    pos += sizeof(int);
+    /* Read number of metadata packets
+     * num_metadata < 0  -  terminate
+     * num_metadata = 0  -  getVeri
+     * otherwise, regular packets */
+	num_metadata = *(int *)(data + pos);
 	printf("num_metadata=%d\n", num_metadata);
     if (num_metadata < 0) {
         termSignal = 1;
@@ -126,10 +124,12 @@ int read_event(struct Vector *MetadataVectorPtr)
         pushVector(MetadataVectorPtr, metadata);
         pos += sizeof(struct Metadata);
     }
-	printf("num_metadata = %d\n", num_metadata);
+	
+	free(buffer);
 
 	return last_packet;
 }
+
 
 void send_ack(char* ack_msg) 
 {	
@@ -150,26 +150,38 @@ int main(int argc, char *argv[])
 
     // Open connection
     nls = open_netlink();
+
+	printf("Metadata size=%lu\n", sizeof(struct Metadata));
+
     if (nls < 0) return nls;
 
     while (1) {
+		printf("New iteration\n");
 		termSignal = 0;
 		getResultSignal = 0;
         
-		if (last_packet)
+		if (last_packet) {
             MetadataVectorPtr = (struct Vector*)malloc(sizeof(struct Vector));
+			initVector(MetadataVectorPtr);
+		}
 
         last_packet = read_event(MetadataVectorPtr);
 
         // Check termination signal
-        if (termSignal) break;
-        // Check getVeri signal
-		//char signal[] = "VERI_COMPLETE";
-        if (getResultSignal) 
-			send_ack("VERI_COMPLETE");
+        if (termSignal) {
+			printf("Terminate\n");
+			break;
+		}
+        
+        if (getResultSignal) {
+			printf("get result\n");
+			//send_ack("VERI_COMPLETE");
+		} else {
+			//send_ack("RECEIVED");
+		}
 	 	    // Start verification once all packets have been received
         if (last_packet) {
-			printf("last one");
+			printf("last one\n");
             //execVeri(MetadataVectorPtr);
         }
     }

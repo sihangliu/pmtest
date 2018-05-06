@@ -8,39 +8,38 @@
 
 
 static struct sock *nl_sk = NULL;
+char* send_buffer;
 
-static void send_to_user(void)
+static void send_to_user(int flag)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
 	int res;
-    //char *msg = "@ Hello from kernel";
-    //int msg_size = strlen(msg) + 1;
 	struct Metadata metadata;
-	char* send_buffer;
 	int num_metadata = 1;
 
-	metadata.type = _ASSIGN;
-	metadata.assign.addr = (void*) 0x100;
-	metadata.assign.size = 4;
+	if (flag < 0) num_metadata = -1;
 
-	send_buffer = (char*) kmalloc (MAX_MSG_LENGTH, GFP_KERNEL);
+	metadata.type = _ASSIGN;
+	metadata.assign.addr = (void*)(100 + flag * 8);
+	metadata.assign.size = 8;
+
 	memset(send_buffer, 0, MAX_MSG_LENGTH);
 
-	*((int*)send_buffer) = 1;
-	*((int*)(send_buffer + sizeof(int))) = num_metadata;
+	*((int*)send_buffer) = (flag == 9);
+	*((int*)send_buffer + 1) = num_metadata;
 	*((struct Metadata*)(send_buffer + 2 * sizeof(int))) = metadata;
 
     printk("@ Creating skb.\n");
-    skb = nlmsg_new(MAX_MSG_LENGTH, GFP_KERNEL);
+    skb = nlmsg_new(NLMSG_ALIGN(MAX_MSG_LENGTH), GFP_KERNEL);
     if (!skb) {
         printk("@ Allocation failure.\n");
         return;
     }
 
     nlh = nlmsg_put(skb, 0, 1, NLMSG_DONE, MAX_MSG_LENGTH, 0);
-    memcpy(nlmsg_data(nlh), &send_buffer, MAX_MSG_LENGTH);
-
+    memcpy(nlmsg_data(nlh), send_buffer, sizeof(int) * 2 + sizeof(struct Metadata));
+	
     printk("@ Sending skb.\n");
     res = nlmsg_multicast(nl_sk, skb, 0, MYMGRP, GFP_KERNEL);
     if (res < 0)
@@ -51,6 +50,10 @@ static void send_to_user(void)
 
 static int __init hello_init(void)
 {
+	int i;
+	printk("@ Metadata size = %lu\n", sizeof(struct Metadata));
+
+	send_buffer = (char*) kmalloc (MAX_MSG_LENGTH, GFP_KERNEL);
     printk("@ Inserting hello module.\n");
 
     nl_sk = netlink_kernel_create(&init_net, MYPROTO, NULL);
@@ -58,15 +61,20 @@ static int __init hello_init(void)
         printk("@ Error creating socket.\n");
         return -10;
     }
+	
+	for (i = 0; i < 10; ++i)
+		send_to_user(i);
 
-    send_to_user();
+	//send_to_user(-1);
+	
 
-    netlink_kernel_release(nl_sk);
     return 0;
 }
 
 static void __exit hello_exit(void)
 {
+    netlink_kernel_release(nl_sk);
+	kfree(send_buffer);
     printk("@ Exiting hello module.\n");
 }
 
