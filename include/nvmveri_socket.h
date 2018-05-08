@@ -1,19 +1,30 @@
-#ifndef __NVMVERI_H__
-#define __NVMVERI_H__
+#ifndef __NVMVERI_SOCKET_H__
+#define __NVMVERI_SOCKET_H__
 
+// nvmveri
 #define MAX_THREAD_POOL_SIZE 5
 #define MAX_OP_NAME_SIZE 50
 
+// netlink
+#define MYPROTO NETLINK_USERSOCK
+#define MYMGRP 21
+#define MAX_MSG_LENGTH 1024
+
+// file io
+#define MAX_BUFFER_LEN 20
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
 
 typedef unsigned long long addr_t;
 
-typedef enum {_OPINFO, 
-			  _ASSIGN, 
-			  _FLUSH, 
+
+typedef enum {_OPINFO,
+			  _ASSIGN,
+			  _FLUSH,
 			  _COMMIT,
-              _BARRIER, 
-			  _FENCE, 
-			  _PERSIST, 
+              _BARRIER,
+			  _FENCE,
+			  _PERSIST,
 			  _ORDER} MetadataType;
 
 //const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT",
@@ -76,7 +87,7 @@ struct Metadata {
 
 
 struct Vector {
-	struct Metadata** arr_vector;
+	void** arr_vector;
 	int cur_size;
 	int vector_max_size;
 };
@@ -84,15 +95,14 @@ struct Vector {
 void initVector(struct Vector* vec) {
 	vec->cur_size = 0;
 	vec->vector_max_size = 200;
-	vec->arr_vector = (struct Metadata**) 
-			malloc(vec->vector_max_size * sizeof(struct Metadata**));
+	vec->arr_vector = (void**) malloc(vec->vector_max_size * sizeof(void*));
 }
 
-void pushVector(struct Vector* vec, struct Metadata* input) {
+void pushVector(struct Vector* vec, void* input) {
 	if (vec->cur_size >= vec->vector_max_size) {
 		vec->vector_max_size *= 10;
-		vec->arr_vector = (struct Metadata**) realloc(vec->arr_vector, 
-						vec->vector_max_size * sizeof(struct Metadata**));
+		vec->arr_vector = (void**) realloc(vec->arr_vector,
+						vec->vector_max_size * sizeof(void*));
 	}
 	vec->arr_vector[vec->cur_size] = input;
 	++(vec->cur_size);

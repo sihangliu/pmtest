@@ -2,7 +2,7 @@
 #define __NVMVERI_HH__
 
 #define DEBUG_FLAG false
-		
+
 // Libary for verification
 
 #include <stdio.h>

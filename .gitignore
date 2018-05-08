@@ -3,3 +3,8 @@ build/
 *~
 *.o
 nvmveri_socket
+.*
+*.mod.*
+*.ko
+Module.symvers
+modules.order

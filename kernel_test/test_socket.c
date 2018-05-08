@@ -31,14 +31,13 @@ static void send_to_user(int flag)
 	*((int*)send_buffer + 1) = num_metadata;
 	*((struct Metadata*)(send_buffer + 2 * sizeof(int))) = metadata;
 
-    printk("@ Creating skb.\n");
     skb = nlmsg_new(NLMSG_ALIGN(MAX_MSG_LENGTH), GFP_KERNEL);
     if (!skb) {
         printk("@ Allocation failure.\n");
         return;
     }
 
-    nlh = nlmsg_put(skb, 0, 1, NLMSG_DONE, MAX_MSG_LENGTH, 0);
+    nlh = nlmsg_put(skb, 0, 0, NLMSG_DONE, MAX_MSG_LENGTH, 0);
     memcpy(nlmsg_data(nlh), send_buffer, sizeof(int) * 2 + sizeof(struct Metadata));
 	
     printk("@ Sending skb.\n");
@@ -47,7 +46,10 @@ static void send_to_user(int flag)
         printk("@ nlmsg_multicast() error: %d\n", res);
     else
         printk("@ Success.\n");
+	
 	skb = skb_recv_datagram(nl_sk, 0, 0, &err);
+	nlh = (struct nlmsghdr *)skb->data;
+	printk("@ Received: %s\n", (char*)nlmsg_data(nlh));
 }
 
 static int __init hello_init(void)
