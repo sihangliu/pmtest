@@ -1,9 +1,6 @@
 #ifndef __NVMVERI_H__
 #define __NVMVERI_H__
 
-#define MAX_THREAD_POOL_SIZE 5
-#define MAX_OP_NAME_SIZE 50
-
 void *C_createVeriInstance(void);
 void C_deleteVeriInstance(void *);
 

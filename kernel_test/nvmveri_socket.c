@@ -97,6 +97,7 @@ void read_data(struct Vector* MetadataVectorPtr, int metadata_len)
     char* read_buf;
 
     fd = open("/dev/nvmveri_dev", O_RDWR);
+	printf("fd=%d\n", fd);
 
     while (i < metadata_len) {
         // for each metadata packet, allocate a new read buffer
@@ -104,11 +105,12 @@ void read_data(struct Vector* MetadataVectorPtr, int metadata_len)
                                         MIN(MAX_BUFFER_LEN, metadata_len - i));
         // read one metadata_packet each time
         read(fd, read_buf,
-                sizeof(struct Metadata) * MAX_BUFFER_LEN + sizeof(int));
+                sizeof(struct Metadata) * MAX_BUFFER_LEN);
         // read the entire buffer, unless we are reading the last one
         for (j = 0; j < MIN(MAX_BUFFER_LEN, metadata_len - i); ++j) {
             // put the pointer to each metadata in read buffer to metadata vector
             pushVector(MetadataVectorPtr, (struct Metadata*)(read_buf) + j);
+            printf("%p\n", ((struct Metadata*)(read_buf) + j)->assign.addr);
         }
         // number of metadata read previously
         i += MIN(MAX_BUFFER_LEN, metadata_len - i);
@@ -126,6 +128,7 @@ int main(int argc, char *argv[])
     int i, j;
     void* VeriInstancePtr;
 
+    initVector(&MetadataVector_array);
     // Open connection
     nls = open_netlink();
     if (nls < 0)

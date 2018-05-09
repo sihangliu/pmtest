@@ -2,7 +2,6 @@
 #define __NVMVERI_SOCKET_H__
 
 // nvmveri
-#define MAX_THREAD_POOL_SIZE 5
 #define MAX_OP_NAME_SIZE 50
 
 // netlink
@@ -100,6 +99,7 @@ void initVector(struct Vector* vec) {
 
 void pushVector(struct Vector* vec, void* input) {
 	if (vec->cur_size >= vec->vector_max_size) {
+        printf("max_size=%d, cur_size=%d\n", vec->vector_max_size, vec->cur_size);
 		vec->vector_max_size *= 10;
 		vec->arr_vector = (void**) realloc(vec->arr_vector,
 						vec->vector_max_size * sizeof(void*));
