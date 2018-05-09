@@ -1,7 +1,107 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 
-#include "../include/knvmveri.h"
+/********** START HEADER **********/
+#include <linux/fs.h> // required for various structures related to files liked fops.
+#include <asm/uaccess.h> // required for copy_from and copy_to user functions
+#include <linux/semaphore.h>
+#include <linux/cdev.h>
+#include <linux/slab.h>
+#include <linux/netlink.h>
+#include <net/netlink.h>
+#include <net/net_namespace.h>
+
+
+// nvmveri
+#define MAX_OP_NAME_SIZE 50
+
+#define MYPROTO NETLINK_USERSOCK
+#define MYMGRP 21
+#define MAX_MSG_LENGTH 1024
+
+// file io
+#define BUFFER_LEN 20
+
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
+
+typedef unsigned long long addr_t;
+
+typedef enum {_OPINFO,
+              _ASSIGN,
+              _FLUSH,
+              _COMMIT,
+              _BARRIER,
+              _FENCE,
+              _PERSIST,
+              _ORDER} MetadataType;
+
+//const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT",
+//                                   "_BARRIER", "_FENCE", "_PERSIST", "_ORDER"};
+
+struct Metadata_OpInfo {
+    //enum State {NONE, WORK, COMMIT, ABORT, FINAL};
+    char opName[MAX_OP_NAME_SIZE]; // function name
+    addr_t address;		    	   // address of object being operated
+    int size;					   // size of object
+};
+
+struct Metadata_Assign {
+    void *addr;
+    size_t size;
+};
+
+struct Metadata_Flush {
+    void *addr;
+    size_t size;
+};
+
+struct Metadata_Commit {
+
+};
+
+struct Metadata_Barrier {
+
+};
+
+struct Metadata_Fence {
+
+};
+
+struct Metadata_Persist {
+    void *addr;
+    size_t size;
+};
+
+struct Metadata_Order {
+    void *early_addr;
+    size_t early_size;
+    void *late_addr;
+    size_t late_size;
+};
+
+struct Metadata {
+    MetadataType type;
+    union {
+        struct Metadata_OpInfo op;
+        struct Metadata_Assign assign;
+        struct Metadata_Flush flush;
+        struct Metadata_Commit commit;
+        struct Metadata_Barrier barrier;
+        struct Metadata_Fence fence;
+        struct Metadata_Persist persist;
+        struct Metadata_Order order;
+    };
+};
+
+
+struct mydevice
+{
+    struct Metadata data[BUFFER_LEN];
+    struct semaphore sem;
+} nvmveri_dev;
+/********** END HEADER **********/
 
 // only for testing
 #define TRACE_LEN 105
@@ -13,6 +113,8 @@ int cur_idx;
 dev_t dev_no,dev;
 
 struct cdev *kernel_cdev;
+
+bool existVeriInstance = 0;
 
 
 static void send_to_user(int metadata_len)
@@ -90,7 +192,7 @@ struct file_operations fops = {
 };
 
 
-static int __init knvmeri_init(void)
+static int __init knvmveri_init(void)
 {
     int i, ret;
 
@@ -131,14 +233,14 @@ static int __init knvmeri_init(void)
     return 0;
 }
 
-static void __exit knvmeri_exit(void)
+static void __exit knvmveri_exit(void)
 {
     netlink_kernel_release(nl_sk);
     kfree(trace);
     printk("@ Exiting hello module.\n");
 }
 
-module_init(knvmeri_init);
-module_exit(knvmeri_exit);
+module_init(knvmveri_init);
+module_exit(knvmveri_exit);
 
 MODULE_LICENSE("GPL");
