@@ -8,8 +8,9 @@
 #include <fcntl.h>
 
 #include "nvmveri.h"
-#include "nvmveri_socket.h"
 
+#define CLIENT_CODE
+#include "nvmveri_kernel.h"
 
 // nvmveri
 //int termSignal;
@@ -22,6 +23,33 @@ struct iovec iov;
 int sock;
 struct msghdr msg;
 //char* buffer;
+
+struct Vector {
+    void** arr_vector;
+    int cur_size;
+    int vector_max_size;
+};
+
+void initVector(struct Vector* vec) {
+    vec->cur_size = 0;
+    vec->vector_max_size = 200;
+    vec->arr_vector = (void**) malloc(vec->vector_max_size * sizeof(void*));
+}
+
+void pushVector(struct Vector* vec, void* input) {
+    if (vec->cur_size >= vec->vector_max_size) {
+        printf("max_size=%d, cur_size=%d\n", vec->vector_max_size, vec->cur_size);
+        vec->vector_max_size *= 10;
+        vec->arr_vector = (void**) realloc(vec->arr_vector,
+                        vec->vector_max_size * sizeof(void*));
+    }
+    vec->arr_vector[vec->cur_size] = input;
+    ++(vec->cur_size);
+}
+
+void deleteVector(struct Vector* vec) {
+    free(vec->arr_vector);
+}
 
 int open_netlink()
 {
@@ -102,18 +130,18 @@ void read_data(struct Vector* MetadataVectorPtr, int metadata_len)
     while (i < metadata_len) {
         // for each metadata packet, allocate a new read buffer
         read_buf = (char*) malloc (sizeof(struct Metadata) *
-                                        MIN(MAX_BUFFER_LEN, metadata_len - i));
+                                        MIN(BUFFER_LEN, metadata_len - i));
         // read one metadata_packet each time
         read(fd, read_buf,
-                sizeof(struct Metadata) * MAX_BUFFER_LEN);
+                sizeof(struct Metadata) * BUFFER_LEN);
         // read the entire buffer, unless we are reading the last one
-        for (j = 0; j < MIN(MAX_BUFFER_LEN, metadata_len - i); ++j) {
+        for (j = 0; j < MIN(BUFFER_LEN, metadata_len - i); ++j) {
             // put the pointer to each metadata in read buffer to metadata vector
             pushVector(MetadataVectorPtr, (struct Metadata*)(read_buf) + j);
             printf("%p\n", ((struct Metadata*)(read_buf) + j)->assign.addr);
         }
         // number of metadata read previously
-        i += MIN(MAX_BUFFER_LEN, metadata_len - i);
+        i += MIN(BUFFER_LEN, metadata_len - i);
     }
     close(fd);
 }

@@ -1,7 +1,7 @@
+#include "nvmveri_kernel.h"
+
 #include <linux/module.h>
 #include <linux/kernel.h>
-
-/********** START HEADER **********/
 #include <linux/fs.h> // required for various structures related to files liked fops.
 #include <asm/uaccess.h> // required for copy_from and copy_to user functions
 #include <linux/semaphore.h>
@@ -11,100 +11,14 @@
 #include <net/netlink.h>
 #include <net/net_namespace.h>
 
+MetadataStatus metadataStatus;
 
-// nvmveri
-#define MAX_OP_NAME_SIZE 50
+struct mydevice nvmveri_dev;
 
-#define MYPROTO NETLINK_USERSOCK
-#define MYMGRP 21
-#define MAX_MSG_LENGTH 1024
-
-// file io
-#define BUFFER_LEN 20
-
-
-#define MIN(a,b) (((a)<(b))?(a):(b))
-
-
-typedef unsigned long long addr_t;
-
-typedef enum {_OPINFO,
-              _ASSIGN,
-              _FLUSH,
-              _COMMIT,
-              _BARRIER,
-              _FENCE,
-              _PERSIST,
-              _ORDER} MetadataType;
-
-//const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT",
-//                                   "_BARRIER", "_FENCE", "_PERSIST", "_ORDER"};
-
-struct Metadata_OpInfo {
-    //enum State {NONE, WORK, COMMIT, ABORT, FINAL};
-    char opName[MAX_OP_NAME_SIZE]; // function name
-    addr_t address;		    	   // address of object being operated
-    int size;					   // size of object
-};
-
-struct Metadata_Assign {
-    void *addr;
-    size_t size;
-};
-
-struct Metadata_Flush {
-    void *addr;
-    size_t size;
-};
-
-struct Metadata_Commit {
-
-};
-
-struct Metadata_Barrier {
-
-};
-
-struct Metadata_Fence {
-
-};
-
-struct Metadata_Persist {
-    void *addr;
-    size_t size;
-};
-
-struct Metadata_Order {
-    void *early_addr;
-    size_t early_size;
-    void *late_addr;
-    size_t late_size;
-};
-
-struct Metadata {
-    MetadataType type;
-    union {
-        struct Metadata_OpInfo op;
-        struct Metadata_Assign assign;
-        struct Metadata_Flush flush;
-        struct Metadata_Commit commit;
-        struct Metadata_Barrier barrier;
-        struct Metadata_Fence fence;
-        struct Metadata_Persist persist;
-        struct Metadata_Order order;
-    };
-};
-
-
-struct mydevice
-{
-    struct Metadata data[BUFFER_LEN];
-    struct semaphore sem;
-} nvmveri_dev;
-/********** END HEADER **********/
+struct Vector *metadataVectorPtr;
 
 // only for testing
-#define TRACE_LEN 105
+int TRACE_LEN = 105;
 
 static int Major = 250;
 static struct sock *nl_sk = NULL;
@@ -114,10 +28,9 @@ dev_t dev_no,dev;
 
 struct cdev *kernel_cdev;
 
-bool existVeriInstance = 0;
+int existVeriInstance = 0;
 
-
-static void send_to_user(int metadata_len)
+void send_to_user(void)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
@@ -126,6 +39,7 @@ static void send_to_user(int metadata_len)
     //int msg_size = (msg) + 1;
     int msg_size = sizeof(int);
     int res;
+    TRACE_LEN = metadataVectorPtr->cur_size;
 
     //pr_info("Creating skb.\n");
     skb = nlmsg_new(NLMSG_ALIGN(msg_size), GFP_KERNEL);
@@ -136,7 +50,11 @@ static void send_to_user(int metadata_len)
 
     nlh = nlmsg_put(skb, 0, 1, NLMSG_DONE, msg_size + 1, 0);
     //strcpy(nlmsg_data(nlh), msg);
-    memcpy(nlmsg_data(nlh), &metadata_len, sizeof(int));
+    memcpy(nlmsg_data(nlh), &TRACE_LEN, sizeof(int));
+
+    // reset the index of output buffer before signaling the user
+    cur_idx = 0;
+    metadataStatus = _WRITTEN;
 
     //pr_info("Sending skb.\n");
     res = nlmsg_multicast(nl_sk, skb, 0, MYMGRP, GFP_KERNEL);
@@ -144,6 +62,7 @@ static void send_to_user(int metadata_len)
         pr_info("nlmsg_multicast() error: %d\n", res);
     //else
     //    pr_info("Success.\n");
+
 }
 
 
@@ -157,11 +76,11 @@ ssize_t read(struct file *filp, char *buff, size_t count, loff_t *offp)
     size = MIN(BUFFER_LEN, TRACE_LEN - cur_idx);
     printk(KERN_INFO "@ count=%lu\n", count);
 
-    memcpy(nvmveri_dev.data, trace + cur_idx, size * sizeof(struct Metadata));
+    memcpy(nvmveri_dev.data, metadataVectorPtr->arr_vector + cur_idx, size * sizeof(struct Metadata));
     cur_idx += size;
 
     ret = copy_to_user(buff, nvmveri_dev.data, count);
-    
+
 	return ret;
 }
 
@@ -181,6 +100,7 @@ int release(struct inode *inode, struct file *filp)
   //printk(KERN_INFO "@ Inside close \n");
   //printk(KERN_INFO "@ Releasing semaphore");
   up(&nvmveri_dev.sem);  //unlock
+  metadataStatus = _RELEASED;
   return 0;
 }
 
@@ -191,8 +111,7 @@ struct file_operations fops = {
     release: release
 };
 
-
-static int __init knvmveri_init(void)
+static int __init knvmveri_testinit(void)
 {
     int i, ret;
 
@@ -228,19 +147,19 @@ static int __init knvmveri_init(void)
     }
 
     cur_idx = 0;
-    send_to_user(TRACE_LEN);
+    send_to_user();
 
     return 0;
 }
 
-static void __exit knvmveri_exit(void)
+static void __exit knvmveri_testexit(void)
 {
     netlink_kernel_release(nl_sk);
     kfree(trace);
     printk("@ Exiting hello module.\n");
 }
 
-module_init(knvmveri_init);
-module_exit(knvmveri_exit);
+module_init(knvmveri_testinit);
+module_exit(knvmveri_testexit);
 
 MODULE_LICENSE("GPL");
