@@ -18,9 +18,9 @@
 typedef unsigned long long addr_t;
 
 typedef enum {_INIT,
-      _WRITTEN,
-      _OPENED,
-      _RELEASED} MetadataStatus;
+              _WRITTEN,
+              _READING,
+              _RELEASED} MetadataStatus;
 
 extern MetadataStatus metadataStatus;
 
@@ -102,14 +102,15 @@ typedef struct Metadata {
     #include <linux/netlink.h>
     #include <net/netlink.h>
     #include <net/net_namespace.h>
+    //#include <asm/current.h>
 
-    typedef struct mydevice
+    typedef struct NVMVeriDevice
     {
         Metadata data[BUFFER_LEN];
         struct semaphore sem;
-    } mydevice;
+    } NVMVeriDevice;
 
-    extern mydevice nvmveri_dev;
+    extern NVMVeriDevice nvmveri_dev;
 
     typedef struct Vector {
     	struct Metadata* arr_vector;
@@ -136,8 +137,8 @@ typedef struct Metadata {
     void kC_deleteMetadataVector(void);
     void kC_createMetadata_Assign(void *, size_t);
 
-    void send_to_user(void);
-
+    void send_to_user(int);
+    void wait_until_read(void);
     int knvmveri_init(void);
     int knvmveri_exit(void);
 

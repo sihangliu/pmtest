@@ -13,9 +13,9 @@
 
 MetadataStatus metadataStatus;
 
-struct mydevice nvmveri_dev;
+NVMVeriDevice nvmveri_dev;
 
-struct Vector *metadataVectorPtr;
+Vector *metadataVectorPtr;
 
 // only for testing
 int TRACE_LEN = 105;
@@ -148,7 +148,6 @@ static int __init knvmveri_testinit(void)
 
     cur_idx = 0;
     send_to_user();
-
     return 0;
 }
 

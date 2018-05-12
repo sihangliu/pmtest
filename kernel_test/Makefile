@@ -1,7 +1,7 @@
 KDIR := /lib/modules/$(shell uname -r)/build
 
-obj-m += test_socket.o
-ccflags-y := -I$(src)/../include
+#obj-m += test_socket.o
+#ccflags-y := -I$(src)/../include
 
 all:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(shell pwd) modules

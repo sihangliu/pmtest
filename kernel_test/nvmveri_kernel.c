@@ -2,13 +2,14 @@
 
 MetadataStatus metadataStatus;
 
-mydevice nvmveri_dev;
+NVMVeriDevice nvmveri_dev;
 
 int existVeriInstance;
 
 int TRACE_LEN;
 
-static int Major = 250;
+static int Major;
+// static int Major = 250;
 static struct sock *nl_sk = NULL;
 int cur_idx;
 dev_t dev_no, dev;
@@ -18,36 +19,50 @@ struct cdev *kernel_cdev;
 Vector *metadataVectorPtr;
 
 void initVector(Vector* vec) {
+    //(*vec) = (Vector *)kmalloc(sizeof(Vector), GFP_KERNEL);
     vec->cur_size = 0;
     vec->vector_max_size = 200;
+    printk(KERN_INFO "@ Inside initVector.\n");
     vec->arr_vector = (Metadata *)
-            kmalloc(vec->vector_max_size * sizeof(Metadata *), GFP_KERNEL);
+            kmalloc(vec->vector_max_size * sizeof(Metadata), GFP_KERNEL);
+    printk(KERN_INFO "@ Complete initVector.\n");
 }
 
 void pushVector(Vector* vec, Metadata input) {
+    printk(KERN_INFO "@ Inside pushVector, ptr=%p\n", vec);
     if (vec->cur_size >= vec->vector_max_size) {
+        printk(KERN_INFO "@ Inside resize vector");
         vec->vector_max_size *= 10;
         vec->arr_vector = (Metadata *) krealloc(vec->arr_vector,
-                        vec->vector_max_size * sizeof(Metadata *), GFP_KERNEL);
+                        vec->vector_max_size * sizeof(Metadata), GFP_KERNEL);
+        printk(KERN_INFO "@ Complete resize vector");
     }
     vec->arr_vector[vec->cur_size] = input;
     ++(vec->cur_size);
 }
 
 void deleteVector(Vector* vec) {
+    printk(KERN_INFO "@ Inside delete vector. \n");
     kfree(vec->arr_vector);
+    //kfree(vec);
+    printk(KERN_INFO "@ Complete delete vector. \n");
 }
 
 void kC_createMetadataVector(void)
 {
+    printk(KERN_INFO "@ Inside create metadata. \n");
+    metadataVectorPtr = (Vector*)kmalloc(sizeof(Vector), GFP_KERNEL);
     initVector(metadataVectorPtr);
-	//vec->reserve(100);
+    printk(KERN_INFO "@ Complete create metadata. \n");
 }
 
 
 void kC_deleteMetadataVector(void)
 {
+    printk(KERN_INFO "@ Inside delete metadata. \n");
     deleteVector(metadataVectorPtr);
+    kfree(metadataVectorPtr);
+    printk(KERN_INFO "@ Complete delete metadata. \n");
 }
 
 
@@ -55,6 +70,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 {
 	if (existVeriInstance) {
 		Metadata input;
+        printk(KERN_INFO "@ Inside assign metadata. \n");
 		input.type = _ASSIGN;
 
 		//log("assign_aa\n");
@@ -62,6 +78,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 		input.assign.addr = addr;
 		input.assign.size = size;
 		pushVector(metadataVectorPtr, input);
+        printk(KERN_INFO "@ Complete assign metadata. \n");
 	}
 	else {
 		//log("assign\n");
@@ -69,7 +86,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 }
 
 
-void send_to_user(void)
+void send_to_user(int terminateSignal)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
@@ -78,7 +95,13 @@ void send_to_user(void)
     //int msg_size = (msg) + 1;
     int msg_size = sizeof(int);
     int res;
-    TRACE_LEN = metadataVectorPtr->cur_size;
+
+    if (terminateSignal == 0) {
+        TRACE_LEN = metadataVectorPtr->cur_size;
+    }
+    else {
+        TRACE_LEN = -1;
+    }
 
     //pr_info("Creating skb.\n");
     skb = nlmsg_new(NLMSG_ALIGN(msg_size), GFP_KERNEL);
@@ -96,16 +119,27 @@ void send_to_user(void)
     metadataStatus = _WRITTEN;
 
     //pr_info("Sending skb.\n");
-    res = nlmsg_multicast(nl_sk, skb, 0, MYMGRP, GFP_KERNEL);
+    while (metadataStatus != _READING) {
+        res = nlmsg_multicast(nl_sk, skb, 0, MYMGRP, GFP_KERNEL);
+        //udelay(1);
+    }
     if (res < 0)
         pr_info("nlmsg_multicast() error: %d\n", res);
     //else
     //    pr_info("Success.\n");
 
+
 }
 
 
-ssize_t read(struct file *filp, char *buff, size_t count, loff_t *offp)
+inline void wait_until_read(void)
+{
+    // a spinlock to ensure that all data are read
+    while (metadataStatus != _RELEASED);
+}
+
+
+ssize_t NVMDeviceRead(struct file *filp, char *buff, size_t count, loff_t *offp)
 {
     unsigned long ret;
     int size;
@@ -114,7 +148,7 @@ ssize_t read(struct file *filp, char *buff, size_t count, loff_t *offp)
         return 0;
     size = MIN(BUFFER_LEN, TRACE_LEN - cur_idx);
     printk(KERN_INFO "@ count=%lu\n", count);
-
+    metadataStatus = _READING;
     memcpy(nvmveri_dev.data, metadataVectorPtr->arr_vector + cur_idx, size * sizeof(Metadata));
     cur_idx += size;
 
@@ -124,7 +158,7 @@ ssize_t read(struct file *filp, char *buff, size_t count, loff_t *offp)
 }
 
 
-int open(struct inode *inode, struct file *filp)
+int NVMDeviceOpen(struct inode *inode, struct file *filp)
 {
     //printk(KERN_INFO "@ Inside open \n");
     if(down_interruptible(&nvmveri_dev.sem)) { //lock
@@ -134,7 +168,7 @@ int open(struct inode *inode, struct file *filp)
     return 0;
 }
 
-int release(struct inode *inode, struct file *filp)
+int NVMDeviceRelease(struct inode *inode, struct file *filp)
 {
   //printk(KERN_INFO "@ Inside close \n");
   //printk(KERN_INFO "@ Releasing semaphore");
@@ -144,10 +178,10 @@ int release(struct inode *inode, struct file *filp)
 }
 
 struct file_operations fops = {
-    read:  read,
-    //write:  write,
-    open:   open,
-    release: release
+    read:  NVMDeviceRead,
+    //write:  NVMDeviceWrite,
+    open:   NVMDeviceOpen,
+    release: NVMDeviceRelease
 };
 
 
@@ -158,16 +192,18 @@ int knvmveri_init(void)
     kernel_cdev = cdev_alloc();
     kernel_cdev->ops = &fops;
     kernel_cdev->owner = THIS_MODULE;
-    printk ("@ Inside init module\n");
+    printk ("@ Inside knvmveri init module\n");
     ret = alloc_chrdev_region(&dev_no, 0, 1, "chr_arr_dev");
     if (ret < 0) {
         printk("@ Major number allocation is failed\n");
         return ret;
     }
 
-    dev = MKDEV(Major,0);
-    sema_init(&nvmveri_dev.sem,1);
-    ret = cdev_add( kernel_cdev,dev,1);
+    Major = MAJOR(dev_no);
+    printk ("@ The major number for nvmveri_dev is %d\n", Major);
+    dev = MKDEV(Major, 0);
+    sema_init(&nvmveri_dev.sem, 1);
+    ret = cdev_add( kernel_cdev,dev, 1);
     if(ret < 0) {
         printk(KERN_INFO "@ Unable to allocate cdev");
         return ret;
@@ -188,7 +224,7 @@ int knvmveri_init(void)
 int knvmveri_exit(void)
 {
     netlink_kernel_release(nl_sk);
-    kfree(metadataVectorPtr->arr_vector);
-    printk("@ Exiting hello module.\n");
+    //kfree(metadataVectorPtr->arr_vector);
+    printk("@ Exiting knvmveri module.\n");
 	return 0;
 }

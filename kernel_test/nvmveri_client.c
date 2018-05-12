@@ -24,19 +24,21 @@ int sock;
 struct msghdr msg;
 //char* buffer;
 
-struct Vector {
+typedef struct Vector {
     void** arr_vector;
     int cur_size;
     int vector_max_size;
-};
+} Vector;
 
-void initVector(struct Vector* vec) {
+void initVector(Vector* vec) {
     vec->cur_size = 0;
     vec->vector_max_size = 200;
+    printf("Init vector %p\n", vec);
     vec->arr_vector = (void**) malloc(vec->vector_max_size * sizeof(void*));
+    printf("Complete init vector\n");
 }
 
-void pushVector(struct Vector* vec, void* input) {
+void pushVector(Vector* vec, void* input) {
     if (vec->cur_size >= vec->vector_max_size) {
         printf("max_size=%d, cur_size=%d\n", vec->vector_max_size, vec->cur_size);
         vec->vector_max_size *= 10;
@@ -47,7 +49,7 @@ void pushVector(struct Vector* vec, void* input) {
     ++(vec->cur_size);
 }
 
-void deleteVector(struct Vector* vec) {
+void deleteVector(Vector* vec) {
     free(vec->arr_vector);
 }
 
@@ -117,31 +119,31 @@ int read_event(int sock)
     return metadata_len;
 }
 
-void read_data(struct Vector* MetadataVectorPtr, int metadata_len)
+void read_data(Vector* MetadataVectorPtr, int metadata_len)
 {
     int fd;
     int i = 0;
     int j = 0;
     char* read_buf;
+    int read_len;
 
     fd = open("/dev/nvmveri_dev", O_RDWR);
 	printf("fd=%d\n", fd);
 
     while (i < metadata_len) {
+        read_len = MIN(BUFFER_LEN, metadata_len - i);
         // for each metadata packet, allocate a new read buffer
-        read_buf = (char*) malloc (sizeof(struct Metadata) *
-                                        MIN(BUFFER_LEN, metadata_len - i));
+        read_buf = (char*) malloc (sizeof(Metadata) * read_len);
         // read one metadata_packet each time
-        read(fd, read_buf,
-                sizeof(struct Metadata) * BUFFER_LEN);
+        read(fd, read_buf, sizeof(Metadata) * read_len);
         // read the entire buffer, unless we are reading the last one
-        for (j = 0; j < MIN(BUFFER_LEN, metadata_len - i); ++j) {
+        for (j = 0; j < read_len; ++j) {
             // put the pointer to each metadata in read buffer to metadata vector
-            pushVector(MetadataVectorPtr, (struct Metadata*)(read_buf) + j);
-            printf("%p\n", ((struct Metadata*)(read_buf) + j)->assign.addr);
+            pushVector(MetadataVectorPtr, (Metadata*)(read_buf) + j);
+            printf("%p\n", ((Metadata*)(read_buf) + j)->assign.addr);
         }
         // number of metadata read previously
-        i += MIN(BUFFER_LEN, metadata_len - i);
+        i += read_len;
     }
     close(fd);
 }
@@ -151,8 +153,8 @@ int main(int argc, char *argv[])
 {
     int nls;
     int metadata_len;
-    struct Vector* MetadataVectorPtr;
-    struct Vector MetadataVector_array;
+    Vector* MetadataVectorPtr;
+    Vector MetadataVector_array;
     int i, j;
     void* VeriInstancePtr;
 
@@ -162,7 +164,7 @@ int main(int argc, char *argv[])
     if (nls < 0)
         return nls;
 
-    VeriInstancePtr = C_createVeriInstance();
+    //VeriInstancePtr = C_createVeriInstance();
 
     while (1) {
         printf("New iteration\n");
@@ -170,28 +172,42 @@ int main(int argc, char *argv[])
         metadata_len = read_event(nls);
         if (metadata_len > 0) {
             // create new metadata vector
-            MetadataVectorPtr = (struct Vector*)malloc(sizeof(struct Vector));
+            printf("a\n");
+            MetadataVectorPtr = (Vector*)malloc(sizeof(Vector));
+            printf("b\n");
             initVector(MetadataVectorPtr);
+            printf("c\n");
             // push the new metadata vector to an array
             pushVector(&MetadataVector_array, MetadataVectorPtr);
+            printf("d\n");
             // read data from file io
             read_data(MetadataVectorPtr, metadata_len);
+            printf("e\n");
         } else {
             printf("Exit\n");
             // metadata_len < 0 - exit signal
             break;
         }
 
-        C_execVeri(VeriInstancePtr, MetadataVectorPtr);
+        //C_execVeri(VeriInstancePtr, MetadataVectorPtr);
     }
 
-    C_getVeri(VeriInstancePtr, (void *)(0));
+    //C_getVeri(VeriInstancePtr, (void *)(0));
 
     for (i = 0; i < MetadataVector_array.cur_size; ++i) {
-        C_deleteMetadataVector(MetadataVector_array.arr_vector[i]);
+        //C_deleteMetadataVector(MetadataVector_array.arr_vector[i]);
+        // free the pointer to each buffer
+        for (j = 0;
+            i < ((Vector *)(MetadataVector_array.arr_vector[i]))->cur_size;
+            j += BUFFER_LEN) {
+            free((Metadata *)(((Vector *)(MetadataVector_array.arr_vector[i]))->arr_vector[j]));
+        }
+        // free metadata vector
+        deleteVector((Vector *)(MetadataVector_array.arr_vector[i]));
+        free((Vector *)MetadataVector_array.arr_vector[i]);
     }
 
-    C_deleteVeriInstance(MetadataVectorPtr);
+    //C_deleteVeriInstance(MetadataVectorPtr);
 
 	close_netlink();
 
