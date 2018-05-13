@@ -1,9 +1,83 @@
 #ifndef __NVMVERI_HH__
 #define __NVMVERI_HH__
 
-#define DEBUG_FLAG false
 
-// Libary for verification
+// library part that may be used by C program
+#include "stddef.h"
+// typedef unsigned long long addr_t;
+
+typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING} MetadataType;
+const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING"};
+
+// typedef struct Metadata_OpInfo {
+// 	enum State {NONE, WORK, COMMIT, ABORT, FINAL} state;
+// 	char opName[MAX_OP_NAME_SIZE]; // function name
+// 	addr_t address;		    	   // address of object being operated
+// 	int size;					   // size of object
+// } Metadata_OpInfo;
+
+typedef struct Metadata_Assign {
+    void *addr;
+    size_t size;
+} Metadata_Assign;
+
+typedef struct Metadata_Flush {
+    void *addr;
+    size_t size;
+} Metadata_Flush;
+
+typedef struct Metadata_Commit {
+
+} Metadata_Commit;
+
+typedef struct Metadata_Barrier {
+
+} Metadata_Barrier;
+
+typedef struct Metadata_Fence {
+
+} Metadata_Fence;
+
+typedef struct Metadata_Persist {
+    void *addr;
+    size_t size;
+}  Metadata_Persist;
+
+typedef struct Metadata_Order {
+    size_t early_size;
+    size_t late_size;
+    void *early_addr;
+    void *late_addr;
+} Metadata_Order;
+
+typedef struct Metadata_TransactionDelim {
+
+} Metadata_TransactionDelim;
+
+typedef struct Metadata_Ending {
+
+} Metadata_Ending;
+
+typedef struct Metadata {
+	MetadataType type;
+	union {
+		//Metadata_OpInfo op;
+		Metadata_Assign assign;
+		Metadata_Flush flush;
+		Metadata_Commit commit;
+		Metadata_Barrier barrier;
+		Metadata_Fence fence;
+		Metadata_Persist persist;
+		Metadata_Order order;
+		Metadata_TransactionDelim delim;
+		Metadata_Ending ending;
+	};
+} Metadata;
+
+# ifndef NVMVERI_KERNEL_CODE
+
+#define DEBUG_FLAG false
+// C++ Libary for verification
 
 #include <stdio.h>
 #include <assert.h>
@@ -47,81 +121,11 @@ using namespace boost::icl;
 #define MAX_THREAD_POOL_SIZE 1
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
-typedef unsigned long long addr_t;
 typedef interval_set<size_t> interval_set_addr;
 typedef interval_map<size_t, int, partial_enricher, std::less, inplace_max> interval_map_addr_timestamp;
 
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
-
-//class State {
-//public:
-	//enum StateVal {NONE, WORK, COMMIT, ABORT, FINAL};
-	//const char StateChar[2][10] = {"init", "commit"};
-	//void tranState();
-//};
-
-
-enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER};
-const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER"};
-
-struct Metadata_OpInfo {
-	enum State {NONE, WORK, COMMIT, ABORT, FINAL};
-	char opName[MAX_OP_NAME_SIZE]; // function name
-	addr_t address;		    	   // address of object being operated
-	int size;					   // size of object
-};
-
-struct Metadata_Assign {
-	void *addr;
-	size_t size;
-};
-
-struct Metadata_Flush {
-	void *addr;
-	size_t size;
-};
-
-struct Metadata_Commit {
-
-};
-
-struct Metadata_Barrier {
-
-};
-
-struct Metadata_Fence {
-
-};
-
-struct Metadata_Persist {
-	void *addr;
-	size_t size;
-};
-
-struct Metadata_Order {
-	void *early_addr;
-	size_t early_size;
-	void *late_addr;
-	size_t late_size;
-};
-
-class Metadata {
-public:
-	MetadataType type;
-	union {
-		Metadata_OpInfo op;
-		Metadata_Assign assign;
-		Metadata_Flush flush;
-		Metadata_Commit commit;
-		Metadata_Barrier barrier;
-		Metadata_Fence fence;
-		Metadata_Persist persist;
-		Metadata_Order order;
-	};
-
-	void print();
-};
 
 class VeriResult {
 public:
@@ -211,4 +215,5 @@ extern "C" void C_createMetadata_Persist(void *, void *, size_t);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void *metadataPtr;
-#endif
+#endif // NVMVERI_C_CODE
+#endif // __NVMVERI_HH__

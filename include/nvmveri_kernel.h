@@ -1,5 +1,5 @@
-#ifndef __KNVMVERI_H__
-#define __KNVMVERI_H__
+#ifndef __NVMVERI_KERNEL_H__
+#define __NVMVERI_KERNEL_H__
 
 // nvmveri
 #define MAX_OP_NAME_SIZE 50
@@ -95,6 +95,8 @@ typedef struct Metadata {
     #include <linux/module.h>
     #include <linux/kernel.h>
 
+	#include <linux/sched.h>
+	#include <linux/fs_struct.h>
     #include <asm/uaccess.h> // required for copy_from and copy_to user functions
     #include <linux/semaphore.h>
     #include <linux/cdev.h>
@@ -144,6 +146,4 @@ typedef struct Metadata {
 
 
 #endif
-
-
 #endif

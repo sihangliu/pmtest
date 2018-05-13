@@ -23,21 +23,21 @@ atomic<int> NVMVeri::completedThread;
 void *metadataPtr;
 int existVeriInstance = 0;
 
-void Metadata::print()
+void Metadata_print(Metadata *m)
 {
-	printf("%s ", MetadataTypeStr[type]);
-	if (type == _OPINFO) {
+	printf("%s ", MetadataTypeStr[m->type]);
+	if (m->type == _OPINFO) {
 		printf("\n");
 	}
-	else if (type == _ASSIGN) {
-		printf("%p %lu\n", assign.addr, assign.size);
+	else if (m->type == _ASSIGN) {
+		printf("%p %lu\n", m->assign.addr, m->assign.size);
 	}
-	else if (type == _PERSIST) {
+	else if (m->type == _PERSIST) {
 	}
-	else if (type == _FLUSH) {
-		printf("%p %lu\n", flush.addr, flush.size);
+	else if (m->type == _FLUSH) {
+		printf("%p %lu\n", m->flush.addr, m->flush.size);
 	}
-	else if (type == _FENCE) {
+	else if (m->type == _FENCE) {
 		printf("\n");
 	}
 	else {}
@@ -436,7 +436,7 @@ void C_deleteMetadataVector(void *victim)
 	}
 }
 
-
+/*
 void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, size_t size)
 {
 	if (existVeriInstance) {
@@ -454,7 +454,8 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 	else {
 		//log("opinfo\n");
 	}
-}
+} 
+*/
 
 
 void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)

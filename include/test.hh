@@ -6,4 +6,4 @@
 void transaction();
 void fastvector();
 
-#endif
+#endif // __TEST_HH__

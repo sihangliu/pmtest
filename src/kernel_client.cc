@@ -1,33 +1,89 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/socket.h>
+#include <assert.h>
+//#include <sys/socket.h>
 
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 
-#include "nvmveri.h"
+#include "nvmveri.hh"
+// #include "nvmveri_kernel.h"
+// TODO: FIX THIS HEADER WHEN WRITING KERNEL MODULE
+#define BUFFER_LEN 20
 
-// read a whole transaction, return
-void *read_data(void )
+FastVector<Metadata *> allocated;
+Metadata buf[BUFFER_LEN];
+int start_idx;
+
+// obtain the semaphore and read a single block
+int read_datablock()
 {
-	void *p = C_createMetadataBuffer(METADATA_PACKET_LENGTH);
-	for ()
+	int fd = open("/dev/nvmveri_dev", O_RDONLY);
+	if (fd == -1) {
+		assert(0 && "Cannot open NVMVeri file device");
+	}
+	read(fd, buf, sizeof(Metadata) * BUFFER_LEN);
+	close(fd);
+}
+
+// assemble a whole transaction and return
+int read_transaction(FastVector<Metadata *> *tx)
+{
+	
+	while (true) {
+		for (size_t i = start_idx; i < BUFFER_LEN; i++) {
+			if (buf[i].type == _TRANSACTIONDELIM) {
+				Metadata *start_ptr = new Metadata[i - start_idx - 1];
+				allocated.push_back(start_ptr);
+				// insert all Metadata before index i
+				for (int j = start_idx; j < i; j++) {
+					start_ptr[j - start_idx] = buf[j];
+					tx->push_back(&start_ptr[j - start_idx]);
+				}
+				start_idx = i + 1;
+				return -2;
+			}
+			if (buf[i].type == _ENDING) {
+				Metadata *start_ptr = new Metadata[i - start_idx - 1];
+				allocated.push_back(start_ptr);
+				// insert all metadata before index i
+				for (int j = start_idx; j < i; j++) {
+					start_ptr[j - start_idx] = buf[j];
+					tx->push_back(&start_ptr[j - start_idx]);
+				}
+				return -3;
+			}
+		}
+		Metadata *start_ptr = new Metadata[BUFFER_LEN];
+		allocated.push_back(start_ptr);
+		for (int j = start_idx; j < BUFFER_LEN; j++) {
+			start_ptr[j - start_idx] = buf[j];
+			tx->push_back(&start_ptr[j - start_idx]);
+		}
+		read_datablock();
+		start_idx = 0;
+	}
+
 }
 
 int main(int argc, char *argv[])
 {
-	void *p = C_createVeriInstance();
-
-	while (1) {
-		existVeriInstance = 1;
-		void *result = read_data();
-		existVeriInstance = 0;
-		if (result == NULL) break;
-		C_execVeri(result, metadataPtr);
+	NVMVeri veriInstance;
+	start_idx = 0;
+	FastVector<FastVector<Metadata *> *> tx_vector;
+	while (true) {
+		FastVector<Metadata *> *tx = new FastVector<Metadata *>;
+		int flag = read_transaction(tx);
+		veriInstance.execVeri(tx);
+		tx_vector.push_back(tx);
+		if (flag == -3) break;
 	}
-	C_getVeri(p, (void *)(0));
-	C_deleteVeriInstance(p);
+	FastVector<VeriResult> result;
+	veriInstance.getVeri(result);
+	for (int i = 0; i < tx_vector.size(); i++)
+		delete tx_vector[i];
+
 	return 0;
 }

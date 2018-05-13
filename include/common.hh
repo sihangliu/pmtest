@@ -29,7 +29,8 @@ public:
 	void push_back(T);
 	int size();
 	//void insert(int pos, FastVector<T> &inputFV, int begin, int end);
-	void append(FastVector<T> &input);
+	void append(FastVector<T> &);
+	void append(T *, size_t);
 	const T& operator[](int idx) const { return arr_vector[idx]; }
 private:
 	T* arr_vector;
@@ -78,6 +79,21 @@ void FastVector<T>::append(FastVector<T> &input)
 	cur_size += input.size();
 }
 
+
+template <class T>
+void FastVector<T>::append(T *input, size_t input_size)
+{
+	if (input_size + cur_size >= vector_max_size) {
+		vector_max_size = (cur_size + input_size) * 10;
+		arr_vector = (T *) realloc(arr_vector, vector_max_size * sizeof(T));
+		//printf("@@@@ append reallocate\n");
+	}
+
+	memcpy(arr_vector + cur_size, input, input_size * sizeof(T));
+
+	cur_size += input_size;
+}
+
 /*
 template <class T>
 void FastVector<T>::insert(int pos, FastVector<T> &inputFV, int begin, int end)
@@ -99,4 +115,4 @@ int FastVector<T>::size()
 }
 
 
-#endif
+#endif // __COMMON__HH__

@@ -9,7 +9,6 @@ void C_deleteVeriInstance(void *);
 void C_execVeri(void *, void *);
 void C_getVeri(void *, void *);
 
-
 void *C_createMetadataVector(void);
 void C_deleteMetadataVector(void *);
 void C_createMetadata_OpInfo(void *, char *, void *, size_t);
@@ -24,4 +23,4 @@ void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 extern void* metadataPtr;
 extern int existVeriInstance;
 
-#endif
+#endif // __NVMVERI_H__
