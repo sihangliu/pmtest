@@ -21,7 +21,7 @@ typedef enum {_OPINFO,
 			  _ASSIGN,
 			  _FLUSH,
 			  _COMMIT,
-              _BARRIER,
+			  _BARRIER,
 			  _FENCE,
 			  _PERSIST,
 			  _ORDER} MetadataType;
@@ -99,7 +99,7 @@ void initVector(struct Vector* vec) {
 
 void pushVector(struct Vector* vec, void* input) {
 	if (vec->cur_size >= vec->vector_max_size) {
-        printf("max_size=%d, cur_size=%d\n", vec->vector_max_size, vec->cur_size);
+		printf("max_size=%d, cur_size=%d\n", vec->vector_max_size, vec->cur_size);
 		vec->vector_max_size *= 10;
 		vec->arr_vector = (void**) realloc(vec->arr_vector,
 						vec->vector_max_size * sizeof(void*));

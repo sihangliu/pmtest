@@ -1,6 +1,8 @@
 #ifndef __NVMVERI_H__
 #define __NVMVERI_H__
 
+#define METADATA_PACKET_LENGTH 10
+
 void *C_createVeriInstance(void);
 void C_deleteVeriInstance(void *);
 

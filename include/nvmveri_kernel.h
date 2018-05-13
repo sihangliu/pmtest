@@ -17,10 +17,10 @@
 
 typedef unsigned long long addr_t;
 
-typedef enum {_INIT,
-              _WRITTEN,
-              _READING,
-              _RELEASED} MetadataStatus;
+typedef enum {  _INIT,
+				_WRITTEN,
+				_READING,
+				_RELEASED} MetadataStatus;
 
 extern MetadataStatus metadataStatus;
 

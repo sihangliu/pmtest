@@ -1,46 +1,46 @@
-CC        := -gcc
-CXX       := -g++-4.8
-CFLAGS    := -O3 -fPIC 
-CXXFLAGS  := -O3 -std=c++11 -fPIC#-pedantic-errors -Wall -Wextra -Werror
-LDFLAGS   := -L/usr/lib -lstdc++ -lm -pthread
-BUILD     := ./build
-OBJ_DIR   := $(BUILD)/objects
-APP_DIR   := $(BUILD)/apps
-LIB_DIR   := $(BUILD)/libs
-TARGET    := nvmveri
-INCLUDE   := -Iinclude/
-SRC       := $(wildcard src/*.cc)
-C_SRC     := $(wildcard src/*.c)
+CC			:= -gcc
+CXX			:= -g++-4.8
+CFLAGS		:= -fPIC
+CXXFLAGS	:= -std=c++11 -fPIC#-pedantic-errors -Wall -Wextra -Werror
+LDFLAGS		:= -L/usr/lib -lstdc++ -lm -pthread
+INCLUDE		:= -Iinclude/
 
-OBJECTS   := $(SRC:%.cc=$(OBJ_DIR)/%.o)
-C_OBJECTS := $(SRC:%.c=$(OBJ_DIR)/%.o)
+BUILD		:= ./build
+OBJ_DIR		:= $(BUILD)/objects
+APP_DIR   	:= $(BUILD)/apps
+LIB_DIR   	:= $(BUILD)/libs
+KERNEL_DIR	:= /lib/modules/$(shell uname -r)/build
 
-all: build $(APP_DIR)/$(TARGET) buildlib
+SRC_DIR		:= ./src
 
-buildlib: $(OBJECTS)
+UNIT_TEST			:= nvmveri_test
+UNIT_TEST_OBJECT	:= $(addprefix $(OBJ_DIR)/, main.o nvmveri.o test.o common.o)
+
+KERNEL_CLIENT			:= nvmveri_kernel_client
+KERNEL_CLIENT_OBJECT	:= $(addprefix $(OBJ_DIR)/, kernel_client.o nvmveri.o)
+
+all: build $(APP_DIR)/$(UNIT_TEST) $(APP_DIR)/$(KERNEL_CLIENT) buildlib
+
+buildlib: $(OBJ_DIR)/nvmveri.o
 	@mkdir -p $(@D)
 	ar -cvq $(LIB_DIR)/libnvmveri.a $(<D)/nvmveri.o
 	$(CXX) -shared -o $(LIB_DIR)/libnvmveri.so $(<D)/nvmveri.o
 
+test: $(APP_DIR)/$(UNIT_TEST)
 
-$(APP_DIR)/$(TARGET): $(OBJECTS)
+kernel: $(APP_DIR)/$(KERNEL_CLIENT)
+
+$(APP_DIR)/$(UNIT_TEST): $(UNIT_TEST_OBJECT)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $(APP_DIR)/$(TARGET) $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $@ $^
 
-cc: build $(OBJECTS) $(C_OBJECTS)
+$(APP_DIR)/$(KERNEL_CLIENT): $(KERNEL_CLIENT_OBJECT)
 	@mkdir -p $(@D)
-	$(CC) $(INCLUDE) -o $(APP_DIR)/$(TARGET) $(OBJECTS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $@ $^
 
-$(OBJ_DIR)/%.o: %.cc
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
-
-$(OBJ_DIR)/%.o: %.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
-
-
-.PHONY: all build buildlib clean debug release
 
 build:
 	@mkdir -p $(APP_DIR)
@@ -50,7 +50,7 @@ build:
 debug: CXXFLAGS += -DDEBUG -g
 debug: all
 
-release: CXXFLAGS += -O2
+release: CXXFLAGS += -O3
 release: all
 
 clean:
@@ -58,6 +58,7 @@ clean:
 	-@rm -rf $(APP_DIR)/*
 	-@rm -rf $(LIB_DIR)/*
 
+.PHONY: all build buildlib clean debug kernel release
 # g++-4.8 -std=c++11 -c common.cc -I../include -o common.o
 # g++-4.8 -std=c++11 -c nvmveri.cc -I../include -o nvmveri.o
 # gcc -c main.c -I../include -o main.o
