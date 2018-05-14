@@ -1,13 +1,16 @@
 #ifndef __NVMVERI_HH__
 #define __NVMVERI_HH__
 
+#define DEBUG_FLAG false
 
-// library part that may be used by C program
+/***********************************************
+   library part that may be used by C program 
+***********************************************/
 #include "stddef.h"
 // typedef unsigned long long addr_t;
 
 typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING} MetadataType;
-const char MetadataTypeStr[][20] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING"};
+const char MetadataTypeStr[][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING"};
 
 // typedef struct Metadata_OpInfo {
 // 	enum State {NONE, WORK, COMMIT, ABORT, FINAL} state;
@@ -74,9 +77,10 @@ typedef struct Metadata {
 	};
 } Metadata;
 
+void Metadata_print(Metadata *);
+
 # ifndef NVMVERI_KERNEL_CODE
 
-#define DEBUG_FLAG false
 // C++ Libary for verification
 
 #include <stdio.h>

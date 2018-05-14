@@ -26,21 +26,14 @@ int existVeriInstance = 0;
 void Metadata_print(Metadata *m)
 {
 	printf("%s ", MetadataTypeStr[m->type]);
-	if (m->type == _OPINFO) {
-		printf("\n");
-	}
-	else if (m->type == _ASSIGN) {
-		printf("%p %lu\n", m->assign.addr, m->assign.size);
-	}
-	else if (m->type == _PERSIST) {
+	if (m->type == _ASSIGN) {
+		printf("%p %lu", m->assign.addr, m->assign.size);
 	}
 	else if (m->type == _FLUSH) {
-		printf("%p %lu\n", m->flush.addr, m->flush.size);
-	}
-	else if (m->type == _FENCE) {
-		printf("\n");
+		printf("%p %lu", m->flush.addr, m->flush.size);
 	}
 	else {}
+	printf("\n");
 }
 
 
@@ -348,6 +341,9 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 		if (((*veriptr)[cur])->type == _FENCE) {
 			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)
 			for (int i = prev; i != cur; i++) {
+
+				printf("In nvmveri head %p\n", (*veriptr)[i]);
+				Metadata_print((*veriptr)[i]);
 				if (((*veriptr)[i])->type == _ASSIGN) {
 					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
@@ -372,6 +368,8 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	// processing tail value of [prev, cur):
 	// prev point to last _FENCE, cur point to veriptr->end
 	for (int i = prev; i != cur; i++) {
+		printf("In nvmveri %p\n", (*veriptr)[i]);
+		Metadata_print((*veriptr)[i]);
 		if (((*veriptr)[i])->type == _ASSIGN) {
 			VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 		}
