@@ -3,6 +3,7 @@
 
 #define METADATA_PACKET_LENGTH 10
 
+#ifndef NVMVERI_KERNEL_CODE
 void *C_createVeriInstance(void);
 void C_deleteVeriInstance(void *);
 
@@ -22,5 +23,6 @@ void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
+#endif // !NVMVERI_KERNEL_CODE
 
 #endif // __NVMVERI_H__

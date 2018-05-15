@@ -20,6 +20,7 @@ atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
 atomic<int> NVMVeri::completedThread;
 */
 
+#ifndef NVMVERI_KERNEL_CODE
 void *metadataPtr;
 int existVeriInstance = 0;
 
@@ -390,7 +391,6 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	}
 }
 
-
 void *C_createVeriInstance()
 {
 	NVMVeri *result = new NVMVeri();
@@ -416,6 +416,7 @@ void C_getVeri(void *veriInstance, void *veriResult)
 	in->getVeri(r);
 	// TODO: cast veriResult
 }
+
 
 
 void *C_createMetadataVector()
@@ -568,3 +569,5 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		//log("order\n");
 	}
 }
+
+#endif // !NVMVERI_KERNEL_CODE

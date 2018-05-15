@@ -224,6 +224,7 @@ int knvmveri_init(void)
 int knvmveri_exit(void)
 {
     netlink_kernel_release(nl_sk);
+	cdev_del(kernel_cdev);
     //kfree(metadataVectorPtr->arr_vector);
     printk("@ Exiting knvmveri module.\n");
 	return 0;

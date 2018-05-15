@@ -219,5 +219,5 @@ extern "C" void C_createMetadata_Persist(void *, void *, size_t);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void *metadataPtr;
-#endif // NVMVERI_C_CODE
+#endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__

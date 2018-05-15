@@ -9,9 +9,9 @@
 #include <fcntl.h>
 
 #include "nvmveri.hh"
-// #include "nvmveri_kernel.h"
-// TODO: FIX THIS HEADER WHEN WRITING KERNEL MODULE
-#define BUFFER_LEN 20
+
+#define NVMVERI_USER_CODE
+#include "kernel_module.h"
 
 FastVector<Metadata *> allocated;
 Metadata buf[BUFFER_LEN];
@@ -98,8 +98,6 @@ int read_transaction(FastVector<Metadata *> *tx)
 				// insert all Metadata before index i
 				for (int j = start_idx; j < i; j++) {
 					start_ptr[j - start_idx] = buf[j];
-					assert(&start_ptr[j - start_idx] && "Null ptr 1");
-					assert(j - start_idx < i - start_idx);
 					printf("Transaction 1 %d %d %p %p\n",j,start_idx,start_ptr, &start_ptr[j - start_idx]);
 					tx->push_back(&start_ptr[j - start_idx]);
 				}
@@ -115,8 +113,6 @@ int read_transaction(FastVector<Metadata *> *tx)
 		allocated.push_back(start_ptr);
 		for (int j = start_idx; j < BUFFER_LEN; j++) {
 			start_ptr[j - start_idx] = buf[j];
-			assert(&start_ptr[j - start_idx] && "Null ptr 2");
-			assert(j - start_idx < BUFFER_LEN - start_idx);
 			printf("Transaction 2 %d %d %p, %p\n",j,start_idx, start_ptr, &start_ptr[j - start_idx]);
 			tx->push_back(&start_ptr[j - start_idx]);
 		}
