@@ -28,7 +28,7 @@ We maintain 2 interval trees:
 	* Increase the timestamp by one after `Fence()`;
 	* Add address interval A and current timestamp after `Assign(&A, sizeof(A))`. Update the timestamp of the overlapped part and add not overlapped part if there exists some overlap between A and all the intervals in this tree.
 	
-Examples of interval tree:
+### Examples of interval tree:
 * Add address `[18, 34)` to the *persistence-check* tree:
 ```
 Existing |---------|    |--------------|  |-----|
@@ -54,4 +54,39 @@ Add              |---------------|
             t=0         t=2        t=1      t=1 	
 Result   |-------|---------------|-----|  |-----|
          10      18              34    40 43    49
+```
+### Examples of transactions and queries:
+```
+Assign(&A, 4)
+Fence()
+Assign(&B, 4)
+Flush(&A, 4)
+Persist(&A, 4)		// == true
+Order(&A, 4, &B, 4)	// == true
+```
+```
+Assign(&A, 4)
+Fence()
+Assign(&B, 4)
+Assign(&A, 4)
+Flush(&A, 4)
+Fence()
+Order(&A, 4, &B, 4)	// == false
+```
+```
+Assign(&A, 4)
+Assign(&B, 4)
+Fence()
+Assign(&B, 4)
+Persist(&B, 4)		// == false
+Order(&A, 4, &B, 4)	// == true
+```
+```
+Assign(&A, 4)
+Fence()
+Assign(&B, 4)
+Flush(&A, 4)
+Assign(&A, 4)
+Persist(&A, 4)		// == false
+Order(&A, 4, &B, 4)	// == false
 ```
