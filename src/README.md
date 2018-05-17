@@ -6,8 +6,8 @@ In the simplest case, the generated trace would contain 5 operations:
 	* `Flush(&A, sizeof(A))`:	The value of A is flushed into memory, so the address range of A is persisted.
 	* `Fence()`: The fence operation which ensures that the operations happen before and after this are not reordered.
 * 2 query operations that are inserted by user, the user may would like to know:
-	* `Persist(&A, sizeof(A))` Is the address range of A is persisted in memory?
-	* `Order(&A, sizeof(A), &B, sizeof(B))` Is the address range of A touched strictly earlier than address range of B, e.g. they are seperated by a fence?
+	* `Persist(&A, sizeof(A))`: Is the address range of A is persisted in memory?
+	* `Order(&A, sizeof(A), &B, sizeof(B))`: Is the address range of A touched strictly earlier than address range of B, e.g. they are seperated by a fence?
 
 For example, for an integer A, the address range of A is an interval like `[0x7ffe523ac210, 0x7ffe523ac214)`, but for an user defined structure, the address range may be larger. To identify the order of modification, we update the *timestamp* for each address after each modification.
 
