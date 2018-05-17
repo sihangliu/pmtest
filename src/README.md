@@ -13,7 +13,7 @@ For example, for an integer A, the address range of A is an interval like `[0x7f
 
 Because the overhead of storing each address and corresponding timestamp is not acceptable, to support `Persist` and `Order` queries, we need a data structure that efficiently stores *intervals*, and the related *timestamp* of intervals.
 
-We adopt a data structure named **interval tree**, which takes up O(n \* log n)space and supports the following operations in O(log n) time:
+We adopt a data structure named **interval tree**, which takes up O(n \* log n) space and supports the following operations in O(log n) time:
 * Add an interval;
 * Remove an interval;
 * Given an interval x, find if x overlaps with any of the existing intervals.
