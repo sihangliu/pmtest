@@ -27,7 +27,7 @@ We maintain 2 interval trees:
 * An *order-check* tree, that stores address ranges and the latest time it is modified, represented by the *timestamp*. So we
 	* Maintain a global variable timestamp, and initialize it to 0;
 	* Increase the timestamp by one after `Fence()`;
-	* Add address interval A and current timestamp after `Assign(&A, sizeof(A))`. Update the timestamp of the overlapped part and add not overlapped part if there exists some overlap between A and all the intervals in this tree.
+	* Add address interval A and current timestamp after `Assign(&A, sizeof(A))`. If there exists some overlap between A and the existing intervals in this tree, update the timestamp of the overlapped part and add the remaining part that is not overlapped to the tree.
 	
 ### Examples of interval tree:
 * Add address `[18, 34)` to the *persistence-check* tree:
