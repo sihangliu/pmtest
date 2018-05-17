@@ -5,7 +5,7 @@ In the simplest case, the generated trace would contain 5 operations:
 	* `Assign(&A, sizeof(A))`: The value of A is modified by a value assignment, so the address range of A is touched.
 	* `Flush(&A, sizeof(A))`:	The value of A is flushed into memory, so the address range of A is persisted.
 	* `Fence()`: The fence operation which ensures that the operations happen before and after this are not reordered.
-* 2 query operations that are inserted by user, the user may would like to know:
+* 2 query operations that are inserted by user. By inserting operations at certain positions, the user will know:
 	* `Persist(&A, sizeof(A))`: Is the address range of A is persisted in memory?
 	* `Order(&A, sizeof(A), &B, sizeof(B))`: Is the address range of A touched strictly earlier than address range of B, e.g. they are seperated by a fence?
 
@@ -17,6 +17,7 @@ We adopt a data structure named **interval tree**, which takes up O(n \* log n) 
 * Add an interval;
 * Remove an interval;
 * Given an interval x, find if x overlaps with any of the existing intervals.
+
 This data structure is implemented in boost library.
 
 We maintain 2 interval trees:
