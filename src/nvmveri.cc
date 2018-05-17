@@ -296,7 +296,7 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_
 		cur->order.late_addr,
 		cur->order.late_size);
 
-	// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestampe of the "late" address range
+	// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestamp of the "late" address range
 	if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
 		auto intersec = addrinterval & OrderInfo;
 		auto intersec_late = addrinterval_late & OrderInfo;
