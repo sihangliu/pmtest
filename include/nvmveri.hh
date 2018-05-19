@@ -4,7 +4,7 @@
 #define DEBUG_FLAG false
 
 /***********************************************
-   library part that may be used by C program 
+   library part that may be used by C program
 ***********************************************/
 #include "stddef.h"
 // typedef unsigned long long addr_t;

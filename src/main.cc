@@ -5,7 +5,8 @@
 
 int main()
 {
-	transaction();
+	//transaction();
+	test_icl();
 	//fastvector();
 	return 0;
 }

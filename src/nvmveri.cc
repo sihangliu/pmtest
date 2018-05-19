@@ -225,6 +225,9 @@ void NVMVeri::VeriWorker(int id)
 	return;
 }
 
+/********************************************
+ Check README.md for detailed implementation
+ ********************************************/
 inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	size_t startaddr = (size_t)(cur->assign.addr);
@@ -333,7 +336,6 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	interval_map_addr_timestamp OrderInfo;
 	int timestamp = 0;
 	size_t startaddr, endaddr;
-	discrete_interval<size_t> addrinterval;
 
 	int prev = 0;
 	int cur = 0;
@@ -453,7 +455,7 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 	else {
 		//log("opinfo\n");
 	}
-} 
+}
 */
 
 

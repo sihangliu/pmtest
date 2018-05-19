@@ -4,6 +4,7 @@
 #include "common.hh"
 
 void transaction();
+void test_icl();
 void fastvector();
 
 #endif // __TEST_HH__

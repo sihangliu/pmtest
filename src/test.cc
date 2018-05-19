@@ -166,6 +166,20 @@ void transaction()
 /****************************test5*****************************/
 }
 
+void test_icl()
+{
+	interval_set<size_t> persist;
+	interval_map<size_t, int, partial_enricher, std::less, inplace_max> order;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(10, 20);
+	order += make_pair(addrinterval, 0);
+	addrinterval = interval<size_t>::right_open(20, 30);
+	for (auto it = order.begin(); it != order.end(); it++)
+		std::cout << it->first << " " << it->second << std::endl;
+	order += make_pair(addrinterval, -1);
+	for (auto it = order.begin(); it != order.end(); it++)
+		std::cout << it->first << " " << it->second << std::endl;
+}
+
 
 void fastvector()
 {
@@ -181,8 +195,8 @@ void fastvector()
 		printf("%d %f\n", tmp.first, tmp.second);
 		fv2.push_back(tmp);
 	}
-	
-	
+
+
 	for (int i = 0; i < fv.size(); i++) {
 		printf("%d %f\n", fv[i].first, fv[i].second);
 	}
@@ -190,19 +204,19 @@ void fastvector()
 	for (int i = 0; i < fv.size(); i++) {
 		printf("%d %f\n", fv2[i].first, fv2[i].second);
 	}
-	
+
 	fv.append(fv2);
 
 	printf("fv size = %d\n", fv.size());
 	printf("fv last item is %d %f\n", fv[fv.size()-1].first, fv[fv.size()-1].second);
 
-	
+
 	for (int i = 0; i < fv.size(); i++) {
 		printf("%d %f\n", fv[i].first, fv[i].second);
 	}
-	
-	
+
+
 	for (int i = 0; i < 200; i++)
 		fv.append(fv2);
-	
+
 }
