@@ -172,7 +172,11 @@ int read_transaction(FastVector<Metadata *> *tx)
 	while(true) {
 		Metadata *buf = new Metadata;
 		allocated.push_back(buf);
-		read(fd, buf, sizeof(Metadata));
+		ssize_t result = read(fd, buf, sizeof(Metadata));
+		if (result < 0) {
+			printf("NVMVeri read data error %d\n", result)
+			assert(0);
+		}
 		if (buf->type == _TRANSACTIONDELIM) return 0;
 		if (buf->type == _ENDING) return -1;
 		tx->push_back(buf);

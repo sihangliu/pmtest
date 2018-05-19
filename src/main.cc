@@ -5,7 +5,7 @@
 
 int main()
 {
-	//transaction();
-	fastvector();
+	transaction();
+	//fastvector();
 	return 0;
 }
