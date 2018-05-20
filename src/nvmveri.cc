@@ -228,6 +228,22 @@ void NVMVeri::VeriWorker(int id)
 /********************************************
  Check README.md for detailed implementation
  ********************************************/
+// use negative integers to represent timestamp that is not an exact value
+int timestamp_atleast(int t)
+{
+	return (t >= 0 ? -t : t);
+}
+
+int timestamp_exactly(int t)
+{
+	return (t <= 0 ? -t : t);
+}
+
+bool timestamp_isexacttime(int t)
+{
+	return (t >= 0);
+}
+
 inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	size_t startaddr = (size_t)(cur->assign.addr);
@@ -239,7 +255,7 @@ inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, inter
 		cur->assign.addr,
 		cur->assign.size);
 	PersistInfo += addrinterval;
-	OrderInfo += make_pair(addrinterval, timestamp);
+	OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
 }
 
 inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
@@ -252,6 +268,7 @@ inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interv
 		cur->flush.addr,
 		cur->flush.size);
 	PersistInfo -= addrinterval;
+	OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
 }
 
 inline void VeriProc_Fence(int &timestamp)
@@ -306,10 +323,14 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_
 		int early_max = 0, late_min = std::numeric_limits<int>::max();
 
 		for (auto j = intersec.begin(); j != intersec.end(); j++) {
+			if (!timestamp_isexacttime(j->second)) {
+				early_max = std::numeric_limits<int>::max();
+				break;
+			}
 			early_max = std::max(early_max, j->second);
 		}
 		for (auto j = intersec_late.begin(); j != intersec_late.end(); j++) {
-			late_min = std::min(late_min, j->second);
+			late_min = std::min(late_min, timestamp_exactly(j->second));
 		}
 
 		if (early_max >= late_min) {
@@ -334,7 +355,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	// usually sizeof(size_t) = 8 on 64-bit system
 	interval_set_addr PersistInfo;
 	interval_map_addr_timestamp OrderInfo;
-	int timestamp = 0;
+	int timestamp = 1; // because we want to use the sign of timestamp to store whether this is an exact timestamp, so start from 1
 	size_t startaddr, endaddr;
 
 	int prev = 0;
@@ -377,7 +398,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 			VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 		}
 		else if (((*veriptr)[i])->type == _FLUSH) {
-			VeriProc_Flush(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
+			// do nothing
 		}
 		else if (((*veriptr)[i])->type == _FENCE) {
 			VeriProc_Fence(timestamp);

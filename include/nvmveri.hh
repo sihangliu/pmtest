@@ -125,8 +125,18 @@ using namespace boost::icl;
 #define MAX_THREAD_POOL_SIZE 1
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
+
+template <typename Type> struct inplace_assign: public identity_based_inplace_combine<Type>
+{
+	typedef inplace_assign<Type> type;
+
+	void operator()(Type& object, const Type& operand) const
+	{ object = operand; }
+};
+
 typedef interval_set<size_t> interval_set_addr;
-typedef interval_map<size_t, int, partial_enricher, std::less, inplace_max> interval_map_addr_timestamp;
+typedef interval_map<size_t, int, partial_enricher, std::less, inplace_assign> interval_map_addr_timestamp;
+
 
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
