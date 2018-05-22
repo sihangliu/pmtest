@@ -24,11 +24,35 @@ We maintain 2 interval trees: (Note that we can only make sure an operation is e
 * A *persistence-check* tree, that stores all address ranges that are modified but not yet flushed to memory. So we
 	* Add address interval A to it after we make sure that `Assign(&A, sizeof(A))` is executed;
 	* Remove address interval A from it after we make sure that `Flush(&A, sizeof(A))` is executed.
-* An *order-check* tree, that stores address ranges and the latest time the address range is modified in memory, represented by the *timestamp*. So we
+* An *order-check* tree, that stores address ranges and the latest time the address range is modified in memory, represented by the *timestamp*.
+So we
 	* Maintain a global variable timestamp, and initialize it to 1;
 	* Increase the timestamp by one after `Fence()`;
 	* After `Assign(&A, sizeof(A))` is executed, the timestamp of A is indefinitive, but shall be no less than current timestamp;
 	* After `Flush(&A, sizeof(A))` is executed, the timestamp of A is definitive, which is the current timestamp.
+
+A `fence` will ensure that every operations that appear before it in program order will be executed before it in execution order, while the execution order of operations that are not separated by a `fence` cannot be enforced by the program order. We use *timestamp* to reflect the possible *execution time* of operations, thus sections that are seperated by a `fence` will have different timestamps, while the same section will have the same timestamp, as shown below:
+```
+... // section where timestamp = T - 3
+Fence()
+... // section where timestamp = T - 2
+Fence()
+... // section where timestamp = T - 1
+Fence()
+... // section where timestamp = T
+	// last section that is not followed by a fence
+```
+Recall that the main purpose of having timestamp is to determine the *execution time* of operations, and deduce the orders of them. So we firstly go over the operation trace and divide them into sections with fences. Each section will have a single timestamp. Then, we characterize each operations as follows:
+	* `Assign(&A, sizeof(A))` in section of timestamp T means that address A will be written to memory some time ≥ T. So we mark timestamp ≥ T to address A.
+	* `Flush(&A, sizeof(A))` in section of timestamp T (except the last section) ensures that address A will be written to memory at time T. So we mark timestamp = T to address A. If `Flush` exists in the last section that is not followed by a fence, we are not sure about the execution time of this `Flush`, so we will not update the timestamp of address A in this case.
+By defining the *timestamp* of each address, we know the most recent time an address is possibly modified in memory. Then if the timestamp of A is strictly smaller than B, then we can say `Order(&A, sizeof(A), &B, sizeof(B))` is true, otherwise false. More specifically:
+	* If timestamp(A) = T, timestamp(B) = T, timestamp(A) is not strictly smaller than timestamp(B);
+	* If timestamp(A) = T, timestamp(B) = T + 1, timestamp(A) is strictly smaller than timestamp(B);
+	* If timestamp(A) = T, timestamp(B) ≥ T + 1, timestamp(A) is strictly smaller than timestamp(B);
+	* If timestamp(A) ≥ T, timestamp(B) = T + 1, timestamp(A) is not strictly smaller than timestamp(B);
+	* If timestamp(A) ≥ T, timestamp(B) ≥ T + 1, timestamp(A) is not strictly smaller than timestamp(B).
+
+
 
 ### Examples of interval tree:
 * Add address `[18, 34)` to the *persistence-check* tree:
