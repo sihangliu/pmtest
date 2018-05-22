@@ -39,8 +39,7 @@ Fence()
 Fence()
 ... // section where timestamp = T - 1
 Fence()
-... // section where timestamp = T
-	// last section that is not followed by a fence
+... // section where timestamp = T, last section that is not followed by a fence
 ```
 Recall that the main purpose of having timestamp is to determine the *execution time* of operations, and deduce the orders of them. So we firstly go over the operation trace and divide them into sections with fences. Each section will have a single timestamp. Then, we characterize each operations as follows:
 	* `Assign(&A, sizeof(A))` in section of timestamp T means that address A will be written to memory some time ≥ T. So we mark timestamp ≥ T to address A.
