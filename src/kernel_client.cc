@@ -180,7 +180,6 @@ int read_transaction(FastVector<Metadata *> *tx)
 		if (buf->type == _TRANSACTIONDELIM) return 0;
 		if (buf->type == _ENDING) return -1;
 		tx->push_back(buf);
-		printf("pushed\n");
 	}
 	close(fd);
 }
