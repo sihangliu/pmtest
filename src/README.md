@@ -88,8 +88,8 @@ Assign(&A, 4)
 Fence()
 Assign(&B, 4)
 Flush(&A, 4)
-Persist(&A, 4)		// == true
-Order(&A, 4, &B, 4)	// == true
+Persist(&A, 4)		// == false
+Order(&A, 4, &B, 4)	// == false
 ```
 ```
 Assign(&A, 4)
@@ -98,6 +98,7 @@ Assign(&B, 4)
 Assign(&A, 4)
 Flush(&A, 4)
 Fence()
+Persist(&A, 4)		// == true
 Order(&A, 4, &B, 4)	// == false
 ```
 ```
@@ -106,14 +107,5 @@ Assign(&B, 4)
 Fence()
 Assign(&B, 4)
 Persist(&B, 4)		// == false
-Order(&A, 4, &B, 4)	// == true
-```
-```
-Assign(&A, 4)
-Fence()
-Assign(&B, 4)
-Flush(&A, 4)
-Assign(&A, 4)
-Persist(&A, 4)		// == false
 Order(&A, 4, &B, 4)	// == false
 ```
