@@ -164,7 +164,8 @@ FastVector<Metadata *> allocated;
 
 int read_transaction(FastVector<Metadata *> *tx)
 {
-	int fd = open("/proc/nvmveri", O_RDONLY);
+	// open the virtual file with default name "/proc/nvmveri"
+	int fd = open((std::string("/proc/") + PROC_NAME).c_str(), O_RDONLY);
 	printf("start reading transaction %p\n", tx);
 	if (fd == -1) {
 		assert(0 && "Cannot open NVMVeri file device");

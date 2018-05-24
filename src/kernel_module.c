@@ -100,20 +100,20 @@
 
 int existVeriInstance;
 
-static DEFINE_MUTEX(read_lock);
-static DEFINE_MUTEX(write_lock);
-
 static DECLARE_KFIFO_PTR(nvmveri_dev, Metadata);
 
 ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 	int ret;
-	unsigned int copied;
+	unsigned int copied = 0;
+	printk(KERN_INFO "@ NVMVERI: start reading\n");
 
-	if (mutex_lock_interruptible(&read_lock))
-		return -ERESTARTSYS;
-	ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
-	mutex_unlock(&read_lock);
+	// spin if reads nothing from fifo
+	while (copied == 0) {
+		ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
+	}
+	printk(KERN_INFO "@ NVMVERI: end reading\n");
+
 	return ret ? ret : copied;
 }
 
@@ -147,6 +147,7 @@ int kC_initNVMVeriDevice(void)
 		return ret;
 	}
 
+	remove_proc_entry(PROC_NAME, NULL);
 	if (proc_create(PROC_NAME, 0, NULL, &NVMVeriDeviceOps) == NULL) {
 		kfifo_free(&nvmveri_dev);
 		return -ENOMEM;
@@ -165,7 +166,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 {
 	if (existVeriInstance) {
 		Metadata input;
-        printk(KERN_INFO "@ Inside assign metadata. \n");
+		printk(KERN_INFO "@ Inside assign metadata %p %lu. \n", addr, size);
 		input.type = _ASSIGN;
 
 		//log("assign_aa\n");
@@ -173,7 +174,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 		input.assign.addr = addr;
 		input.assign.size = size;
 		kfifo_put(&nvmveri_dev, input);
-        printk(KERN_INFO "@ Complete assign metadata. \n");
+		printk(KERN_INFO "@ Complete assign metadata %p %lu. \n", addr, size);
 	}
 	else {
 		//log("assign\n");
@@ -184,13 +185,13 @@ void kC_createMetadata_TransactionDelim(void)
 {
 	if (existVeriInstance) {
 		Metadata input;
-        printk(KERN_INFO "@ Inside transactiondelim metadata. \n");
+		printk(KERN_INFO "@ Inside transactiondelim metadata. \n");
 		input.type = _TRANSACTIONDELIM;
 
 		//log("transactiondelim_aa\n");
 
 		kfifo_put(&nvmveri_dev, input);
-        printk(KERN_INFO "@ Complete transactiondelim metadata. \n");
+		printk(KERN_INFO "@ Complete transactiondelim metadata. \n");
 	}
 	else {
 		//log("transactiondelim\n");
@@ -201,13 +202,13 @@ void kC_createMetadata_Ending(void)
 {
 	if (existVeriInstance) {
 		Metadata input;
-        printk(KERN_INFO "@ Inside ending metadata. \n");
+		printk(KERN_INFO "@ Inside ending metadata. \n");
 		input.type = _ENDING;
 
 		//log("ending_aa\n");
 
 		kfifo_put(&nvmveri_dev, input);
-        printk(KERN_INFO "@ Complete ending metadata. \n");
+		printk(KERN_INFO "@ Complete ending metadata. \n");
 	}
 	else {
 		//log("ending\n");
