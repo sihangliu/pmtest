@@ -365,9 +365,6 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 		if (((*veriptr)[cur])->type == _FENCE) {
 			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)
 			for (int i = prev; i != cur; i++) {
-
-				printf("In nvmveri head %p\n", (*veriptr)[i]);
-				Metadata_print((*veriptr)[i]);
 				if (((*veriptr)[i])->type == _ASSIGN) {
 					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
@@ -392,8 +389,6 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	// processing tail value of [prev, cur):
 	// prev point to last _FENCE, cur point to veriptr->end
 	for (int i = prev; i != cur; i++) {
-		printf("In nvmveri %p\n", (*veriptr)[i]);
-		Metadata_print((*veriptr)[i]);
 		if (((*veriptr)[i])->type == _ASSIGN) {
 			VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 		}

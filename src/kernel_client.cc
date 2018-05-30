@@ -163,15 +163,13 @@ void read_datablock()
 
 FastVector<Metadata *> allocated;
 
-int read_transaction(FastVector<Metadata *> *tx)
+int read_transaction(FastVector<Metadata *> *tx, int fd)
 {
 	// open the virtual file with default name "/proc/nvmveri"
-	int fd = open((std::string("/proc/") + PROC_NAME).c_str(), O_RDONLY);
+
 	printf("start reading transaction %p\n", tx);
-	if (fd == -1) {
-		printf("Cannot open NVMVeri file device, %d", errno);
-		assert(0);
-	}
+
+
 
 	int sleeptime = 1, sleeptime_max = 512;
 	while(true) {
@@ -192,7 +190,6 @@ int read_transaction(FastVector<Metadata *> *tx)
 		if (buf->type == _ENDING) return -1;
 		tx->push_back(buf);
 	}
-	close(fd);
 }
 
 
@@ -200,15 +197,23 @@ int main(int argc, char *argv[])
 {
 	NVMVeri veriInstance;
 	FastVector<FastVector<Metadata *> *> tx_vector;
+
+	int fd = open((std::string("/proc/") + PROC_NAME).c_str(), O_RDONLY);
+	if (fd == -1) {
+		printf("NVMVeri: %d %s\n", errno, strerror(errno));
+		close(fd);
+		assert(0);
+	}
+
 	while (true) {
 		FastVector<Metadata *> *tx = new FastVector<Metadata *>;
 		printf("transaction head %p\n", tx);
-		int flag = read_transaction(tx);
+		int flag = read_transaction(tx, fd);
 		tx_vector.push_back(tx);
-		for (int i = 0; i < tx->size(); i++) {
-			printf("local ");
-			Metadata_print((*tx)[i]);
-		}
+		// for (int i = 0; i < tx->size(); i++) {
+		// 	printf("local ");
+		// 	Metadata_print((*tx)[i]);
+		// }
 		if (flag == -1) break;
 		veriInstance.execVeri(tx);
 	}
@@ -218,6 +223,8 @@ int main(int argc, char *argv[])
 		delete allocated[i];
 	for (int i = 0; i < tx_vector.size(); i++)
 		delete tx_vector[i];
+	
+	close(fd);
 
 	return 0;
 }
