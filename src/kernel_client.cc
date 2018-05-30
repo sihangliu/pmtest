@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "nvmveri.hh"
 
@@ -168,8 +169,11 @@ int read_transaction(FastVector<Metadata *> *tx)
 	int fd = open((std::string("/proc/") + PROC_NAME).c_str(), O_RDONLY);
 	printf("start reading transaction %p\n", tx);
 	if (fd == -1) {
-		assert(0 && "Cannot open NVMVeri file device");
+		printf("Cannot open NVMVeri file device, %d", errno);
+		assert(0);
 	}
+
+	int sleeptime = 1, sleeptime_max = 512;
 	while(true) {
 		Metadata *buf = new Metadata;
 		allocated.push_back(buf);
@@ -177,6 +181,12 @@ int read_transaction(FastVector<Metadata *> *tx)
 		if (result < 0) {
 			printf("NVMVeri read data error %ld\n", result);
 			assert(0);
+		}
+		if (result == 1) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
+			if (sleeptime < sleeptime_max)
+			sleeptime *= 2;
+			continue;
 		}
 		if (buf->type == _TRANSACTIONDELIM) return 0;
 		if (buf->type == _ENDING) return -1;

@@ -108,13 +108,16 @@ ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, lof
 	unsigned int copied = 0;
 	printk(KERN_INFO "@ NVMVERI: start reading\n");
 
-	// spin if reads nothing from fifo
-	while (copied == 0) {
-		ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
-	}
+	ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
+
 	printk(KERN_INFO "@ NVMVERI: end reading\n");
 
-	return ret ? ret : copied;
+	if (copied == 0)
+		return 1;
+	else if (ret != 0)
+		return ret;
+	else
+		return 0;
 }
 
 // ssize_t NVMVeriDeviceWrite(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
