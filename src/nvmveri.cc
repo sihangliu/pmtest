@@ -142,13 +142,13 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 		getResultSignal[i] = true;
 	}
 
-	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		unique_lock<mutex> lock(VeriQueueMutex[i]);
-		VeriQueueCV[i].notify_all();
-	}
 
 	// Wait until all worker threads are complete
 	while (completedThread != MAX_THREAD_POOL_SIZE) {
+		for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+			unique_lock<mutex> lock(VeriQueueMutex[i]);
+			VeriQueueCV[i].notify_all();
+		}
 	};
 
 	// Merge results
