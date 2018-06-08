@@ -1,7 +1,7 @@
 #ifndef __NVMVERI_H__
 #define __NVMVERI_H__
 
-#define METADATA_PACKET_LENGTH 10
+//#define METADATA_PACKET_LENGTH 10
 
 #ifndef NVMVERI_KERNEL_CODE
 void *C_createVeriInstance(void);
