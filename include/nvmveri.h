@@ -23,6 +23,9 @@ void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
+
+extern void *metadataManagerPtr;
+
 #endif // !NVMVERI_KERNEL_CODE
 
 #endif // __NVMVERI_H__

@@ -22,6 +22,8 @@ atomic<int> NVMVeri::completedThread;
 
 #ifndef NVMVERI_KERNEL_CODE
 void *metadataPtr;
+void *metadataManagerPtr;
+
 int existVeriInstance = 0;
 
 void Metadata_print(Metadata *m)
@@ -409,6 +411,92 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	}
 }
 
+/* Metadata Manager for multithreaded programs */
+
+metadataManager::metadataManager(int _num_threads) 
+{
+	num_threads = _num_threads;
+	metadataPtrArray = (MetadataPtrInfo*) 
+							malloc(sizeof(MetadataPtrInfo) * num_threads);
+}
+
+metadataManager::~metadataManager() 
+{
+	// lock, in case still in use
+	unique_lock<mutex> lock(metadataManagerLock);
+	free(metadataPtrArray);
+}
+
+
+// void metadataManager::addThreads(int _num_new_threads) 
+// {
+// 	unique_lock<mutex> lock(metadataManagerLock);
+// 	num_threads += _num_new_threads;
+// 	metadataPtrArray = (MetadataPtrInfo*) 
+// 							realloc(metadataPtrArray, num_threads);
+// }
+
+
+void metadataManager::registerThread() 
+{
+	unique_lock<mutex> lock(metadataManagerLock);
+	// find the next available metadataPtrArray entry;
+	int i = 0;
+	for (; i < num_threads; ++i) {
+		if (metadataPtrArray[i].valid != true) {
+			metadataPtrArray[i].valid = true;
+			metadataPtrArray[i].tid = gettid();
+			break;
+		}
+	}
+	// Raise error and exist if no space left
+	if (i == num_threads) 
+		assert(0 && "Insuffcient metadataPtr entries");
+	// Create more entries if no space left
+	// if (i == num_threads) {
+		// addThreads(num_threads * 2);
+	// }
+}
+
+void metadataManager::setExistVeriInstance() {
+	int cur_tid = gettid();
+	int i = 0;
+	for (; i < num_threads; ++i) {
+		if (metadataPtrArray[i].tid == cur_tid) {
+			metadataPtrArray[i].existVeriInstance = true;
+			break;
+		}
+	}
+	if (i == num_threads)
+		assert(0 && "setExistVeriInstance: Metadata Manager cannot find thread id");
+}
+
+void metadataManager::unsetExistVeriInstance() {
+	int cur_tid = gettid();
+	int i = 0;
+	for (; i < num_threads; ++i) {
+		if (metadataPtrArray[i].tid == cur_tid) {
+			metadataPtrArray[i].existVeriInstance = false;
+			break;
+		}
+	}
+	if (i == num_threads)
+		assert(0 && "unsetExistVeriInstance: Metadata Manager cannot find thread id");
+}
+
+void* metadataManager::getMetadataPtr() {
+	int cur_tid = gettid();
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrArray[i].tid == cur_tid) {
+			return metadataPtrArray[i].metadataPtr;
+		}
+	}
+	assert(0 && "getMetadataPtr: Metadata Manager cannot find thread id");
+	return NULL;
+}
+
+/* C program interface */
+
 void *C_createVeriInstance()
 {
 	NVMVeri *result = new NVMVeri();
@@ -587,5 +675,7 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		//log("order\n");
 	}
 }
+
+
 
 #endif // !NVMVERI_KERNEL_CODE

@@ -7,8 +7,22 @@ using std::queue;
 #include <mutex>
 using std::mutex;
 using std::unique_lock;
-
 #include <cstdlib>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#define gettid() syscall(SYS_gettid)
+
+/*
+#define gettid(pid) ( \
+    asm volatile( \
+    "mov $20, %%eax\n\t" \
+    "int $0x80\n\t" \
+    "mov %%eax, %0\n\t" \
+    :"=m"(pid) \
+    ); \
+)
+*/
 
 class Timer {
 public:
@@ -113,6 +127,5 @@ int FastVector<T>::size()
 {
 	return cur_size;
 }
-
 
 #endif // __COMMON__HH__

@@ -122,9 +122,34 @@ using namespace boost::icl;
 
 #include "common.hh"
 
-#define MAX_THREAD_POOL_SIZE 4
+#define MAX_THREAD_POOL_SIZE 1
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
+
+
+typedef struct {
+	int tid;
+	bool valid;
+	bool existVeriInstance;
+	void* metadataPtr;
+} MetadataPtrInfo;
+
+class metadataManager {
+public:
+	MetadataPtrInfo *metadataPtrArray;
+	int num_threads;
+	// Mutex for metadataPtrArray
+	mutex metadataManagerLock;
+
+	metadataManager(int);
+	~metadataManager();
+
+	// void addThreads(int);
+	void registerThread();
+	void setExistVeriInstance();
+	void unsetExistVeriInstance();
+	void* getMetadataPtr();
+};
 
 template <typename Type> struct inplace_assign: public identity_based_inplace_combine<Type>
 {
@@ -229,5 +254,7 @@ extern "C" void C_createMetadata_Persist(void *, void *, size_t);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
 extern void *metadataPtr;
+extern void* metadataManagerPtr;
+
 #endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__
