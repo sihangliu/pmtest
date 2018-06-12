@@ -24,6 +24,7 @@ atomic<int> NVMVeri::completedThread;
 void *metadataPtr;
 void *metadataManagerPtr;
 
+__thread int thread_id;
 int existVeriInstance = 0;
 
 void Metadata_print(Metadata *m)
@@ -445,26 +446,30 @@ metadataManager::~metadataManager()
 void metadataManager::registerThread() 
 {
 	unique_lock<mutex> lock(metadataManagerLock);
+	metadataPtrInfoArray[cur_num_threads].valid = true;
+	thread_id = cur_num_threads;
+	cur_num_threads++;
+
 	// find the next available metadataPtrArray entry;
-	for (int i = 0; i < num_threads; ++i) {
+	//for (int i = 0; i < num_threads; ++i) {
+		/*
 		if (metadataPtrInfoArray[i].valid != true) {
 			metadataPtrInfoArray[i].valid = true;
-			metadataPtrInfoArray[i].tid = gettid();
-			metadataPtrInfoArray[i].threadIndex = cur_num_threads;
+			//metadataPtrInfoArray[i].tid = gettid();
+			//metadataPtrInfoArray[i].threadIndex = cur_num_threads;
 
-			pthread_setname_np(pthread_self(), 
-					string(1, 'A' + cur_num_threads).c_str());
+			//pthread_setname_np(pthread_self(), 
+			//		string(1, 'A' + cur_num_threads).c_str());
+			thread_id = cur_num_threads;
 
-			char checkname[16];
-			pthread_getname_np(pthread_self(), checkname, 16);
-			printf("Check thread name: %s\n", checkname);
 			cur_num_threads++;
-			//printf("tid=%ld\n", gettid());
+			// printf("tid=%d\n", thread_id);
 			return;
 		}
-	}
+		*/
+	//}
 	// Raise error and exist if no space left
-	assert(0 && "registerThread: Insuffcient metadataPtr entries");
+	//assert(0 && "registerThread: Insuffcient metadataPtr entries");
 	// Create more entries if no space left
 	// if (i == num_threads) {
 		// addThreads(num_threads * 2);
@@ -473,6 +478,9 @@ void metadataManager::registerThread()
 
 void metadataManager::setExistVeriInstance() 
 {
+	//int thread_id = getThreadID();
+	metadataPtrInfoArray[thread_id].existVeriInstance = true;
+	/*
 	int cur_tid = gettid();
 	for (int i = 0; i < num_threads; ++i) {
 		if (metadataPtrInfoArray[i].tid == cur_tid) {
@@ -481,10 +489,14 @@ void metadataManager::setExistVeriInstance()
 		}
 	}
 	assert(0 && "setExistVeriInstance: Metadata Manager cannot find thread id");
+	*/
 }
 
 void metadataManager::unsetExistVeriInstance() 
 {
+	//int thread_id = getThreadID();
+	metadataPtrInfoArray[thread_id].existVeriInstance = false;
+	/*
 	int cur_tid = gettid();
 	for (int i = 0; i < num_threads; ++i) {
 		if (metadataPtrInfoArray[i].tid == cur_tid) {
@@ -493,10 +505,20 @@ void metadataManager::unsetExistVeriInstance()
 		}
 	}
 	assert(0 && "unsetExistVeriInstance: Metadata Manager cannot find thread id");
+	*/
 }
 
 void metadataManager::incrMetadataVectorCurIndex() 
 {
+	//int thread_id = getThreadID();
+	printf("Increment Index in thread %d\n", thread_id);
+	++metadataPtrInfoArray[thread_id].metadataVectorCurIndex;
+	metadataPtrInfoArray[thread_id].metadataPtr 
+			= metadataPtrInfoArray[thread_id].metadataVectorArrayPtr[metadataPtrInfoArray[thread_id].metadataVectorCurIndex];
+
+	//printf("incrIndex: %d\n", metadataPtrInfoArray[cur_thread_id].metadataVectorCurIndex);
+
+	/*
 	int cur_tid = gettid();
 	for (int i = 0; i < num_threads; ++i) {
 		if (metadataPtrInfoArray[i].tid == cur_tid) {
@@ -509,10 +531,17 @@ void metadataManager::incrMetadataVectorCurIndex()
 		}
 	}
 	assert(0 && "incrMetadataVectorCurIndex: Metadata Manager cannot find thread id");
+	*/
 }
 
 void metadataManager::resetMetadataVectorCurIndex() 
 {
+	//int thread_id = getThreadID();
+	metadataPtrInfoArray[thread_id].metadataVectorCurIndex = 0;
+	metadataPtrInfoArray[thread_id].metadataPtr 
+			= metadataPtrInfoArray[thread_id].metadataVectorArrayPtr[0];
+
+	/*
 	int cur_tid = gettid();
 	for (int i = 0; i < num_threads; ++i) {
 		if (metadataPtrInfoArray[i].tid == cur_tid) {
@@ -523,8 +552,10 @@ void metadataManager::resetMetadataVectorCurIndex()
 		}
 	}
 	assert(0 && "resetMetadataVectorCurIndex: Metadata Manager cannot find thread id");
+	*/
 }
 
+/*
 int metadataManager::getCurThreadIndex()
 {
 	int cur_tid = gettid();
@@ -540,9 +571,13 @@ int metadataManager::getCurThreadIndex()
 	assert(0 && "getCurThreadIndex: Metadata Manager cannot find thread id");
 	return -1;
 }
+*/
 
 MetadataPtrInfo* metadataManager::getMetadataPtrInfo() 
 {
+	//int thread_id = getThreadID();
+	return &metadataPtrInfoArray[thread_id];
+	/*
 	int cur_tid = gettid();
 	for (int i = 0; i < num_threads; ++i) {
 		if (metadataPtrInfoArray[i].tid == cur_tid) {
@@ -551,10 +586,15 @@ MetadataPtrInfo* metadataManager::getMetadataPtrInfo()
 	}
 	assert(0 && "getMetadataPtrInfo: Metadata Manager cannot find thread id");
 	return NULL;
+	*/
 }
 
 
 /* C programming interface for Metadata Manager */
+int C_getThreadID()
+{
+	return thread_id;
+}
 
 void *C_createMetadataManager(int num_threads) 
 {
@@ -611,10 +651,12 @@ void C_resetMetadataVectorCurIndex(void *metadataManagerPtr)
 	((metadataManager*)metadataManagerPtr)->resetMetadataVectorCurIndex();
 }
 
+/*
 int C_getCurThreadIndex(void *metadataManagerPtr)
 {
 	return (((metadataManager*)metadataManagerPtr)->getCurThreadIndex());
 }
+*/
 
 /* C programming interface for Nvmveri */
 
@@ -659,6 +701,7 @@ void C_deleteMetadataVector(void *victim)
 	}
 }
 
+
 /*
 void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, size_t size)
 {
@@ -679,7 +722,6 @@ void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, s
 	}
 }
 */
-
 
 void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 {
@@ -708,6 +750,7 @@ void C_createMetadata_Assign_MultiThread(void *metadata_manager, void *addr, siz
 			m->type = _ASSIGN;
 
 			//log("assign_aa\n");
+			printf("Assign in thread %d\n", thread_id);
 
 			m->assign.addr = addr;
 			m->assign.size = size;

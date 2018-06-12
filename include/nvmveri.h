@@ -22,7 +22,8 @@ void C_setExistVeriInstance(void *);
 void C_unsetExistVeriInstance(void *);
 void C_incrMetadataVectorCurIndex(void *);
 void C_resetMetadataVectorCurIndex(void *);
-int C_getCurThreadIndex(void *);
+//int C_getCurThreadIndex(void *);
+int C_getThreadID(void);
 
 /* Nvmveri */
 void *C_createMetadataVector(void);
@@ -48,6 +49,7 @@ void C_createMetadata_Order_MultiThread(void *, void *, size_t, void *, size_t);
 extern void* metadataPtr;
 extern int existVeriInstance;
 
+//extern __thread int thread_id;
 extern void *metadataManagerPtr;
 
 #endif // !NVMVERI_KERNEL_CODE

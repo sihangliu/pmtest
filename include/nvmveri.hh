@@ -122,14 +122,14 @@ using namespace boost::icl;
 
 #include "common.hh"
 
-#define MAX_THREAD_POOL_SIZE 4
+#define MAX_THREAD_POOL_SIZE 1
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 
 
 typedef struct {
-	int tid;		  // system thread_id
-	int threadIndex; // 0, 1 , 2 ...#threads
+	//int tid;		  // system thread_id
+	//int threadIndex; // 0, 1 , 2 ...#threads
 	int metadataVectorCurIndex;
 	bool valid;
 	bool existVeriInstance;
@@ -256,7 +256,8 @@ extern "C" void C_setExistVeriInstance(void *);
 extern "C" void C_unsetExistVeriInstance(void *);
 extern "C" void C_incrMetadataVectorCurIndex(void *);
 extern "C" void C_resetMetadataVectorCurIndex(void *);
-extern "C" int C_getCurThreadIndex(void *);
+//extern "C" int C_getCurThreadIndex(void *);
+extern "C" int C_getThreadID(void);
 
 /* Nvmveri */
 extern "C" void *C_createVeriInstance();
@@ -286,6 +287,7 @@ extern "C" void C_createMetadata_Order_MultiThread(void *, void *, size_t, void 
 
 extern void *metadataPtr;
 extern void *metadataManagerPtr;
+//extern __thread int thread_id;
 
 #endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__

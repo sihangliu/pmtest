@@ -1,6 +1,6 @@
 CC			:= -gcc
 CXX			:= -g++-4.8
-CFLAGS		:= -fPIC
+CFLAGS		:= -fPIC -std=c11
 CXXFLAGS	:= -std=c++11 -fPIC#-pedantic-errors -Wall -Wextra -Werror
 LDFLAGS		:= -L/usr/lib -lstdc++ -lm -pthread
 INCLUDE		:= -Iinclude/
@@ -13,18 +13,20 @@ KERNEL_DIR	:= /lib/modules/$(shell uname -r)/build
 
 SRC_DIR		:= ./src
 
+DYNAMICLINK_OBJECT	:= $(addprefix $(OBJ_DIR)/, nvmveri.o common.o)
+
 UNIT_TEST			:= nvmveri_test
 UNIT_TEST_OBJECT	:= $(addprefix $(OBJ_DIR)/, main.o nvmveri.o test.o common.o)
 
 KERNEL_CLIENT			:= nvmveri_kernel_client
-KERNEL_CLIENT_OBJECT	:= $(addprefix $(OBJ_DIR)/, kernel_client.o nvmveri.o)
+KERNEL_CLIENT_OBJECT	:= $(addprefix $(OBJ_DIR)/, kernel_client.o nvmveri.o common.o)
 
 all: build $(APP_DIR)/$(UNIT_TEST) $(APP_DIR)/$(KERNEL_CLIENT) buildlib
 
-buildlib: $(OBJ_DIR)/nvmveri.o
+buildlib: $(DYNAMICLINK_OBJECT)
 	@mkdir -p $(@D)
-	ar -cvq $(LIB_DIR)/libnvmveri.a $(<D)/nvmveri.o
-	$(CXX) -shared -o $(LIB_DIR)/libnvmveri.so $(<D)/nvmveri.o
+	ar -cvq $(LIB_DIR)/libnvmveri.a $(DYNAMICLINK_OBJECT)
+	$(CXX) -shared -o $(LIB_DIR)/libnvmveri.so $(DYNAMICLINK_OBJECT)
 
 test: $(APP_DIR)/$(UNIT_TEST)
 

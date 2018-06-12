@@ -12,7 +12,6 @@ using std::unique_lock;
 #include <unistd.h>
 #include <sys/syscall.h>
 //#define gettid() syscall(SYS_gettid)
-#define gettid() pthread_self()
 /*
 #define gettid(pid) ( \
     asm volatile( \
@@ -127,5 +126,14 @@ int FastVector<T>::size()
 {
 	return cur_size;
 }
+
+/*
+inline int getThreadID()
+{
+	char name[16];
+	pthread_getname_np(pthread_self(), name, 16);
+	return (name[0] - 'A');
+}
+*/
 
 #endif // __COMMON__HH__
