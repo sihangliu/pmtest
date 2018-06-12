@@ -121,7 +121,7 @@ bool NVMVeri::termVeri()
 // execute verification of input
 bool NVMVeri::execVeri(FastVector<Metadata *> *input)
 {
-
+	//printf("@execVeri\n");
 	unique_lock<mutex> lock(VeriQueueMutex[assignTo]);
 	VeriQueue[assignTo].push(input);
 	lock.unlock();
@@ -416,15 +416,20 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 metadataManager::metadataManager(int _num_threads) 
 {
 	num_threads = _num_threads;
-	metadataPtrArray = (MetadataPtrInfo*) 
-							malloc(sizeof(MetadataPtrInfo) * num_threads);
+	cur_num_threads = 0;
+	metadataPtrInfoArray = new MetadataPtrInfo[num_threads];
+	for (int i = 0; i < num_threads; ++i) {
+		metadataPtrInfoArray[i].metadataVectorCurIndex = 0;
+		metadataPtrInfoArray[i].valid = false;
+		metadataPtrInfoArray[i].existVeriInstance = false;
+	}
 }
 
 metadataManager::~metadataManager() 
 {
 	// lock, in case still in use
 	unique_lock<mutex> lock(metadataManagerLock);
-	free(metadataPtrArray);
+	delete[] metadataPtrInfoArray;
 }
 
 
@@ -432,8 +437,8 @@ metadataManager::~metadataManager()
 // {
 // 	unique_lock<mutex> lock(metadataManagerLock);
 // 	num_threads += _num_new_threads;
-// 	metadataPtrArray = (MetadataPtrInfo*) 
-// 							realloc(metadataPtrArray, num_threads);
+// 	metadataPtrInfoArray = (MetadataPtrInfo*) 
+// 							realloc(metadataPtrInfoArray, num_threads);
 // }
 
 
@@ -441,61 +446,177 @@ void metadataManager::registerThread()
 {
 	unique_lock<mutex> lock(metadataManagerLock);
 	// find the next available metadataPtrArray entry;
-	int i = 0;
-	for (; i < num_threads; ++i) {
-		if (metadataPtrArray[i].valid != true) {
-			metadataPtrArray[i].valid = true;
-			metadataPtrArray[i].tid = gettid();
-			break;
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrInfoArray[i].valid != true) {
+			metadataPtrInfoArray[i].valid = true;
+			metadataPtrInfoArray[i].tid = gettid();
+			metadataPtrInfoArray[i].threadIndex = cur_num_threads;
+
+			pthread_setname_np(pthread_self(), 
+					string(1, 'A' + cur_num_threads).c_str());
+
+			char checkname[16];
+			pthread_getname_np(pthread_self(), checkname, 16);
+			printf("Check thread name: %s\n", checkname);
+			cur_num_threads++;
+			//printf("tid=%ld\n", gettid());
+			return;
 		}
 	}
 	// Raise error and exist if no space left
-	if (i == num_threads) 
-		assert(0 && "Insuffcient metadataPtr entries");
+	assert(0 && "registerThread: Insuffcient metadataPtr entries");
 	// Create more entries if no space left
 	// if (i == num_threads) {
 		// addThreads(num_threads * 2);
 	// }
 }
 
-void metadataManager::setExistVeriInstance() {
-	int cur_tid = gettid();
-	int i = 0;
-	for (; i < num_threads; ++i) {
-		if (metadataPtrArray[i].tid == cur_tid) {
-			metadataPtrArray[i].existVeriInstance = true;
-			break;
-		}
-	}
-	if (i == num_threads)
-		assert(0 && "setExistVeriInstance: Metadata Manager cannot find thread id");
-}
-
-void metadataManager::unsetExistVeriInstance() {
-	int cur_tid = gettid();
-	int i = 0;
-	for (; i < num_threads; ++i) {
-		if (metadataPtrArray[i].tid == cur_tid) {
-			metadataPtrArray[i].existVeriInstance = false;
-			break;
-		}
-	}
-	if (i == num_threads)
-		assert(0 && "unsetExistVeriInstance: Metadata Manager cannot find thread id");
-}
-
-void* metadataManager::getMetadataPtr() {
+void metadataManager::setExistVeriInstance() 
+{
 	int cur_tid = gettid();
 	for (int i = 0; i < num_threads; ++i) {
-		if (metadataPtrArray[i].tid == cur_tid) {
-			return metadataPtrArray[i].metadataPtr;
+		if (metadataPtrInfoArray[i].tid == cur_tid) {
+			metadataPtrInfoArray[i].existVeriInstance = true;
+			return;
 		}
 	}
-	assert(0 && "getMetadataPtr: Metadata Manager cannot find thread id");
+	assert(0 && "setExistVeriInstance: Metadata Manager cannot find thread id");
+}
+
+void metadataManager::unsetExistVeriInstance() 
+{
+	int cur_tid = gettid();
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrInfoArray[i].tid == cur_tid) {
+			metadataPtrInfoArray[i].existVeriInstance = false;
+			return;
+		}
+	}
+	assert(0 && "unsetExistVeriInstance: Metadata Manager cannot find thread id");
+}
+
+void metadataManager::incrMetadataVectorCurIndex() 
+{
+	int cur_tid = gettid();
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrInfoArray[i].tid == cur_tid) {
+			int index = ++(metadataPtrInfoArray[i].metadataVectorCurIndex);
+			metadataPtrInfoArray[i].metadataPtr 
+					= metadataPtrInfoArray[i].metadataVectorArrayPtr[index];
+
+			//printf("CurIndex=%d\n", metadataPtrInfoArray[i].metadataVectorCurIndex);
+			return;
+		}
+	}
+	assert(0 && "incrMetadataVectorCurIndex: Metadata Manager cannot find thread id");
+}
+
+void metadataManager::resetMetadataVectorCurIndex() 
+{
+	int cur_tid = gettid();
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrInfoArray[i].tid == cur_tid) {
+			metadataPtrInfoArray[i].metadataVectorCurIndex = 0;
+			metadataPtrInfoArray[i].metadataPtr 
+					= metadataPtrInfoArray[i].metadataVectorArrayPtr[0];
+			return;
+		}
+	}
+	assert(0 && "resetMetadataVectorCurIndex: Metadata Manager cannot find thread id");
+}
+
+int metadataManager::getCurThreadIndex()
+{
+	int cur_tid = gettid();
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrInfoArray[i].tid == cur_tid) {
+			// TODO: in the current version, threadIndex = i,
+			// because we did not implememnt thread termination.
+			// However, if a thread gets deleted and replaced by another, 
+			// threadIndex will be differente.
+			return metadataPtrInfoArray[i].threadIndex;
+		}
+	}
+	assert(0 && "getCurThreadIndex: Metadata Manager cannot find thread id");
+	return -1;
+}
+
+MetadataPtrInfo* metadataManager::getMetadataPtrInfo() 
+{
+	int cur_tid = gettid();
+	for (int i = 0; i < num_threads; ++i) {
+		if (metadataPtrInfoArray[i].tid == cur_tid) {
+			return &metadataPtrInfoArray[i];
+		}
+	}
+	assert(0 && "getMetadataPtrInfo: Metadata Manager cannot find thread id");
 	return NULL;
 }
 
-/* C program interface */
+
+/* C programming interface for Metadata Manager */
+
+void *C_createMetadataManager(int num_threads) 
+{
+	return new metadataManager(num_threads);
+}
+
+void C_deleteMetadataManager(void *metadataManagerPtr) 
+{
+	delete (metadataManager*)metadataManagerPtr;
+}
+
+void C_registerThread(void *metadataManagerPtr) {
+	((metadataManager*) metadataManagerPtr)->registerThread();
+}
+
+void C_setExistVeriInstance(void *metadataManagerPtr) {
+	((metadataManager*) metadataManagerPtr)->setExistVeriInstance();
+}
+
+void C_unsetExistVeriInstance(void *metadataManagerPtr) {
+	((metadataManager*) metadataManagerPtr)->unsetExistVeriInstance();
+}
+
+void C_setMetadataPtrInfoArray(void *metadataManagerPtr, int index, void **metadataVectorArrayPtr)
+{
+	((metadataManager*)metadataManagerPtr)->metadataPtrInfoArray[index].metadataVectorArrayPtr
+			= metadataVectorArrayPtr;
+}
+
+int C_getMetadataVectorCurIndex(void *metadataManagerPtr)
+{
+	return (((metadataManager*)metadataManagerPtr)->getMetadataPtrInfo())->metadataVectorCurIndex;
+}
+
+void** C_getMetadataVectorArrayPtr(void *metadataManagerPtr)
+{
+	return (((metadataManager*)metadataManagerPtr)->getMetadataPtrInfo())->metadataVectorArrayPtr;
+}
+
+void* C_getMetadataVectorCurPtr(void *metadataManagerPtr)
+{
+	MetadataPtrInfo* info = 
+			((metadataManager*) metadataManagerPtr)->getMetadataPtrInfo();
+	return info->metadataVectorArrayPtr[info->metadataVectorCurIndex];
+}
+
+void C_incrMetadataVectorCurIndex(void *metadataManagerPtr) 
+{
+	((metadataManager*)metadataManagerPtr)->incrMetadataVectorCurIndex();
+}
+
+void C_resetMetadataVectorCurIndex(void *metadataManagerPtr)
+{
+	((metadataManager*)metadataManagerPtr)->resetMetadataVectorCurIndex();
+}
+
+int C_getCurThreadIndex(void *metadataManagerPtr)
+{
+	return (((metadataManager*)metadataManagerPtr)->getCurThreadIndex());
+}
+
+/* C programming interface for Nvmveri */
 
 void *C_createVeriInstance()
 {
@@ -523,15 +644,12 @@ void C_getVeri(void *veriInstance, void *veriResult)
 	// TODO: cast veriResult
 }
 
-
-
 void *C_createMetadataVector()
 {
 	FastVector<Metadata *> *vec= new FastVector<Metadata *>;
 	//vec->reserve(100);
 	return (void *)(vec);
 }
-
 
 void C_deleteMetadataVector(void *victim)
 {
@@ -580,6 +698,27 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 	}
 }
 
+void C_createMetadata_Assign_MultiThread(void *metadata_manager, void *addr, size_t size)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _ASSIGN;
+
+			//log("assign_aa\n");
+
+			m->assign.addr = addr;
+			m->assign.size = size;
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("assign\n");
+		}
+	}
+}
+
 
 void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 {
@@ -597,6 +736,26 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 	}
 }
 
+void C_createMetadata_Flush_MultiThread(void *metadata_manager, void *addr, size_t size)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _FLUSH;
+
+			//log("flush_aa\n");
+			m->flush.addr = addr;
+			m->flush.size = size;
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("flush\n");
+		}
+	}
+}
+
 
 void C_createMetadata_Commit(void *metadata_vector)
 {
@@ -608,6 +767,24 @@ void C_createMetadata_Commit(void *metadata_vector)
 	}
 	else {
 		//log("commit\n");
+	}
+}
+
+
+void C_createMetadata_Commit_MultiThread(void *metadata_manager)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _COMMIT;
+
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("commit\n");
+		}
 	}
 }
 
@@ -627,6 +804,25 @@ void C_createMetadata_Barrier(void *metadata_vector)
 }
 
 
+void C_createMetadata_Barrier_MultiThread(void *metadata_manager)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _BARRIER;
+
+			//log("flush_aa\n");
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("barrier\n");
+		}
+	}
+}
+
+
 void C_createMetadata_Fence(void *metadata_vector)
 {
 	if (existVeriInstance) {
@@ -640,6 +836,25 @@ void C_createMetadata_Fence(void *metadata_vector)
 		//log("fence\n");
 	}
 }
+
+void C_createMetadata_Fence_MultiThread(void *metadata_manager)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _FENCE;
+			//log("fence_aa\n");
+
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("fence\n");
+		}
+	}
+}
+
 
 void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 {
@@ -657,6 +872,28 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 		//log("persist\n");
 	}
 }
+
+void C_createMetadata_Persist_MultiThread(void *metadata_manager, void *addr, size_t size)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _PERSIST;
+
+			//log("persist_aa\n");
+			m->persist.addr = addr;
+			m->persist.size = size;
+
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("persist\n");
+		}
+	}
+}
+
 
 void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t early_size, void *late_addr, size_t late_size)
 {
@@ -676,6 +913,28 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 	}
 }
 
+
+void C_createMetadata_Order_MultiThread(void *metadata_manager, void *early_addr, size_t early_size, void *late_addr, size_t late_size)
+{
+	if (metadata_manager) {
+		MetadataPtrInfo* info = 
+			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
+		if (info->existVeriInstance) {
+			Metadata *m = new Metadata;
+			m->type = _ORDER;
+			m->order.early_addr = early_addr;
+			m->order.early_size = early_size;
+			m->order.late_addr = late_addr;
+			m->order.late_size = late_size;
+
+			//log("order_aa\n");
+			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
+		}
+		else {
+			//log("order\n");
+		}
+	}
+}
 
 
 #endif // !NVMVERI_KERNEL_CODE

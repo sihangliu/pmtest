@@ -122,22 +122,26 @@ using namespace boost::icl;
 
 #include "common.hh"
 
-#define MAX_THREAD_POOL_SIZE 1
+#define MAX_THREAD_POOL_SIZE 4
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 
 
 typedef struct {
-	int tid;
+	int tid;		  // system thread_id
+	int threadIndex; // 0, 1 , 2 ...#threads
+	int metadataVectorCurIndex;
 	bool valid;
 	bool existVeriInstance;
 	void* metadataPtr;
+	void** metadataVectorArrayPtr;
 } MetadataPtrInfo;
 
 class metadataManager {
 public:
-	MetadataPtrInfo *metadataPtrArray;
+	MetadataPtrInfo *metadataPtrInfoArray;
 	int num_threads;
+	int cur_num_threads;
 	// Mutex for metadataPtrArray
 	mutex metadataManagerLock;
 
@@ -148,7 +152,10 @@ public:
 	void registerThread();
 	void setExistVeriInstance();
 	void unsetExistVeriInstance();
-	void* getMetadataPtr();
+	void incrMetadataVectorCurIndex();
+	void resetMetadataVectorCurIndex();
+	int getCurThreadIndex();
+	MetadataPtrInfo* getMetadataPtrInfo();
 };
 
 template <typename Type> struct inplace_assign: public identity_based_inplace_combine<Type>
@@ -237,6 +244,21 @@ public:
 	//bool assignTask(tid_t);
 };
 
+/* Metadata manager */
+extern "C" void *C_createMetadataManager(int);
+extern "C" void C_deleteMetadataManager(void *);
+extern "C" void C_setMetadataPtrInfoArray(void *, int, void **);
+extern "C" int C_getMetadataVectorCurIndex(void *);
+extern "C" void** C_getMetadataVectorArrayPtr(void *);
+extern "C" void* C_getMetadataVectorCurPtr(void *metadataManagerPtr);
+extern "C" void C_registerThread(void *);
+extern "C" void C_setExistVeriInstance(void *);
+extern "C" void C_unsetExistVeriInstance(void *);
+extern "C" void C_incrMetadataVectorCurIndex(void *);
+extern "C" void C_resetMetadataVectorCurIndex(void *);
+extern "C" int C_getCurThreadIndex(void *);
+
+/* Nvmveri */
 extern "C" void *C_createVeriInstance();
 extern "C" void C_deleteVeriInstance(void *);
 extern "C" void C_execVeri(void *, void *);
@@ -253,8 +275,17 @@ extern "C" void C_createMetadata_Fence(void *);
 extern "C" void C_createMetadata_Persist(void *, void *, size_t);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
 
+/* Multithread supported version */
+extern "C" void C_createMetadata_Assign_MultiThread(void *, void *, size_t);
+extern "C" void C_createMetadata_Flush_MultiThread(void *, void *, size_t);
+extern "C" void C_createMetadata_Commit_MultiThread(void *);
+extern "C" void C_createMetadata_Barrier_MultiThread(void *);
+extern "C" void C_createMetadata_Fence_MultiThread(void *);
+extern "C" void C_createMetadata_Persist_MultiThread(void *, void *, size_t);
+extern "C" void C_createMetadata_Order_MultiThread(void *, void *, size_t, void *, size_t);
+
 extern void *metadataPtr;
-extern void* metadataManagerPtr;
+extern void *metadataManagerPtr;
 
 #endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__

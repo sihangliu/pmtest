@@ -11,8 +11,8 @@ using std::unique_lock;
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/syscall.h>
-#define gettid() syscall(SYS_gettid)
-
+//#define gettid() syscall(SYS_gettid)
+#define gettid() pthread_self()
 /*
 #define gettid(pid) ( \
     asm volatile( \
