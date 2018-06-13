@@ -511,7 +511,7 @@ void metadataManager::unsetExistVeriInstance()
 void metadataManager::incrMetadataVectorCurIndex() 
 {
 	//int thread_id = getThreadID();
-	printf("Increment Index in thread %d\n", thread_id);
+	//printf("Increment Index in thread %d\n", thread_id);
 	++metadataPtrInfoArray[thread_id].metadataVectorCurIndex;
 	metadataPtrInfoArray[thread_id].metadataPtr 
 			= metadataPtrInfoArray[thread_id].metadataVectorArrayPtr[metadataPtrInfoArray[thread_id].metadataVectorCurIndex];
@@ -622,6 +622,8 @@ void C_setMetadataPtrInfoArray(void *metadataManagerPtr, int index, void **metad
 {
 	((metadataManager*)metadataManagerPtr)->metadataPtrInfoArray[index].metadataVectorArrayPtr
 			= metadataVectorArrayPtr;
+
+	((metadataManager*)metadataManagerPtr)->metadataPtrInfoArray[index].metadataPtr = metadataVectorArrayPtr[0];
 }
 
 int C_getMetadataVectorCurIndex(void *metadataManagerPtr)
@@ -750,10 +752,13 @@ void C_createMetadata_Assign_MultiThread(void *metadata_manager, void *addr, siz
 			m->type = _ASSIGN;
 
 			//log("assign_aa\n");
-			printf("Assign in thread %d\n", thread_id);
+			//printf("Assign in thread %d\n", thread_id);
 
 			m->assign.addr = addr;
 			m->assign.size = size;
+
+			//assert(info->metadataPtr && "metadataPtr is NULL");
+
 			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
 		}
 		else {
