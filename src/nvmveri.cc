@@ -471,27 +471,6 @@ void C_getNewMetadataPtr() {
 	nvmveri_cur_idx++;
 }
 
-/*
-void C_createMetadata_OpInfo(void *metadata_vector, char *name, void *address, size_t size)
-{
-	if (existVeriInstance) {
-	Metadata *m = new Metadata;
-	m->type = _OPINFO;
-
-	strcpy(m->op.opName, name);
-	m->op.address = (unsigned long long)address;
-	m->op.size = size;
-
-	//log("opinfo_aa\n");
-
-	((FastVector<Metadata *> *)metadata_vector)->push_back(m);
-	}
-	else {
-		//log("opinfo\n");
-	}
-}
-*/
-
 void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 {
 	if (existVeriInstance) {
@@ -509,33 +488,6 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 	// }
 }
 
-/*
-void C_createMetadata_Assign_MultiThread(void *metadata_manager, void *addr, size_t size)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _ASSIGN;
-
-			//log("assign_aa\n");
-			//printf("Assign in thread %d\n", thread_id);
-
-			m->assign.addr = addr;
-			m->assign.size = size;
-
-			//assert(info->metadataPtr && "metadataPtr is NULL");
-
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("assign\n");
-		}
-	}
-}
-*/
-
 void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 {
 	if (existVeriInstance) {
@@ -552,27 +504,6 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 	// }
 }
 
-/*
-void C_createMetadata_Flush_MultiThread(void *metadata_manager, void *addr, size_t size)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _FLUSH;
-
-			//log("flush_aa\n");
-			m->flush.addr = addr;
-			m->flush.size = size;
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("flush\n");
-		}
-	}
-}
-*/
 
 void C_createMetadata_Commit(void *metadata_vector)
 {
@@ -587,24 +518,6 @@ void C_createMetadata_Commit(void *metadata_vector)
 	// }
 }
 
-/*
-void C_createMetadata_Commit_MultiThread(void *metadata_manager)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _COMMIT;
-
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("commit\n");
-		}
-	}
-}
-*/
 
 void C_createMetadata_Barrier(void *metadata_vector)
 {
@@ -620,25 +533,6 @@ void C_createMetadata_Barrier(void *metadata_vector)
 	// }
 }
 
-/*
-void C_createMetadata_Barrier_MultiThread(void *metadata_manager)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _BARRIER;
-
-			//log("flush_aa\n");
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("barrier\n");
-		}
-	}
-}
-*/
 
 void C_createMetadata_Fence(void *metadata_vector)
 {
@@ -654,25 +548,6 @@ void C_createMetadata_Fence(void *metadata_vector)
 	// }
 }
 
-/*
-void C_createMetadata_Fence_MultiThread(void *metadata_manager)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _FENCE;
-			//log("fence_aa\n");
-
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("fence\n");
-		}
-	}
-}
-*/
 
 void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 {
@@ -691,28 +566,6 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 	// }
 }
 
-/*
-void C_createMetadata_Persist_MultiThread(void *metadata_manager, void *addr, size_t size)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _PERSIST;
-
-			//log("persist_aa\n");
-			m->persist.addr = addr;
-			m->persist.size = size;
-
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("persist\n");
-		}
-	}
-}
-*/
 
 void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t early_size, void *late_addr, size_t late_size)
 {
@@ -732,28 +585,5 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 	// }
 }
 
-/*
-void C_createMetadata_Order_MultiThread(void *metadata_manager, void *early_addr, size_t early_size, void *late_addr, size_t late_size)
-{
-	if (metadata_manager) {
-		MetadataPtrInfo* info = 
-			((metadataManager*) metadata_manager)->getMetadataPtrInfo();
-		if (info->existVeriInstance) {
-			Metadata *m = new Metadata;
-			m->type = _ORDER;
-			m->order.early_addr = early_addr;
-			m->order.early_size = early_size;
-			m->order.late_addr = late_addr;
-			m->order.late_size = late_size;
-
-			//log("order_aa\n");
-			((FastVector<Metadata *> *)(info->metadataPtr))->push_back(m);
-		}
-		else {
-			//log("order\n");
-		}
-	}
-}
-*/
 
 #endif // !NVMVERI_KERNEL_CODE
