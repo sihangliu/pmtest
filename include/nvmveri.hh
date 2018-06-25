@@ -20,13 +20,13 @@ const char MetadataTypeStr[][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "
 // } Metadata_OpInfo;
 
 typedef struct Metadata_Assign {
+    unsigned short size;
     void *addr;
-    size_t size;
 } Metadata_Assign;
 
 typedef struct Metadata_Flush {
+    unsigned short size;
     void *addr;
-    size_t size;
 } Metadata_Flush;
 
 typedef struct Metadata_Commit {
@@ -42,13 +42,14 @@ typedef struct Metadata_Fence {
 } Metadata_Fence;
 
 typedef struct Metadata_Persist {
+    unsigned short size;
     void *addr;
-    size_t size;
+	//int linenum
 }  Metadata_Persist;
 
 typedef struct Metadata_Order {
-    size_t early_size;
-    size_t late_size;
+    unsigned short early_size;
+    unsigned short late_size;
     void *early_addr;
     void *late_addr;
 } Metadata_Order;
@@ -122,7 +123,7 @@ using namespace boost::icl;
 
 #include "common.hh"
 
-#define MAX_THREAD_POOL_SIZE 6
+#define MAX_THREAD_POOL_SIZE 4
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 
@@ -210,12 +211,13 @@ public:
 	condition_variable VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
 
-	/* Result queue
-	*/
+	/* Result queue */
 	FastVector<VeriResult> ResultVector[MAX_THREAD_POOL_SIZE];
 	mutex ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 	//static condition_variable ResultVectorCV;
 
+	/* Name to address map */
+	unordered_map<string, std::pair<void*, int> > VariableNameAddressMap;
 
 	/* Default constructor, call init/term */
 	NVMVeri();
@@ -259,6 +261,7 @@ extern "C" void *C_createVeriInstance();
 extern "C" void C_deleteVeriInstance(void *);
 extern "C" void C_execVeri(void *, void *);
 extern "C" void C_getVeri(void *, void *);
+extern "C" void C_getVeriDefault(void *);
 
 extern "C" void *C_createMetadataVector();
 extern "C" void C_deleteMetadataVector(void *);
@@ -270,6 +273,9 @@ extern "C" void C_createMetadata_Barrier(void *);
 extern "C" void C_createMetadata_Fence(void *);
 extern "C" void C_createMetadata_Persist(void *, void *, size_t);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
+extern "C" void C_registerVariable(char*, void*, int);
+extern "C" void C_unregisterVariable(char*);
+extern "C" void* C_getVariable(char*, int*);
 
 extern __thread void *metadataPtr;
 extern __thread int existVeriInstance;
@@ -281,6 +287,7 @@ extern __thread void **metadataVectorPtr;
 extern __thread int nvmveri_cur_idx;
 //extern ThreadInfo thread_info;
 
+extern void* veriInstancePtr;
 
 #endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__

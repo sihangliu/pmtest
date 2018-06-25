@@ -27,6 +27,7 @@ __thread int thread_id;
 __thread int existVeriInstance = 0;
 __thread int nvmveri_cur_idx;
 __thread void **metadataVectorPtr;
+void* veriInstancePtr;
 
 ThreadInfo thread_info;
 
@@ -34,10 +35,10 @@ void Metadata_print(Metadata *m)
 {
 	printf("%s ", MetadataTypeStr[m->type]);
 	if (m->type == _ASSIGN) {
-		printf("%p %lu", m->assign.addr, m->assign.size);
+		printf("%p %u", m->assign.addr, m->assign.size);
 	}
 	else if (m->type == _FLUSH) {
-		printf("%p %lu", m->flush.addr, m->flush.size);
+		printf("%p %u", m->flush.addr, m->flush.size);
 	}
 	else {}
 	printf("\n");
@@ -420,6 +421,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 void *C_createVeriInstance()
 {
 	NVMVeri *result = new NVMVeri();
+	veriInstancePtr = result;
 	return (void *)result;
 }
 
@@ -436,6 +438,15 @@ void C_execVeri(void *veriInstance, void *metadata_vector)
 }
 
 void C_getVeri(void *veriInstance, void *veriResult)
+{
+	NVMVeri *in = (NVMVeri *)veriInstance;
+	FastVector<VeriResult> r;
+	in->getVeri(r);
+	// TODO: cast veriResult
+}
+
+
+void C_getVeriDefault(void *veriInstance)
 {
 	NVMVeri *in = (NVMVeri *)veriInstance;
 	FastVector<VeriResult> r;
@@ -583,6 +594,29 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 	// else {
 		//log("order\n");
 	// }
+}
+
+void C_registerVariable(char* name, void* addr, int size)
+{
+	string variableName(name);
+	variableName += std::to_string(thread_id);
+	((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName] = std::make_pair(addr, size);
+}
+
+void C_unregisterVariable(char* name)
+{
+	string variableName(name);
+	variableName += std::to_string(thread_id);
+	((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.erase(variableName);
+}
+
+void* C_getVariable(char* name, int* size)
+{
+	string variableName(name);
+	variableName += std::to_string(thread_id);
+	//printf("%s\n", variableName.c_str());
+	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].second;
+	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].first;
 }
 
 
