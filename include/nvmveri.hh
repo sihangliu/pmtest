@@ -194,12 +194,12 @@ public:
 
 class NVMVeriWorkerInfo {
 public:
-	char padding1[64-sizeof(atomic<bool>)*3 - sizeof(thread *)];
+	//char padding1[64-sizeof(atomic<bool>)*3 - sizeof(thread *)];
 	thread *WorkerThreadPool;
-	atomic<bool> termSignal;
-	atomic<bool> getResultSignal;
-	atomic<bool> completedStateMap;
-	char padding2[64-sizeof(atomic<bool>)*3 - sizeof(thread *)];
+	bool termSignal;
+	bool getResultSignal;
+	bool completedStateMap;
+	char padding2[64-sizeof(bool)*3 - sizeof(thread *)];
 };
 
 class NVMVeri {
