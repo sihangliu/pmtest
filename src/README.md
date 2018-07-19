@@ -26,7 +26,7 @@ We maintain 2 interval trees: (Note that we can only make sure an operation is e
 	* Remove address interval A from it after we make sure that `Flush(&A, sizeof(A))` is executed.
 * An *order-check* tree, that stores address ranges and the latest time the address range is modified in memory, represented by the *timestamp*.
 So we
-	* Maintain a global variable timestamp, and initialize it to 1;
+	* Maintain a global variable timestamp, and initialize it to 0;
 	* Increase the timestamp by one after `Fence()`;
 	* After `Assign(&A, sizeof(A))` is executed, the timestamp of A is indefinitive, but shall be no less than current timestamp;
 	* After `Flush(&A, sizeof(A))` is executed, the timestamp of A is definitive, which is the current timestamp.
