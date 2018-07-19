@@ -151,12 +151,28 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 
 
 	// Wait until all worker threads are complete
+	/*
 	while (completedThread != MAX_THREAD_POOL_SIZE) {
 		for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
 			unique_lock<mutex> lock(VeriQueueMutex[i]);
 			VeriQueueCV[i].notify_all();
 		}
 	};
+	*/
+
+	while (true) {
+		int tmp = 0;
+		for (int i = 0; i < MAX_THREAD_POOL_SIZE; ++i) {
+			tmp += WorkerInfo[i].completedStateMap;
+		}
+
+		if (tmp == MAX_THREAD_POOL_SIZE) break;
+		for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
+			unique_lock<mutex> lock(VeriQueueMutex[i]);
+			VeriQueueCV[i].notify_all();
+		}
+	};
+
 
 	// Merge results
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -222,7 +238,7 @@ void NVMVeri::VeriWorker(int id)
 			VeriProc(veriptr);
 
 			VeriResult temp;
-			//unique_lock<mutex> result_lock(ResultVectorMutex[id]);
+			unique_lock<mutex> result_lock(ResultVectorMutex[id]);
 			ResultVector[id].push_back(temp);
 		}
 
