@@ -88,7 +88,7 @@ bool NVMVeri::initVeri()
 		WorkerInfo[i].completedStateMap = false;
 	}
 
-	completedThread = 0;
+	//completedThread = 0;
 	assignTo = 0;
 
 	existVeriInstance = 0;
@@ -195,7 +195,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 		WorkerInfo[i].completedStateMap = false;
 	}
 
-	completedThread = 0;
+	//completedThread = 0;
 
 	// printf("end getVeri\n");
 	return true;
@@ -225,7 +225,7 @@ void NVMVeri::VeriWorker(int id)
 
 		// when getResultSignal and this thread is not completed yet and VeriQueue is empty
 		if (!WorkerInfo[id].completedStateMap && WorkerInfo[id].getResultSignal && VeriQueue[id].size() == 0) {
-			completedThread++;
+			//completedThread++;
 			WorkerInfo[id].completedStateMap = true;
 			continue;
 		}

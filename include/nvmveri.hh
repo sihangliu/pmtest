@@ -213,7 +213,7 @@ public:
 	/* get result signal */
 	//atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
 	//atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
-	atomic<int> completedThread;
+	//atomic<int> completedThread;
 
 	NVMVeriWorkerInfo WorkerInfo[MAX_THREAD_POOL_SIZE]; 
 
