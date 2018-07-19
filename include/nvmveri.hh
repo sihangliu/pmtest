@@ -194,6 +194,7 @@ public:
 
 class NVMVeriWorkerInfo {
 public:
+	char padding[64-sizeof(atomic<bool>)*3 - sizeof(thread *)];
 	thread *WorkerThreadPool;
 	atomic<bool> termSignal;
 	atomic<bool> getResultSignal;
