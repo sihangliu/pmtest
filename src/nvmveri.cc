@@ -73,19 +73,19 @@ bool NVMVeri::initVeri()
 {
 	// create worker
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		WorkerThreadPool[i] = new thread(&NVMVeri::VeriWorker, this, i);
+		WorkerInfo[i].WorkerThreadPool = new thread(&NVMVeri::VeriWorker, this, i);
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		termSignal[i] = false;
+		WorkerInfo[i].termSignal = false;
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		getResultSignal[i] = false;
+		WorkerInfo[i].getResultSignal = false;
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		completedStateMap[i] = false;
+		WorkerInfo[i].completedStateMap = false;
 	}
 
 	completedThread = 0;
@@ -106,7 +106,7 @@ bool NVMVeri::termVeri()
 
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		termSignal[i] = true;
+		WorkerInfo[i].termSignal = true;
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -115,7 +115,7 @@ bool NVMVeri::termVeri()
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		WorkerThreadPool[i]->join();
+		WorkerInfo[i].WorkerThreadPool->join();
 	}
 
 	// printf("stopped\n");
@@ -146,7 +146,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 
 	for (int i = 0 ; i < MAX_THREAD_POOL_SIZE; i++) {
 		// unique_lock<mutex> lock(VeriQueueMutex[i]);
-		getResultSignal[i] = true;
+		WorkerInfo[i].getResultSignal = true;
 	}
 
 
@@ -167,7 +167,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 
 	// Reset worker state
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		getResultSignal[i] = false;
+		WorkerInfo[i].getResultSignal = false;
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -176,7 +176,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		completedStateMap[i] = false;
+		WorkerInfo[i].completedStateMap = false;
 	}
 
 	completedThread = 0;
@@ -188,7 +188,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 
 void NVMVeri::VeriWorker(int id)
 {
-	while (termSignal[id] == true);
+	while (WorkerInfo[id].termSignal == true);
 
 	while (true) {
 		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
@@ -198,19 +198,19 @@ void NVMVeri::VeriWorker(int id)
 		// when no termSignal and no getResultSignal and VeriQueue is empty
 //		if (id == 0)
 //printf("b%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
-		while (!termSignal[id] && !getResultSignal[id] && VeriQueue[id].size() == 0) {
+		while (!WorkerInfo[id].termSignal && !WorkerInfo[id].getResultSignal && VeriQueue[id].size() == 0) {
 		//	assert(completedStateMap[id] != true);
 			VeriQueueCV[id].wait(veri_lock);
 		}
 //		if (id == 0)
 //printf("c%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
-		if (termSignal[id]) break;
+		if (WorkerInfo[id].termSignal) break;
 
 
 		// when getResultSignal and this thread is not completed yet and VeriQueue is empty
-		if (!completedStateMap[id] && getResultSignal[id] && VeriQueue[id].size() == 0) {
+		if (!WorkerInfo[id].completedStateMap && WorkerInfo[id].getResultSignal && VeriQueue[id].size() == 0) {
 			completedThread++;
-			completedStateMap[id] = true;
+			WorkerInfo[id].completedStateMap = true;
 			continue;
 		}
 
@@ -222,7 +222,7 @@ void NVMVeri::VeriWorker(int id)
 			VeriProc(veriptr);
 
 			VeriResult temp;
-			unique_lock<mutex> result_lock(ResultVectorMutex[id]);
+			//unique_lock<mutex> result_lock(ResultVectorMutex[id]);
 			ResultVector[id].push_back(temp);
 		}
 
@@ -376,6 +376,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
 				else if (((*veriptr)[i])->type == _FLUSH) {
+					log("flush verified %p, %lu, %d\n", ((*veriptr)[i])->flush.addr, ((*veriptr)[i])->flush.size, ((*veriptr)[i])->type);
 					VeriProc_Flush(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
 				else if (((*veriptr)[i])->type == _FENCE) {
@@ -401,6 +402,8 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 		}
 		else if (((*veriptr)[i])->type == _FLUSH) {
 			// do nothing
+			//printf("flush not verified %p\n", ((*veriptr)[i])->flush.addr);
+
 		}
 		else if (((*veriptr)[i])->type == _FENCE) {
 			VeriProc_Fence(timestamp);
@@ -488,10 +491,10 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 		Metadata *m = new Metadata;
 		m->type = _ASSIGN;
 
-		//log("assign_aa\n");
 
 		m->assign.addr = addr;
 		m->assign.size = size;
+		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	// else {
@@ -505,9 +508,9 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 		Metadata *m = new Metadata;
 		m->type = _FLUSH;
 
-		//log("flush_aa\n");
 		m->flush.addr = addr;
 		m->flush.size = size;
+		log("create metadata flush %p, %lu, %d\n", m->flush.addr, m->flush.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	// else {
@@ -569,7 +572,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 		//log("persist_aa\n");
 		m->persist.addr = addr;
 		m->persist.size = size;
-
+		log("create metadata persist %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 	// else {
@@ -596,11 +599,18 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 	// }
 }
 
-void C_registerVariable(char* name, void* addr, int size)
+void C_registerVariable(char* name, void* addr, size_t size)
 {
 	string variableName(name);
 	variableName += std::to_string(thread_id);
-	((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName] = std::make_pair(addr, size);
+	if (((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.find(variableName) == ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.end()) {
+		printf("Register name=%s, addr=%p, size=%lu, ", name, addr, size);
+		printf("variableName=%s\n", variableName.c_str());
+		VariableInfo new_var;
+		new_var.addr = addr;
+		new_var.size = size;
+		((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName] = new_var; //std::pair<void*, int>(addr, (int)size);
+	}
 }
 
 void C_unregisterVariable(char* name)
@@ -610,13 +620,13 @@ void C_unregisterVariable(char* name)
 	((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.erase(variableName);
 }
 
-void* C_getVariable(char* name, int* size)
+void* C_getVariable(char* name, size_t* size)
 {
 	string variableName(name);
 	variableName += std::to_string(thread_id);
 	//printf("%s\n", variableName.c_str());
-	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].second;
-	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].first;
+	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
+	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
 }
 
 

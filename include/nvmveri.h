@@ -26,9 +26,9 @@ void C_createMetadata_Barrier(void *);
 void C_createMetadata_Fence(void *);
 void C_createMetadata_Persist(void *, void *, size_t);
 void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
-void C_registerVariable(char*, void*, int);
+void C_registerVariable(char*, void*, size_t);
 void C_unregisterVariable(char*);
-void* C_getVariable(char*, int*);
+void* C_getVariable(char*, size_t*);
 
 
 extern __thread void* metadataPtr;

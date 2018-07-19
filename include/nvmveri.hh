@@ -109,6 +109,7 @@ using std::atomic;
 using std::queue;
 #include <unordered_map>
 using std::unordered_map;
+#include <map>
 #include <string>
 using std::string;
 #include <vector>
@@ -123,7 +124,7 @@ using namespace boost::icl;
 
 #include "common.hh"
 
-#define MAX_THREAD_POOL_SIZE 4
+#define MAX_THREAD_POOL_SIZE NUM_CORES
 #define MAX_OP_NAME_SIZE 50
 typedef unsigned int tid_t;
 
@@ -180,24 +181,40 @@ typedef interval_map<size_t, int, partial_enricher, std::less, inplace_assign> i
 enum VeriWorkerState {IDLE, BUSY};
 enum ResultType {PASS, FAIL};
 
+class VariableInfo {
+public:
+	void* addr;
+	int size;
+};
+
 class VeriResult {
 public:
 	ResultType result;
 };
 
+class NVMVeriWorkerInfo {
+public:
+	thread *WorkerThreadPool;
+	atomic<bool> termSignal;
+	atomic<bool> getResultSignal;
+	atomic<bool> completedStateMap;
+	char padding[64-sizeof(atomic<bool>)*3 - sizeof(thread *)];
+};
 
 class NVMVeri {
 public:
 	/* master and worker thread */
-	thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
+	//thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
 
 	/* terminate signal */
-	atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
+	//atomic<bool> termSignal[MAX_THREAD_POOL_SIZE];
 
 	/* get result signal */
-	atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
-	atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
+	//atomic<bool> getResultSignal[MAX_THREAD_POOL_SIZE];
+	//atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
 	atomic<int> completedThread;
+
+	NVMVeriWorkerInfo WorkerInfo[MAX_THREAD_POOL_SIZE]; 
 
 	int assignTo;
 
@@ -217,7 +234,7 @@ public:
 	//static condition_variable ResultVectorCV;
 
 	/* Name to address map */
-	unordered_map<string, std::pair<void*, int> > VariableNameAddressMap;
+	unordered_map<string, VariableInfo> VariableNameAddressMap;
 
 	/* Default constructor, call init/term */
 	NVMVeri();
@@ -273,9 +290,9 @@ extern "C" void C_createMetadata_Barrier(void *);
 extern "C" void C_createMetadata_Fence(void *);
 extern "C" void C_createMetadata_Persist(void *, void *, size_t);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
-extern "C" void C_registerVariable(char*, void*, int);
+extern "C" void C_registerVariable(char*, void*, size_t);
 extern "C" void C_unregisterVariable(char*);
-extern "C" void* C_getVariable(char*, int*);
+extern "C" void* C_getVariable(char*, size_t*);
 
 extern __thread void *metadataPtr;
 extern __thread int existVeriInstance;
