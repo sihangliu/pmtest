@@ -9,7 +9,7 @@
 #include "stddef.h"
 // typedef unsigned long long addr_t;
 
-typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING} MetadataType;
+typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING, _SUSPEND} MetadataType;
 const char MetadataTypeStr[][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING"};
 
 // typedef struct Metadata_OpInfo {
@@ -41,15 +41,20 @@ typedef struct Metadata_Fence {
 
 } Metadata_Fence;
 
+#define FILENAME_LEN 10
+
 typedef struct Metadata_Persist {
     unsigned short size;
+	unsigned short line_num;
+	char file_name[FILENAME_LEN];
     void *addr;
-	//int linenum
 }  Metadata_Persist;
 
 typedef struct Metadata_Order {
     unsigned short early_size;
     unsigned short late_size;
+	unsigned short line_num;
+	char file_name[FILENAME_LEN];
     void *early_addr;
     void *late_addr;
 } Metadata_Order;
@@ -289,8 +294,8 @@ extern "C" void C_createMetadata_Flush(void *, void *, size_t);
 extern "C" void C_createMetadata_Commit(void *);
 extern "C" void C_createMetadata_Barrier(void *);
 extern "C" void C_createMetadata_Fence(void *);
-extern "C" void C_createMetadata_Persist(void *, void *, size_t);
-extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t);
+extern "C" void C_createMetadata_Persist(void *, void *, size_t, const char[], unsigned short);
+extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t, const char[], unsigned short);
 extern "C" void C_registerVariable(char*, void*, size_t);
 extern "C" void C_unregisterVariable(char*);
 extern "C" void* C_getVariable(char*, size_t*);

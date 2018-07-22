@@ -313,9 +313,14 @@ inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, inte
 
 	if (iter != PersistInfo.end()) {
 		addrinterval = addrinterval & (*iter);
+		char filename_temp[FILENAME_LEN + 1];
+		strncpy(filename_temp, cur->persist.file_name, FILENAME_LEN);
+		filename_temp[FILENAME_LEN] = '\0';
 		printf(
 			COLOR_RED "PERSIST ERROR: " COLOR_RESET
-			"Address range [0x%lx, 0x%lx) not persisted.\n",
+			"%s:%hu: Address range [0x%lx, 0x%lx) not persisted.\n",
+			filename_temp,
+			cur->persist.line_num,
 			addrinterval.lower(),
 			addrinterval.upper());
 	}
@@ -357,9 +362,14 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_
 		}
 
 		if (early_max >= late_min) {
+			char filename_temp[FILENAME_LEN + 1];
+			strncpy(filename_temp, cur->order.file_name, FILENAME_LEN);
+			filename_temp[FILENAME_LEN] = '\0';
 			printf(
 				COLOR_RED "ORDER ERROR: " COLOR_RESET
-				"Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+				"%s:%hu: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+				filename_temp,
+				cur->order.line_num,
 				(size_t)(cur->order.early_addr),
 				(size_t)(cur->order.early_addr) + cur->order.early_size,
 				(size_t)(cur->order.late_addr),
@@ -367,9 +377,14 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_
 		}
 	}
 	else {
+		char filename_temp[FILENAME_LEN + 1];
+		strncpy(filename_temp, cur->order.file_name, FILENAME_LEN);
+		filename_temp[FILENAME_LEN] = '\0';
 		printf(
 			COLOR_RED "ORDER ERROR: " COLOR_RESET
-			"Queried address range not yet assigned.\n");
+			"%s:%hu: Queried address range not yet assigned.\n",
+			filename_temp,
+			cur->order.line_num);
 	}
 }
 
@@ -579,7 +594,7 @@ void C_createMetadata_Fence(void *metadata_vector)
 }
 
 
-void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
+void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -588,6 +603,8 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 		//log("persist_aa\n");
 		m->persist.addr = addr;
 		m->persist.size = size;
+		m->persist.line_num = line_num;
+		strncpy(m->persist.file_name, file_name, FILENAME_LEN);
 		log("create metadata persist %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
@@ -597,7 +614,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size)
 }
 
 
-void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t early_size, void *late_addr, size_t late_size)
+void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t early_size, void *late_addr, size_t late_size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -606,6 +623,8 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		m->order.early_size = early_size;
 		m->order.late_addr = late_addr;
 		m->order.late_size = late_size;
+		m->order.line_num = line_num;
+		strncpy(m->order.file_name, file_name, FILENAME_LEN);
 
 		//log("order_aa\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);

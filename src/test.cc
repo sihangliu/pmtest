@@ -26,8 +26,8 @@ void transaction()
 	C_createMetadata_Fence(metadataPtr);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
+	isPersistent((void *)(&arr[0]), 4);
+	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
 
 
 	C_execVeri(p, metadataPtr);
@@ -57,8 +57,8 @@ void transaction()
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	isPersistent((void *)(&arr[0]), 4);
+	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
 
 	C_execVeri(p, metadataPtr);
@@ -89,8 +89,8 @@ void transaction()
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	isPersistent((void *)(&arr[0]), 4);
+	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
 	C_execVeri(p, metadataPtr);
@@ -119,8 +119,8 @@ void transaction()
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
 	C_createMetadata_Fence(metadataPtr);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
-	C_createMetadata_Persist(metadataPtr, (void *)(&arr[4]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	isPersistent((void *)(&arr[4]), 4);
+	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
 	C_execVeri(p, metadataPtr);
@@ -148,8 +148,8 @@ void transaction()
 	C_createMetadata_Fence(metadataPtr);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
+	isPersistent((void *)(&arr[0]), 4);
+	isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
 
 	C_execVeri(p, metadataPtr);
@@ -177,7 +177,7 @@ void transaction()
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
 	C_execVeri(p, metadataPtr);
@@ -205,7 +205,7 @@ void transaction()
 	C_createMetadata_Fence(metadataPtr);
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Persist(metadataPtr, (void *)(&arr[0]), 4);
+	isPersistent((void *)(&arr[0]), 4);
 
 	C_execVeri(p, metadataPtr);
 
@@ -233,7 +233,7 @@ void transaction()
 	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Order(metadataPtr, (void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
+	isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
 
 	C_execVeri(p, metadataPtr);

@@ -1,7 +1,7 @@
 #ifndef __KERNEL_MODULE__
 #define __KERNEL_MODULE__
 
-#define DEVICE_STORAGE_LEN 1000
+#define DEVICE_STORAGE_LEN 1024
 #define BUFFER_LEN 20
 #define PROC_NAME "nvmveri"
 

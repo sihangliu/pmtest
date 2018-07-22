@@ -7,6 +7,7 @@
 #include <linux/proc_fs.h>
 #include <linux/mutex.h>
 #include <linux/kfifo.h>
+#include <linux/kmod.h>
 
 // NVMVeriDevice *nvmveri_dev;
 //
@@ -169,7 +170,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 {
 	if (existVeriInstance) {
 		Metadata input;
-		printk(KERN_INFO "@ Inside assign metadata %p %lu. \n", addr, size);
+		//printk(KERN_INFO "@ Inside assign metadata %p %lu. \n", addr, size);
 		input.type = _ASSIGN;
 
 		//log("assign_aa\n");
@@ -177,7 +178,14 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 		input.assign.addr = addr;
 		input.assign.size = size;
 		kfifo_put(&nvmveri_dev, input);
-		printk(KERN_INFO "@ Complete assign metadata %p %lu. \n", addr, size);
+		//printk(KERN_INFO "@ Complete assign metadata %p %lu. \n", addr, size);
+		
+		// prevent overflow kernel FIFO
+		//if (kfifo_size(&nvmveri_dev) > 0.7 * DEVICE_STORAGE_LEN) {
+		//	Metadata suspend_signal;
+		//	input.type = _SUSPEND;
+		//	kfifo_put(&nvmveri_dev, suspend_signal);
+		//}
 	}
 	else {
 		//log("assign\n");
