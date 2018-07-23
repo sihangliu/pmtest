@@ -81,7 +81,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 {
 	if (existVeriInstance) {
 		Metadata input;
-		//printk(KERN_INFO "@ Inside assign metadata %p %lu. \n", addr, size);
+		//printk(KERN_INFO "@ Inside assign %p %lu. \n", addr, size);
 		input.type = _ASSIGN;
 
 		//log("assign_aa\n");
@@ -89,7 +89,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 		input.assign.addr = addr;
 		input.assign.size = size;
 		kfifo_put(&nvmveri_dev, input);
-		//printk(KERN_INFO "@ Complete assign metadata %p %lu. \n", addr, size);
+		//printk(KERN_INFO "@ Complete assign %p %lu. \n", addr, size);
 		
 		// prevent overflow kernel FIFO
 		//if (kfifo_size(&nvmveri_dev) > 0.7 * DEVICE_STORAGE_LEN) {
@@ -102,6 +102,121 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 		//log("assign\n");
 	}
 }
+
+
+void kC_createMetadata_Flush(void *addr, size_t size)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		//printk(KERN_INFO "@ Inside flush %p %lu. \n", addr, size);
+		input.type = _FLUSH;
+
+		//log("flush_aa\n");
+
+		input.flush.addr = addr;
+		input.flush.size = size;
+		kfifo_put(&nvmveri_dev, input);
+	}
+	else {
+		//log("flush\n");
+	}
+}
+
+
+void kC_createMetadata_Commit(void)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		//printk(KERN_INFO "@ Inside commit. \n");
+		input.type = _COMMIT;
+
+		//log("commit_aa\n");
+
+		kfifo_put(&nvmveri_dev, input);
+	}
+	else {
+		//log("commit\n");
+	}
+}
+
+
+void kC_createMetadata_Barrier(void)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		//printk(KERN_INFO "@ Inside barrier. \n");
+		input.type = _BARRIER;
+
+		//log("barrier_aa\n");
+
+		kfifo_put(&nvmveri_dev, input);
+	}
+	else {
+		//log("barrier\n");
+	}
+}
+
+
+void kC_createMetadata_Fence(void)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		//printk(KERN_INFO "@ Inside fence. \n");
+		input.type = _FENCE;
+
+		//log("fence_aa\n");
+
+		kfifo_put(&nvmveri_dev, input);
+	}
+	else {
+		//log("fence\n");
+	}
+}
+
+
+void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], unsigned short line_num)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		//printk(KERN_INFO "@ Inside persist %p %lu. \n", addr, size);
+		input.type = _PERSIST;
+
+		//log("persist_aa\n");
+
+		input.persist.addr = addr;
+		input.persist.size = size;
+		input.persist.line_num = line_num;
+		strncpy(input.persist.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		kfifo_put(&nvmveri_dev, input);
+	}
+	else {
+		//log("persist\n");
+	}
+}
+
+
+void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_addr, size_t late_size, const char file_name[], unsigned short line_num)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		//printk(KERN_INFO "@ Inside order %p %lu %p %lu. \n", early_addr, early_size, late_addr, late_size);
+		input.type = _ORDER;
+		input.order.early_addr = early_addr;
+		input.order.early_size = early_size;
+		input.order.late_addr = late_addr;
+		input.order.late_size = late_size;
+		input.order.line_num = line_num;
+		strncpy(input.order.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+
+		//log("order_aa\n");
+
+		kfifo_put(&nvmveri_dev, input);
+	}
+	else {
+		//log("order\n");
+	}
+}
+
 
 void kC_createMetadata_TransactionDelim(void)
 {

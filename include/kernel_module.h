@@ -58,8 +58,8 @@ void kC_createMetadata_Flush(void *, size_t);
 void kC_createMetadata_Commit(void);
 void kC_createMetadata_Barrier(void);
 void kC_createMetadata_Fence(void);
-void kC_createMetadata_Persist(void *, size_t);
-void kC_createMetadata_Order(void *, size_t, void *, size_t);
+void kC_createMetadata_Persist(void *, size_t, const char[], unsigned short);
+void kC_createMetadata_Order(void *, size_t, void *, size_t, const char[], unsigned short);
 
 void kC_createMetadata_TransactionDelim(void);
 void kC_createMetadata_Ending(void);
@@ -67,8 +67,11 @@ void kC_createMetadata_Ending(void);
 extern void* metadataPtr;
 extern int existVeriInstance;
 
+#define NVTest_START existVeriInstance = 1
+#define NVTest_END existVeriInstance = 0
+#define isPersistent(addr,size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
+#define isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+
 #endif // NVMVERI_KERNEL_CODE && !NVMVERI_USER_CODE
-
-
 
 #endif // __KERNEL_MODULE__

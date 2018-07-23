@@ -248,6 +248,35 @@ void transaction()
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test8*****************************/
+
+/****************************test9*****************************/
+	timer.startTimer();
+
+	p = C_createVeriInstance();
+	metadataVectorPtr = C_createMetadataVector();
+	metadataPtr = metadataVectorPtr;
+	existVeriInstance = 1;
+
+	C_createMetadata_Assign(metadataPtr, (void *)(128), 8);
+	C_createMetadata_Assign(metadataPtr, (void *)(256), 8);
+	C_createMetadata_Flush(metadataPtr, (void *)(128), 8);
+	C_createMetadata_Fence(metadataPtr);
+	isPersistent((void *)(128), 8);
+	isPersistent((void *)(256), 8);
+
+
+	C_execVeri(p, metadataPtr);
+
+	existVeriInstance = 0;
+
+	C_getVeri(p, (void *)(0));
+	C_deleteMetadataVector(metadataVectorPtr);
+
+
+	C_deleteVeriInstance(p);
+	timer.endTimer();
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
+/****************************test9*****************************/
 }
 
 void test_icl()

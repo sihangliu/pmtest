@@ -40,6 +40,12 @@ void Metadata_print(Metadata *m)
 	else if (m->type == _FLUSH) {
 		printf("%p %u", m->flush.addr, m->flush.size);
 	}
+	else if (m->type == _PERSIST) {
+		printf("%p %u", m->persist.addr, m->persist.size);
+	}
+	else if (m->type == _ORDER) {
+		printf("%p %u %p %u", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size);
+	}
 	else {}
 	printf("\n");
 }
@@ -407,7 +413,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
 				else if (((*veriptr)[i])->type == _FLUSH) {
-					log("flush verified %p, %lu, %d\n", ((*veriptr)[i])->flush.addr, ((*veriptr)[i])->flush.size, ((*veriptr)[i])->type);
+					// log("flush verified %p, %lu, %d\n", ((*veriptr)[i])->flush.addr, ((*veriptr)[i])->flush.size, ((*veriptr)[i])->type);
 					VeriProc_Flush(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
 				}
 				else if (((*veriptr)[i])->type == _FENCE) {
@@ -604,7 +610,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 		m->persist.addr = addr;
 		m->persist.size = size;
 		m->persist.line_num = line_num;
-		strncpy(m->persist.file_name, file_name, FILENAME_LEN);
+		strncpy(m->persist.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
 		log("create metadata persist %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
@@ -624,7 +630,7 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		m->order.late_addr = late_addr;
 		m->order.late_size = late_size;
 		m->order.line_num = line_num;
-		strncpy(m->order.file_name, file_name, FILENAME_LEN);
+		strncpy(m->order.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
 
 		//log("order_aa\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
