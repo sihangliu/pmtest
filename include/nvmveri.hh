@@ -1,7 +1,7 @@
 #ifndef __NVMVERI_HH__
 #define __NVMVERI_HH__
 
-#define DEBUG_FLAG true
+#define DEBUG_FLAG false
 
 /***********************************************
    library part that may be used by C program
