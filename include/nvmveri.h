@@ -29,7 +29,8 @@ void C_createMetadata_Order(void *, void *, size_t, void *, size_t, const char[]
 void C_registerVariable(char*, void*, size_t);
 void C_unregisterVariable(char*);
 void* C_getVariable(char*, size_t*);
-
+void C_transactionBegin(void *);
+void C_transactionEnd(void *);
 
 extern __thread void* metadataPtr;
 extern __thread int existVeriInstance;
@@ -42,6 +43,8 @@ extern void* veriInstancePtr;
 
 #define NVTest_START existVeriInstance = 1
 #define NVTest_END existVeriInstance = 0
+#define TX_CHECKER_START C_transactionBegin(metadataPtr)
+#define TX_CHECKER_END C_transactionEnd(metadataPtr)
 #define isPersistent(addr,size) C_createMetadata_Persist(metadataPtr, (addr), (size), __FILE__, __LINE__)
 #define isPersistedBefore(addrA, sizeA, addrB, sizeB) C_createMetadata_Order(metadataPtr, (addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
 

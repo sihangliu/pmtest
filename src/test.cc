@@ -355,12 +355,14 @@ void tx_wrapper()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_transactionBegin(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
-	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
-	C_transactionEnd(metadataPtr);
+	for (int i = 0; i < 2; ++i) {
+	  C_transactionBegin(metadataPtr);
+	  C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	  C_createMetadata_Fence(metadataPtr);
+	  C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	  C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
+	  C_transactionEnd(metadataPtr);
+	}
 
 	C_execVeri(p, metadataPtr);
 
