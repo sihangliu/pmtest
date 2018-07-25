@@ -700,6 +700,7 @@ void C_transactionEnd(void *metadata_vector)
 	if (transactionLog != NULL) {
 		((FastVector<Metadata *> *)metadata_vector)->append(*transactionLog);
 		delete transactionLog;
+		transactionLog = NULL;
 	}
 }
 
