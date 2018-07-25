@@ -25,6 +25,7 @@ __thread void *metadataPtr;
 //void *metadataManagerPtr;
 __thread int thread_id;
 __thread int existVeriInstance = 0;
+__thread FastVector<Metadata *> *transactionLog = NULL;
 __thread int nvmveri_cur_idx;
 __thread void **metadataVectorPtr;
 void* veriInstancePtr;
@@ -98,6 +99,7 @@ bool NVMVeri::initVeri()
 	assignTo = 0;
 
 	existVeriInstance = 0;
+	transactionLog = NULL;
 	return true;
 }
 
@@ -514,6 +516,7 @@ void C_initThread() {
 	thread_id = thread_info.cur_thread_id;
 	++(thread_info.cur_thread_id);
 	existVeriInstance = 0;
+	transactionLog = NULL;
 	nvmveri_cur_idx = 0;
 }
 
@@ -533,6 +536,20 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 		m->assign.size = size;
 		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
+
+		// if assign is inside a transaction, then the lhs needs to be persisted.
+		if (transactionLog != NULL) {
+			m = new Metadata;
+			m->type = _PERSIST;
+
+			//log("persist_aa\n");
+			m->persist.addr = addr;
+			m->persist.size = size;
+			m->persist.line_num = 0;
+			strncpy(m->persist.file_name, "in TX", FILENAME_LEN);
+			log("create persisted assign %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
+			transactionLog->push_back(m);
+		}
 	}
 	// else {
 		//log("assign\n");
@@ -668,6 +685,22 @@ void* C_getVariable(char* name, size_t* size)
 	//printf("%s\n", variableName.c_str());
 	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
 	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
+}
+
+void C_transactionBegin(void *metadata_vector)
+{
+	if (transactionLog == NULL) {
+		transactionLog = new FastVector<Metadata *>;
+	}
+
+}
+
+void C_transactionEnd(void *metadata_vector)
+{
+	if (transactionLog != NULL) {
+		((FastVector<Metadata *> *)metadata_vector)->append(*transactionLog);
+		delete transactionLog;
+	}
 }
 
 

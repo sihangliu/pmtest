@@ -61,9 +61,7 @@ release: CXXFLAGS += -O3
 release: all
 
 clean:
-	-@rm -rf $(OBJ_DIR)/*
-	-@rm -rf $(APP_DIR)/*
-	-@rm -rf $(LIB_DIR)/*
+	-@rm -rf $(BUILD)
 
 .PHONY: all build buildlib clean debug kernel release
 # g++-4.8 -std=c++11 -c common.cc -I../include -o common.o

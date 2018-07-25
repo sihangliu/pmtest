@@ -337,3 +337,40 @@ void fastvector()
 		fv.append(fv2);
 
 }
+
+void tx_wrapper()
+{
+	char arr[100];
+
+	void *metadataVectorPtr;
+	Timer timer;
+	void *p;
+
+	const int LOOP_CNT = 3;
+
+	timer.startTimer();
+
+	p = C_createVeriInstance();
+	metadataVectorPtr = C_createMetadataVector();
+	metadataPtr = metadataVectorPtr;
+	existVeriInstance = 1;
+
+	C_transactionBegin(metadataPtr);
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	C_createMetadata_Fence(metadataPtr);
+	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
+	C_transactionEnd(metadataPtr);
+
+	C_execVeri(p, metadataPtr);
+
+	existVeriInstance = 0;
+
+	C_getVeri(p, (void *)(0));
+	C_deleteMetadataVector(metadataVectorPtr);
+
+
+	C_deleteVeriInstance(p);
+	timer.endTimer();
+	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
+}
