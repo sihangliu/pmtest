@@ -1,13 +1,13 @@
 #ifndef __KERNEL_MODULE__
 #define __KERNEL_MODULE__
 
-#define DEVICE_STORAGE_LEN 1024
-#define BUFFER_LEN 20
+#define DEVICE_STORAGE_LEN 8192
+// #define BUFFER_LEN 20
 #define PROC_NAME "nvmveri"
 
-#if BUFFER_LEN > DEVICE_STORAGE_LEN
-	#define BUFFER_LEN DEVICE_STORAGE_LEN
-#endif
+// #if BUFFER_LEN > DEVICE_STORAGE_LEN
+// 	#define BUFFER_LEN DEVICE_STORAGE_LEN
+// #endif
 
 #define NVMVERI_MAJOR 0
 

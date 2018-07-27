@@ -88,7 +88,12 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 
 		input.assign.addr = addr;
 		input.assign.size = size;
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 		//printk(KERN_INFO "@ Complete assign %p %lu. \n", addr, size);
 		
 		// prevent overflow kernel FIFO
@@ -115,7 +120,12 @@ void kC_createMetadata_Flush(void *addr, size_t size)
 
 		input.flush.addr = addr;
 		input.flush.size = size;
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 	}
 	else {
 		//log("flush\n");
@@ -132,7 +142,12 @@ void kC_createMetadata_Commit(void)
 
 		//log("commit_aa\n");
 
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 	}
 	else {
 		//log("commit\n");
@@ -149,7 +164,12 @@ void kC_createMetadata_Barrier(void)
 
 		//log("barrier_aa\n");
 
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 	}
 	else {
 		//log("barrier\n");
@@ -166,7 +186,12 @@ void kC_createMetadata_Fence(void)
 
 		//log("fence_aa\n");
 
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 	}
 	else {
 		//log("fence\n");
@@ -187,7 +212,12 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 		input.persist.size = size;
 		input.persist.line_num = line_num;
 		strncpy(input.persist.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 	}
 	else {
 		//log("persist\n");
@@ -210,7 +240,12 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 
 		//log("order_aa\n");
 
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 	}
 	else {
 		//log("order\n");
@@ -227,7 +262,12 @@ void kC_createMetadata_TransactionDelim(void)
 
 		//log("transactiondelim_aa\n");
 
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 		printk(KERN_INFO "@ Complete transactiondelim metadata. \n");
 	}
 	else {
@@ -244,7 +284,12 @@ void kC_createMetadata_Ending(void)
 
 		//log("ending_aa\n");
 
-		kfifo_put(&nvmveri_dev, input);
+		if (kfifo_put(&nvmveri_dev, input) == 0) {
+			printk(KERN_INFO "kfifo full.\n");
+		}
+		else {
+			printk(KERN_INFO "kfifo input.\n");
+		}
 		printk(KERN_INFO "@ Complete ending metadata. \n");
 	}
 	else {
