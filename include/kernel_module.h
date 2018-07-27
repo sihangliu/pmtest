@@ -1,13 +1,13 @@
 #ifndef __KERNEL_MODULE__
 #define __KERNEL_MODULE__
 
-#define DEVICE_STORAGE_LEN 1024
-// #define BUFFER_LEN 20
+// KFIFO_THRESHOLD_LEN is set to half of maximum size
+#define KFIFO_LEN 1024
+#define KFIFO_THRESHOLD_LEN (KFIFO_LEN / 2)
+
 #define PROC_NAME "nvmveri"
 
-// #if BUFFER_LEN > DEVICE_STORAGE_LEN
-// 	#define BUFFER_LEN DEVICE_STORAGE_LEN
-// #endif
+
 
 #define NVMVERI_MAJOR 0
 
@@ -17,34 +17,7 @@
 #include <linux/ioctl.h>
 
 
-// typedef struct NVMVeriDevice
-// {
-// 	Metadata buf[DEVICE_STORAGE_LEN];
-//
-// 	wait_queue_head_t inq, outq;
-// 	char *buf_head, *buf_tail;
-// 	char *read_ptr, *write_ptr;
-//
-// 	struct semaphore sem;
-// 	struct cdev cdev;
-// } NVMVeriDevice;
-
-// typedef struct KernelVector {
-// 	struct Metadata* arr_vector;
-// 	int cur_size;
-// 	int vector_max_size;
-// } KernelVector;
-
-// void initKernelVector(KernelVector *);
-// void pushKernelVector(KernelVector *, Metadata);
-// void deleteKernelVector(KernelVector *);
-
 ssize_t NVMVeriDeviceRead(struct file *, char __user *, size_t, loff_t *);
-// static ssize_t NVMVeriDeviceWrite(struct file *, const char __user *, size_t, loff_t *);
-
-// int NVMVeriDeviceOpen(struct inode *inode, struct file *filp);
-// int NVMVeriDeviceRelease(struct inode *inode, struct file *filp);
-
 
 
 int kC_initNVMVeriDevice(void);
@@ -66,8 +39,6 @@ void kC_createMetadata_Ending(void);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
-extern int fifoRemainSize;
-extern int fifoCurrent;
 
 #define NVTest_START existVeriInstance = 1
 #define NVTest_END existVeriInstance = 0

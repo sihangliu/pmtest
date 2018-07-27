@@ -8,14 +8,20 @@
 #include <linux/mutex.h>
 #include <linux/kfifo.h>
 #include <linux/kmod.h>
-
+#include <linux/sched.h>
 
 int existVeriInstance;
-int fifoRemainSize;
-int fifoCurrent;
-
 static DECLARE_KFIFO_PTR(nvmveri_dev, Metadata);
+int asleep = 0;
+static DECLARE_WAIT_QUEUE_HEAD(kfifo_wq);
 
+struct file_operations NVMVeriDeviceOps = {
+	.owner = 	THIS_MODULE,
+	.read = 	NVMVeriDeviceRead,
+	.llseek = 	noop_llseek
+};
+
+// the user interface to read metadata from kfifo
 ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 	int ret;
@@ -23,6 +29,10 @@ ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, lof
 	// printk(KERN_INFO "@ NVMVERI: start reading\n");
 
 	ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
+	if (asleep != 0 && kfifo_avail(&nvmveri_dev) >= KFIFO_THRESHOLD_LEN) {
+		wake_up_interruptible(&kfifo_wq);
+		asleep = 0;
+	}
 
 	// printk(KERN_INFO "@ NVMVERI: end reading\n");
 
@@ -34,31 +44,25 @@ ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, lof
 		return 0;
 }
 
-// ssize_t NVMVeriDeviceWrite(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
-// {
-// 	int ret;
-// 	unsigned int copied;
-//
-// 	if (mutex_lock_interruptible(&write_lock))
-// 		return -ERESTARTSYS;
-// 	ret = kfifo_from_user(&nvmveri_dev, buf, count, &copied);
-// 	mutex_unlock(&write_lock);
-// 	return ret ? ret : copied;
-// }
-
-struct file_operations NVMVeriDeviceOps = {
-	.owner = 	THIS_MODULE,
-	.read = 	NVMVeriDeviceRead,
-	//.write = 	NVMVeriDeviceWrite,
-	.llseek = 	noop_llseek
-};
-
+// the kernel interface to write metadata to kfifo
+void NVMVeriFifoWrite(Metadata *input)
+{
+	if (kfifo_avail(&nvmveri_dev) > 0) {
+		kfifo_put(&nvmveri_dev, *input);
+	}
+	if (kfifo_avail(&nvmveri_dev) == 0) {
+		asleep = 1;
+		wait_event_interruptible(
+			kfifo_wq,
+			kfifo_avail(&nvmveri_dev) >= KFIFO_THRESHOLD_LEN);
+	}
+}
 
 int kC_initNVMVeriDevice(void)
 {
 	int ret;
 
-	ret = kfifo_alloc(&nvmveri_dev, DEVICE_STORAGE_LEN, GFP_KERNEL);
+	ret = kfifo_alloc(&nvmveri_dev, KFIFO_LEN, GFP_KERNEL);
 	if (ret) {
 		printk(KERN_ERR "@ NVMVERI: error kfifo_alloc\n");
 		return ret;
@@ -70,8 +74,7 @@ int kC_initNVMVeriDevice(void)
 		return -ENOMEM;
 	}
 
-	fifoRemainSize = kfifo_avail(&nvmveri_dev);
-	fifoCurrent = 0;
+	asleep = 0;
 	return 0;
 }
 
@@ -82,22 +85,6 @@ int kC_exitNVMVeriDevice(void)
 	return 0;
 }
 
-void NVMVeriFifoWrite(Metadata *input)
-{
-	while (true) {
-		if (fifoCurrent < fifoRemainSize) {
-			fifoCurrent++;
-			printk(KERN_INFO "@ NVMVERI: kfifo available = %d, cur = %d\n", fifoRemainSize, fifoCurrent);
-			kfifo_put(&nvmveri_dev, *input);
-			break;
-		}
-		else {
-			fifoRemainSize = kfifo_avail(&nvmveri_dev);
-			fifoCurrent = 0;
-			printk(KERN_INFO "@ NVMVERI: kfifo reset = %d, cur = %d\n", fifoRemainSize, fifoCurrent);
-		}
-	}
-}
 
 void kC_createMetadata_Assign(void *addr, size_t size)
 {
@@ -116,7 +103,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 		//printk(KERN_INFO "@ Complete assign %p %lu. \n", addr, size);
 		
 		// prevent overflow kernel FIFO
-		//if (kfifo_size(&nvmveri_dev) > 0.7 * DEVICE_STORAGE_LEN) {
+		//if (kfifo_size(&nvmveri_dev) > 0.7 * KFIFO_LEN) {
 		//	Metadata suspend_signal;
 		//	input.type = _SUSPEND;
 		//	kfifo_put(&nvmveri_dev, suspend_signal);
