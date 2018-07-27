@@ -11,6 +11,8 @@
 
 
 int existVeriInstance;
+int fifoRemainSize;
+int fifoCurrent;
 
 static DECLARE_KFIFO_PTR(nvmveri_dev, Metadata);
 
@@ -18,11 +20,11 @@ ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, lof
 {
 	int ret;
 	unsigned int copied = 0;
-	printk(KERN_INFO "@ NVMVERI: start reading\n");
+	// printk(KERN_INFO "@ NVMVERI: start reading\n");
 
 	ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
 
-	printk(KERN_INFO "@ NVMVERI: end reading\n");
+	// printk(KERN_INFO "@ NVMVERI: end reading\n");
 
 	if (copied == 0)
 		return 1;
@@ -67,6 +69,9 @@ int kC_initNVMVeriDevice(void)
 		kfifo_free(&nvmveri_dev);
 		return -ENOMEM;
 	}
+
+	fifoRemainSize = kfifo_avail(&nvmveri_dev);
+	fifoCurrent = 0;
 	return 0;
 }
 
@@ -75,6 +80,23 @@ int kC_exitNVMVeriDevice(void)
 	remove_proc_entry(PROC_NAME, NULL);
 	kfifo_free(&nvmveri_dev);
 	return 0;
+}
+
+void NVMVeriFifoWrite(Metadata *input)
+{
+	while (true) {
+		if (fifoCurrent < fifoRemainSize) {
+			fifoCurrent++;
+			printk(KERN_INFO "@ NVMVERI: kfifo available = %d, cur = %d\n", fifoRemainSize, fifoCurrent);
+			kfifo_put(&nvmveri_dev, *input);
+			break;
+		}
+		else {
+			fifoRemainSize = kfifo_avail(&nvmveri_dev);
+			fifoCurrent = 0;
+			printk(KERN_INFO "@ NVMVERI: kfifo reset = %d, cur = %d\n", fifoRemainSize, fifoCurrent);
+		}
+	}
 }
 
 void kC_createMetadata_Assign(void *addr, size_t size)
@@ -88,12 +110,9 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 
 		input.assign.addr = addr;
 		input.assign.size = size;
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+
+		NVMVeriFifoWrite(&input);
+
 		//printk(KERN_INFO "@ Complete assign %p %lu. \n", addr, size);
 		
 		// prevent overflow kernel FIFO
@@ -120,12 +139,8 @@ void kC_createMetadata_Flush(void *addr, size_t size)
 
 		input.flush.addr = addr;
 		input.flush.size = size;
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+
+		NVMVeriFifoWrite(&input);
 	}
 	else {
 		//log("flush\n");
@@ -142,12 +157,7 @@ void kC_createMetadata_Commit(void)
 
 		//log("commit_aa\n");
 
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+		NVMVeriFifoWrite(&input);
 	}
 	else {
 		//log("commit\n");
@@ -164,12 +174,7 @@ void kC_createMetadata_Barrier(void)
 
 		//log("barrier_aa\n");
 
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+		NVMVeriFifoWrite(&input);
 	}
 	else {
 		//log("barrier\n");
@@ -186,12 +191,7 @@ void kC_createMetadata_Fence(void)
 
 		//log("fence_aa\n");
 
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+		NVMVeriFifoWrite(&input);
 	}
 	else {
 		//log("fence\n");
@@ -212,12 +212,8 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 		input.persist.size = size;
 		input.persist.line_num = line_num;
 		strncpy(input.persist.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+
+		NVMVeriFifoWrite(&input);
 	}
 	else {
 		//log("persist\n");
@@ -240,12 +236,7 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 
 		//log("order_aa\n");
 
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+		NVMVeriFifoWrite(&input);
 	}
 	else {
 		//log("order\n");
@@ -262,12 +253,8 @@ void kC_createMetadata_TransactionDelim(void)
 
 		//log("transactiondelim_aa\n");
 
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+		NVMVeriFifoWrite(&input);
+
 		printk(KERN_INFO "@ Complete transactiondelim metadata. \n");
 	}
 	else {
@@ -284,12 +271,8 @@ void kC_createMetadata_Ending(void)
 
 		//log("ending_aa\n");
 
-		if (kfifo_put(&nvmveri_dev, input) == 0) {
-			printk(KERN_INFO "kfifo full.\n");
-		}
-		else {
-			printk(KERN_INFO "kfifo input.\n");
-		}
+		NVMVeriFifoWrite(&input);
+
 		printk(KERN_INFO "@ Complete ending metadata. \n");
 	}
 	else {

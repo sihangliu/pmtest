@@ -1,7 +1,7 @@
 #ifndef __KERNEL_MODULE__
 #define __KERNEL_MODULE__
 
-#define DEVICE_STORAGE_LEN 8192
+#define DEVICE_STORAGE_LEN 1024
 // #define BUFFER_LEN 20
 #define PROC_NAME "nvmveri"
 
@@ -66,6 +66,8 @@ void kC_createMetadata_Ending(void);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
+extern int fifoRemainSize;
+extern int fifoCurrent;
 
 #define NVTest_START existVeriInstance = 1
 #define NVTest_END existVeriInstance = 0
