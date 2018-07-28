@@ -21,6 +21,8 @@ atomic<int> NVMVeri::completedThread;
 */
 
 #ifndef NVMVERI_KERNEL_CODE
+const char MetadataTypeStr[20][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING", "_TRANSACTIONBEGIN", "_TRANSACTIONEND"};
+
 __thread void *metadataPtr;
 //void *metadataManagerPtr;
 __thread int thread_id;

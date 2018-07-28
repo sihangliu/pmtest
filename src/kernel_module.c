@@ -266,3 +266,39 @@ void kC_createMetadata_Ending(void)
 		//log("ending\n");
 	}
 }
+
+void kC_createMetadata_TransactionBegin(void)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		printk(KERN_INFO "@ Inside transactionbegin metadata. \n");
+		input.type = _TRANSACTIONBEGIN;
+
+		//log("transactionbegin_aa\n");
+
+		NVMVeriFifoWrite(&input);
+
+		printk(KERN_INFO "@ Complete transactionbegin metadata. \n");
+	}
+	else {
+		//log("transactionbegin\n");
+	}
+}
+
+void kC_createMetadata_TransactionEnd(void)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		printk(KERN_INFO "@ Inside transactionend metadata. \n");
+		input.type = _TRANSACTIONEND;
+
+		//log("transactionend_aa\n");
+
+		NVMVeriFifoWrite(&input);
+
+		printk(KERN_INFO "@ Complete transactionend metadata. \n");
+	}
+	else {
+		//log("transactionend\n");
+	}
+}

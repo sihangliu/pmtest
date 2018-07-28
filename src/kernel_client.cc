@@ -24,7 +24,6 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 	printf("start reading transaction %p\n", tx);
 
 
-
 	int sleeptime = 1, sleeptime_max = 512;
 	while(true) {
 		Metadata *buf = new Metadata;
@@ -40,9 +39,33 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 			sleeptime *= 2;
 			continue;
 		}
-		if (buf->type == _TRANSACTIONDELIM) return 0;
-		if (buf->type == _ENDING) return -1;
-		tx->push_back(buf);
+
+		switch(buf->type) {
+		/* Metadata that shall not be pushed to tx */
+		case _TRANSACTIONDELIM:
+			return 0;
+		case _ENDING:
+			return -1;
+		case _TRANSACTIONBEGIN:
+			C_transactionBegin((void *) tx);
+			break;
+		case _TRANSACTIONEND:
+			C_transactionEnd((void *) tx);
+			break;
+		/* Metadata that shall be pushed to tx */
+		case _ASSIGN:
+			if (transactionLog != NULL) {
+				Metadata *m = new Metadata;
+				m->type = _PERSIST;
+				m->persist.addr = buf->assign.addr;
+				m->persist.size = buf->assign.size;
+				m->persist.line_num = 0;
+				strncpy(m->persist.file_name, "in TX", FILENAME_LEN);
+				transactionLog->push_back(m);
+			}
+		default:
+			tx->push_back(buf);
+		}
 	}
 }
 

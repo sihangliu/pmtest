@@ -1,7 +1,7 @@
 #ifndef __NVMVERI_HH__
 #define __NVMVERI_HH__
 
-#define DEBUG_FLAG false
+#define DEBUG_FLAG true
 
 /***********************************************
    library part that may be used by C program
@@ -9,8 +9,8 @@
 #include "stddef.h"
 // typedef unsigned long long addr_t;
 
-typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING, _SUSPEND} MetadataType;
-const char MetadataTypeStr[][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING"};
+typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING, _TRANSACTIONBEGIN, _TRANSACTIONEND } MetadataType;
+// the corresponding MetadataTypeStr is defined in nvmveri.cc
 
 // typedef struct Metadata_OpInfo {
 // 	enum State {NONE, WORK, COMMIT, ABORT, FINAL} state;
