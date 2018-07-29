@@ -22,9 +22,9 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	isPersistent((void *)(&arr[0]), 4);
 	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
@@ -52,14 +52,14 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
 	isPersistent((void *)(&arr[0]), 4);
 	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 
 	C_execVeri(p, metadataPtr);
 
@@ -83,10 +83,10 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[4]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
 	isPersistent((void *)(&arr[0]), 4);
@@ -115,10 +115,10 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[0]), 4);
+	assign((void *)(&arr[4]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[4]), 4);
 	isPersistent((void *)(&arr[4]), 4);
 	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
@@ -144,10 +144,10 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[4]), 4);
+	assign((void *)(&arr[0]), 4);
 	isPersistent((void *)(&arr[0]), 4);
 	isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
@@ -173,10 +173,10 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[4]), 4);
 	isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
@@ -201,9 +201,9 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	isPersistent((void *)(&arr[0]), 4);
 
@@ -228,9 +228,9 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	assign((void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
-	C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	assign((void *)(&arr[4]), 4);
 	C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	C_createMetadata_Fence(metadataPtr);
 	isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
@@ -257,8 +257,8 @@ void transaction()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	C_createMetadata_Assign(metadataPtr, (void *)(128), 8);
-	C_createMetadata_Assign(metadataPtr, (void *)(256), 8);
+	assign((void *)(128), 8);
+	assign((void *)(256), 8);
 	C_createMetadata_Flush(metadataPtr, (void *)(128), 8);
 	C_createMetadata_Fence(metadataPtr);
 	isPersistent((void *)(128), 8);
@@ -357,9 +357,9 @@ void tx_wrapper()
 
 	for (int i = 0; i < 2; ++i) {
 	  C_transactionBegin(metadataPtr);
-	  C_createMetadata_Assign(metadataPtr, (void *)(&arr[0]), 4);
+	  assign((void *)(&arr[0]), 4);
 	  C_createMetadata_Fence(metadataPtr);
-	  C_createMetadata_Assign(metadataPtr, (void *)(&arr[4]), 4);
+	  assign((void *)(&arr[4]), 4);
 	  C_createMetadata_Flush(metadataPtr, (void *)(&arr[0]), 4);
 	  C_transactionEnd(metadataPtr);
 	}

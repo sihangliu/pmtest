@@ -21,7 +21,7 @@ atomic<int> NVMVeri::completedThread;
 */
 
 #ifndef NVMVERI_KERNEL_CODE
-const char MetadataTypeStr[20][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING", "_TRANSACTIONBEGIN", "_TRANSACTIONEND"};
+const char MetadataTypeStr[20][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING", "_TRANSACTIONBEGIN", "_TRANSACTIONEND", "_TRANSACTIONADD"};
 
 __thread void *metadataPtr;
 //void *metadataManagerPtr;
@@ -283,10 +283,12 @@ inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, inter
 	size_t endaddr = startaddr + cur->assign.size;
 	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 	log(
-		"%s %p %lu\n",
+		"%s %p %lu %s %hu\n",
 		MetadataTypeStr[_ASSIGN],
 		cur->assign.addr,
-		cur->assign.size);
+		cur->assign.size,
+		cur->assign.file_name,
+		cur->assign.line_num);
 	PersistInfo += addrinterval;
 	OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
 }
@@ -413,49 +415,41 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 		if (((*veriptr)[cur])->type == _FENCE) {
 			// process all Metadata in frame [prev, cur) if (*cur->type == _FENCE)
 			for (int i = prev; i != cur; i++) {
-				if (((*veriptr)[i])->type == _ASSIGN) {
-					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-				}
-				else if (((*veriptr)[i])->type == _FLUSH) {
-					// log("flush verified %p, %lu, %d\n", ((*veriptr)[i])->flush.addr, ((*veriptr)[i])->flush.size, ((*veriptr)[i])->type);
-					VeriProc_Flush(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-				}
-				else if (((*veriptr)[i])->type == _FENCE) {
-					VeriProc_Fence(timestamp);
-				}
-				else if (((*veriptr)[i])->type == _PERSIST) {
-					VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-				}
-				else if (((*veriptr)[i])->type == _ORDER) {
-					VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-				}
-				else {
+				switch(((*veriptr)[i])->type) {
+				case _ASSIGN:
+					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+				case _FLUSH:
+					VeriProc_Flush(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+				case _FENCE:
+					VeriProc_Fence(timestamp); break;
+				case _PERSIST:
+					VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+				case _ORDER:
+					VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+				default:
+					log("Unidentified or unprocessed type.");
 				}
 			}
+
 			prev = cur;
 		}
 	}
 	// processing tail value of [prev, cur):
 	// prev point to last _FENCE, cur point to veriptr->end
 	for (int i = prev; i != cur; i++) {
-		if (((*veriptr)[i])->type == _ASSIGN) {
-			VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-		}
-		else if (((*veriptr)[i])->type == _FLUSH) {
-			// do nothing
-			//printf("flush not verified %p\n", ((*veriptr)[i])->flush.addr);
-
-		}
-		else if (((*veriptr)[i])->type == _FENCE) {
-			VeriProc_Fence(timestamp);
-		}
-		else if (((*veriptr)[i])->type == _PERSIST) {
-			VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-		}
-		else if (((*veriptr)[i])->type == _ORDER) {
-			VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp);
-		}
-		else {
+		switch(((*veriptr)[i])->type) {
+		case _ASSIGN:
+			VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+		case _FLUSH:
+			/* do nothing */ break;
+		case _FENCE:
+			VeriProc_Fence(timestamp); break;
+		case _PERSIST:
+			VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+		case _ORDER:
+			VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+		default:
+			log("Unidentified or unprocessed type.");
 		}
 	}
 }
@@ -527,15 +521,16 @@ void C_getNewMetadataPtr() {
 	nvmveri_cur_idx++;
 }
 
-void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
+void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _ASSIGN;
 
-
 		m->assign.addr = addr;
 		m->assign.size = size;
+		m->assign.line_num = line_num;
+		strncpy(m->assign.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
 		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 
@@ -552,10 +547,8 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size)
 			log("create persisted assign %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 			transactionLog->push_back(m);
 		}
+
 	}
-	// else {
-		//log("assign\n");
-	// }
 }
 
 void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
@@ -569,9 +562,6 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 		log("create metadata flush %p, %lu, %d\n", m->flush.addr, m->flush.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-	// else {
-		//log("flush\n");
-	// }
 }
 
 
@@ -580,12 +570,9 @@ void C_createMetadata_Commit(void *metadata_vector)
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _COMMIT;
-
+		log("create metadata commit\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-	// else {
-		//log("commit\n");
-	// }
 }
 
 
@@ -594,13 +581,9 @@ void C_createMetadata_Barrier(void *metadata_vector)
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _BARRIER;
-
-		//log("flush_aa\n");
+		log("create metadata barrier\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-	// else {
-		//log("barrier\n");
-	// }
 }
 
 
@@ -609,13 +592,9 @@ void C_createMetadata_Fence(void *metadata_vector)
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _FENCE;
-		//log("fence_aa\n");
-
+		log("create metadata fence\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-	// else {
-		//log("fence\n");
-	// }
 }
 
 
@@ -624,8 +603,6 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _PERSIST;
-
-		//log("persist_aa\n");
 		m->persist.addr = addr;
 		m->persist.size = size;
 		m->persist.line_num = line_num;
@@ -633,9 +610,6 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 		log("create metadata persist %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-	// else {
-		//log("persist\n");
-	// }
 }
 
 
@@ -651,12 +625,41 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		m->order.line_num = line_num;
 		strncpy(m->order.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
 
-		//log("order_aa\n");
+		log("create metadata order %p, %lu, %p, %lu, %d\n", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-	// else {
-		//log("order\n");
-	// }
+}
+
+void C_createMetadata_TransactionBegin(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _TRANSACTIONBEGIN;
+		log("create metadata transactionbegin\n");
+		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+}
+
+void C_createMetadata_TransactionEnd(void *metadata_vector)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _TRANSACTIONEND;
+		log("create metadata transactionend\n");
+		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+}
+
+void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t size)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _TRANSACTIONADD;
+		m->transactionadd.addr = addr;
+		m->transactionadd.size = size;
+		log("create metadata transactionadd %p, %lu, %d\n", m->transactionadd.addr, m->transactionadd.size, m->type);
+		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
+	}
 }
 
 void C_registerVariable(char* name, void* addr, size_t size)
