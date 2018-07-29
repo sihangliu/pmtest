@@ -47,6 +47,8 @@ extern int existVeriInstance;
 #define NVTest_END existVeriInstance = 0
 #define isPersistent(addr,size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
 #define isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define TX_CHECKER_START kC_createMetadata_TransactionBegin()
+#define TX_CHECKER_END kC_createMetadata_TransactionEnd()
 
 #endif // NVMVERI_KERNEL_CODE && !NVMVERI_USER_CODE
 
