@@ -198,7 +198,10 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 		input.persist.addr = addr;
 		input.persist.size = size;
 		input.persist.line_num = line_num;
-		strncpy(input.persist.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		strncpy(
+			input.persist.file_name,
+			(file_name+strlen(file_name)-FILENAME_LEN),
+			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
 	}

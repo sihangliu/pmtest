@@ -60,6 +60,9 @@ debug: all
 release: CXXFLAGS += -O3
 release: all
 
+warning: CXXFLAGS += -DNVMVERI_WARN
+warning: all
+
 clean:
 	-@rm -rf $(BUILD)
 

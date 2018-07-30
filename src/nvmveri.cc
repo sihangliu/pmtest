@@ -2,6 +2,7 @@
 #include <stdarg.h>
 
 #define COLOR_RED "\x1B[31m"
+#define COLOR_YELLOW "\x1B[33m"
 #define COLOR_RESET "\x1B[0m"
 
 //size_t NVMVeri::VeriNumber;
@@ -302,7 +303,19 @@ inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interv
 		MetadataTypeStr[_FLUSH],
 		cur->flush.addr,
 		cur->flush.size);
+#ifdef NVMVERI_WARN
+	auto iter = PersistInfo.find(addrinterval);
+	if (iter == PersistInfo.end())
+		printf(
+			COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
+			"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
+			addrinterval.lower(),
+			addrinterval.upper());
+	else
+		PersistInfo -= addrinterval;
+#else
 	PersistInfo -= addrinterval;
+#endif
 	OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
 }
 
