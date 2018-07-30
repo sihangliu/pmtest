@@ -1,6 +1,7 @@
 #ifndef __NVMVERI_HH__
 #define __NVMVERI_HH__
 
+
 #ifndef DEBUG_FLAG
 #define DEBUG_FLAG false
 #endif // DEBUG_FLAG
