@@ -530,7 +530,8 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 		m->assign.addr = addr;
 		m->assign.size = size;
 		m->assign.line_num = line_num;
-		strncpy(m->assign.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		//strncpy(m->assign.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		strncpy(m->assign.file_name, file_name, FILENAME_LEN);
 		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 
