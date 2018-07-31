@@ -28,7 +28,7 @@ __thread void *metadataPtr;
 //void *metadataManagerPtr;
 __thread int thread_id;
 __thread int existVeriInstance = 0;
-__thread FastVector<Metadata *> *transactionLog = NULL;
+__thread int isInTransaction;
 __thread int nvmveri_cur_idx;
 __thread void **metadataVectorPtr;
 void* veriInstancePtr;
@@ -102,7 +102,7 @@ bool NVMVeri::initVeri()
 	assignTo = 0;
 
 	existVeriInstance = 0;
-	transactionLog = NULL;
+	isInTransaction = 0;
 	return true;
 }
 
@@ -278,7 +278,7 @@ bool timestamp_isexacttime(int t)
 	return (t >= 0);
 }
 
-inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->assign.size > 0) {
 		size_t startaddr = (size_t)(cur->assign.addr);
@@ -296,7 +296,7 @@ inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, inter
 	}
 }
 
-inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->flush.size > 0) {
 		size_t startaddr = (size_t)(cur->flush.addr);
@@ -329,7 +329,7 @@ inline void VeriProc_Fence(int &timestamp)
 	timestamp++;
 }
 
-inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->persist.size > 0) {
 		size_t startaddr = (size_t)(cur->persist.addr);
@@ -357,7 +357,7 @@ inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, inte
 	}
 }
 
-void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->order.early_size > 0 && cur->order.late_size > 0) {
 		size_t startaddr = (size_t)(cur->order.early_addr);
@@ -425,6 +425,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 {
 	// usually sizeof(size_t) = 8 on 64-bit system
 	interval_set_addr PersistInfo;
+	interval_set_addr TransactionAddInfo;
 	interval_map_addr_timestamp OrderInfo;
 	int timestamp = 1; // because we want to use the sign of timestamp to store whether this is an exact timestamp, so start from 1
 	size_t startaddr, endaddr;
@@ -438,15 +439,15 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 			for (int i = prev; i != cur; i++) {
 				switch(((*veriptr)[i])->type) {
 				case _ASSIGN:
-					VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+					VeriProc_Assign(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 				case _FLUSH:
-					VeriProc_Flush(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+					VeriProc_Flush(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 				case _FENCE:
 					VeriProc_Fence(timestamp); break;
 				case _PERSIST:
-					VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+					VeriProc_Persist(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 				case _ORDER:
-					VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+					VeriProc_Order(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 				default:
 					log("Unidentified or unprocessed type.");
 				}
@@ -460,15 +461,15 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	for (int i = prev; i != cur; i++) {
 		switch(((*veriptr)[i])->type) {
 		case _ASSIGN:
-			VeriProc_Assign(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+			VeriProc_Assign(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 		case _FLUSH:
 			/* do nothing */ break;
 		case _FENCE:
 			VeriProc_Fence(timestamp); break;
 		case _PERSIST:
-			VeriProc_Persist(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+			VeriProc_Persist(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 		case _ORDER:
-			VeriProc_Order(((*veriptr)[i]), PersistInfo, OrderInfo, timestamp); break;
+			VeriProc_Order(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
 		default:
 			log("Unidentified or unprocessed type.");
 		}
@@ -533,7 +534,7 @@ void C_initThread() {
 	thread_id = thread_info.cur_thread_id;
 	++(thread_info.cur_thread_id);
 	existVeriInstance = 0;
-	transactionLog = NULL;
+	isInTransaction = 0;
 	nvmveri_cur_idx = 0;
 }
 
@@ -558,21 +559,6 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 			FILENAME_LEN);
 		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
-
-		// if assign is inside a transaction, then the lhs needs to be persisted.
-		if (transactionLog != NULL) {
-			m = new Metadata;
-			m->type = _PERSIST;
-
-			//log("persist_aa\n");
-			m->persist.addr = addr;
-			m->persist.size = size;
-			m->line_num = 0;
-			strncpy(m->file_name, "in TX", FILENAME_LEN);
-			log("create persisted assign %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
-			transactionLog->push_back(m);
-		}
-
 	}
 }
 
@@ -732,22 +718,6 @@ void* C_getVariable(char* name, size_t* size)
 	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
 }
 
-void C_transactionBegin(void *metadata_vector)
-{
-	if (transactionLog == NULL) {
-		transactionLog = new FastVector<Metadata *>;
-	}
-
-}
-
-void C_transactionEnd(void *metadata_vector)
-{
-	if (transactionLog != NULL) {
-		((FastVector<Metadata *> *)metadata_vector)->append(*transactionLog);
-		delete transactionLog;
-		transactionLog = NULL;
-	}
-}
 
 
 #endif // !NVMVERI_KERNEL_CODE

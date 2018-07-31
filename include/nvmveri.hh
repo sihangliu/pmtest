@@ -276,12 +276,10 @@ extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t, c
 extern "C" void C_registerVariable(char*, void*, size_t);
 extern "C" void C_unregisterVariable(char*);
 extern "C" void* C_getVariable(char*, size_t*);
-extern "C" void C_transactionBegin(void *);
-extern "C" void C_transactionEnd(void *);
 
 extern __thread void *metadataPtr;
 extern __thread int existVeriInstance;
-extern __thread FastVector<Metadata *> *transactionLog;
+extern __thread int isInTransaction;
 
 //extern void *metadataManagerPtr;
 extern __thread int thread_id;

@@ -31,8 +31,6 @@ void C_createMetadata_TransactionAdd(void *, void *, size_t, const char[], unsig
 void C_registerVariable(char*, void*, size_t);
 void C_unregisterVariable(char*);
 void* C_getVariable(char*, size_t*);
-void C_transactionBegin(void *);
-void C_transactionEnd(void *);
 
 extern __thread void* metadataPtr;
 extern __thread int existVeriInstance;
