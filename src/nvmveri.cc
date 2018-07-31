@@ -280,43 +280,47 @@ bool timestamp_isexacttime(int t)
 
 inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
-	size_t startaddr = (size_t)(cur->assign.addr);
-	size_t endaddr = startaddr + cur->assign.size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-	log(
-		"%s %p %lu %s %hu\n",
-		MetadataTypeStr[_ASSIGN],
-		cur->assign.addr,
-		cur->assign.size,
-		cur->assign.file_name,
-		cur->assign.line_num);
-	PersistInfo += addrinterval;
-	OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
+	if (cur->assign.size > 0) {
+		size_t startaddr = (size_t)(cur->assign.addr);
+		size_t endaddr = startaddr + cur->assign.size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		log(
+			"%s %p %lu %s %hu\n",
+			MetadataTypeStr[_ASSIGN],
+			cur->assign.addr,
+			cur->assign.size,
+			cur->file_name,
+			cur->line_num);
+		PersistInfo += addrinterval;
+		OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
+	}
 }
 
 inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
-	size_t startaddr = (size_t)(cur->flush.addr);
-	size_t endaddr = startaddr + cur->flush.size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-	log("%s %p %lu\n",
-		MetadataTypeStr[_FLUSH],
-		cur->flush.addr,
-		cur->flush.size);
-#ifdef NVMVERI_WARN
-	auto iter = PersistInfo.find(addrinterval);
-	if (iter == PersistInfo.end())
-		printf(
-			COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
-			"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
-			addrinterval.lower(),
-			addrinterval.upper());
-	else
+	if (cur->flush.size > 0) {
+		size_t startaddr = (size_t)(cur->flush.addr);
+		size_t endaddr = startaddr + cur->flush.size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		log("%s %p %lu\n",
+			MetadataTypeStr[_FLUSH],
+			cur->flush.addr,
+			cur->flush.size);
+	#ifdef NVMVERI_WARN
+		auto iter = PersistInfo.find(addrinterval);
+		if (iter == PersistInfo.end())
+			printf(
+				COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
+				"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
+				addrinterval.lower(),
+				addrinterval.upper());
+		else
+			PersistInfo -= addrinterval;
+	#else
 		PersistInfo -= addrinterval;
-#else
-	PersistInfo -= addrinterval;
-#endif
-	OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
+	#endif
+		OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
+	}
 }
 
 inline void VeriProc_Fence(int &timestamp)
@@ -327,89 +331,93 @@ inline void VeriProc_Fence(int &timestamp)
 
 inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
-	size_t startaddr = (size_t)(cur->persist.addr);
-	size_t endaddr = startaddr + cur->persist.size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-	log("%s %p %lu\n",
-		MetadataTypeStr[_PERSIST],
-		cur->persist.addr,
-		cur->persist.size);
-	auto iter = PersistInfo.find(addrinterval);
+	if (cur->persist.size > 0) {
+		size_t startaddr = (size_t)(cur->persist.addr);
+		size_t endaddr = startaddr + cur->persist.size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		log("%s %p %lu\n",
+			MetadataTypeStr[_PERSIST],
+			cur->persist.addr,
+			cur->persist.size);
+		auto iter = PersistInfo.find(addrinterval);
 
-	if (iter != PersistInfo.end()) {
-		addrinterval = addrinterval & (*iter);
-		char filename_temp[FILENAME_LEN + 1];
-		strncpy(filename_temp, cur->persist.file_name, FILENAME_LEN);
-		filename_temp[FILENAME_LEN] = '\0';
-		printf(
-			COLOR_RED "PERSIST ERROR: " COLOR_RESET
-			"%s:%hu: Address range [0x%lx, 0x%lx) not persisted.\n",
-			filename_temp,
-			cur->persist.line_num,
-			addrinterval.lower(),
-			addrinterval.upper());
+		if (iter != PersistInfo.end()) {
+			addrinterval = addrinterval & (*iter);
+			char filename_temp[FILENAME_LEN + 1];
+			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+			filename_temp[FILENAME_LEN] = '\0';
+			printf(
+				COLOR_RED "PERSIST ERROR: " COLOR_RESET
+				"%s:%hu: Address range [0x%lx, 0x%lx) not persisted.\n",
+				filename_temp,
+				cur->line_num,
+				addrinterval.lower(),
+				addrinterval.upper());
+		}
 	}
 }
 
 void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
-	size_t startaddr = (size_t)(cur->order.early_addr);
-	size_t endaddr = startaddr + cur->order.early_size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	if (cur->order.early_size > 0 && cur->order.late_size > 0) {
+		size_t startaddr = (size_t)(cur->order.early_addr);
+		size_t endaddr = startaddr + cur->order.early_size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 
-	startaddr = (size_t)(cur->order.late_addr);
-	endaddr = startaddr + cur->order.late_size;
-	discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
+		startaddr = (size_t)(cur->order.late_addr);
+		endaddr = startaddr + cur->order.late_size;
+		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
 
-	log(
-		"%s %p %lu %p %lu\n",
-		MetadataTypeStr[_ORDER],
-		cur->order.early_addr,
-		cur->order.early_size,
-		cur->order.late_addr,
-		cur->order.late_size);
+		log(
+			"%s %p %lu %p %lu\n",
+			MetadataTypeStr[_ORDER],
+			cur->order.early_addr,
+			cur->order.early_size,
+			cur->order.late_addr,
+			cur->order.late_size);
 
-	// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestamp of the "late" address range
-	if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
-		auto intersec = addrinterval & OrderInfo;
-		auto intersec_late = addrinterval_late & OrderInfo;
-		int early_max = 0, late_min = std::numeric_limits<int>::max();
+		// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestamp of the "late" address range
+		if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
+			auto intersec = addrinterval & OrderInfo;
+			auto intersec_late = addrinterval_late & OrderInfo;
+			int early_max = 0, late_min = std::numeric_limits<int>::max();
 
-		for (auto j = intersec.begin(); j != intersec.end(); j++) {
-			if (!timestamp_isexacttime(j->second)) {
-				early_max = std::numeric_limits<int>::max();
-				break;
+			for (auto j = intersec.begin(); j != intersec.end(); j++) {
+				if (!timestamp_isexacttime(j->second)) {
+					early_max = std::numeric_limits<int>::max();
+					break;
+				}
+				early_max = std::max(early_max, j->second);
 			}
-			early_max = std::max(early_max, j->second);
-		}
-		for (auto j = intersec_late.begin(); j != intersec_late.end(); j++) {
-			late_min = std::min(late_min, timestamp_exactly(j->second));
-		}
+			for (auto j = intersec_late.begin(); j != intersec_late.end(); j++) {
+				late_min = std::min(late_min, timestamp_exactly(j->second));
+			}
 
-		if (early_max >= late_min) {
+			if (early_max >= late_min) {
+				char filename_temp[FILENAME_LEN + 1];
+				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+				filename_temp[FILENAME_LEN] = '\0';
+				printf(
+					COLOR_RED "ORDER ERROR: " COLOR_RESET
+					"%s:%hu: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+					filename_temp,
+					cur->line_num,
+					(size_t)(cur->order.early_addr),
+					(size_t)(cur->order.early_addr) + cur->order.early_size,
+					(size_t)(cur->order.late_addr),
+					(size_t)(cur->order.late_addr) + cur->order.late_size);
+			}
+		}
+		else {
 			char filename_temp[FILENAME_LEN + 1];
-			strncpy(filename_temp, cur->order.file_name, FILENAME_LEN);
+			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
 			printf(
 				COLOR_RED "ORDER ERROR: " COLOR_RESET
-				"%s:%hu: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+				"%s:%hu: Queried address range not yet assigned.\n",
 				filename_temp,
-				cur->order.line_num,
-				(size_t)(cur->order.early_addr),
-				(size_t)(cur->order.early_addr) + cur->order.early_size,
-				(size_t)(cur->order.late_addr),
-				(size_t)(cur->order.late_addr) + cur->order.late_size);
+				cur->line_num);
 		}
-	}
-	else {
-		char filename_temp[FILENAME_LEN + 1];
-		strncpy(filename_temp, cur->order.file_name, FILENAME_LEN);
-		filename_temp[FILENAME_LEN] = '\0';
-		printf(
-			COLOR_RED "ORDER ERROR: " COLOR_RESET
-			"%s:%hu: Queried address range not yet assigned.\n",
-			filename_temp,
-			cur->order.line_num);
 	}
 }
 
@@ -542,9 +550,12 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 
 		m->assign.addr = addr;
 		m->assign.size = size;
-		m->assign.line_num = line_num;
-		//strncpy(m->assign.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
-		strncpy(m->assign.file_name, file_name, FILENAME_LEN);
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 
@@ -556,8 +567,8 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 			//log("persist_aa\n");
 			m->persist.addr = addr;
 			m->persist.size = size;
-			m->persist.line_num = 0;
-			strncpy(m->persist.file_name, "in TX", FILENAME_LEN);
+			m->line_num = 0;
+			strncpy(m->file_name, "in TX", FILENAME_LEN);
 			log("create persisted assign %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 			transactionLog->push_back(m);
 		}
@@ -565,7 +576,7 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 	}
 }
 
-void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
+void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -573,13 +584,20 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size)
 
 		m->flush.addr = addr;
 		m->flush.size = size;
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+
 		log("create metadata flush %p, %lu, %d\n", m->flush.addr, m->flush.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
 
 
-void C_createMetadata_Commit(void *metadata_vector)
+void C_createMetadata_Commit(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -590,7 +608,7 @@ void C_createMetadata_Commit(void *metadata_vector)
 }
 
 
-void C_createMetadata_Barrier(void *metadata_vector)
+void C_createMetadata_Barrier(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -601,7 +619,7 @@ void C_createMetadata_Barrier(void *metadata_vector)
 }
 
 
-void C_createMetadata_Fence(void *metadata_vector)
+void C_createMetadata_Fence(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -619,8 +637,12 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 		m->type = _PERSIST;
 		m->persist.addr = addr;
 		m->persist.size = size;
-		m->persist.line_num = line_num;
-		strncpy(m->persist.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 		log("create metadata persist %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
@@ -636,8 +658,12 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 		m->order.early_size = early_size;
 		m->order.late_addr = late_addr;
 		m->order.late_size = late_size;
-		m->order.line_num = line_num;
-		strncpy(m->order.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		log("create metadata order %p, %lu, %p, %lu, %d\n", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);

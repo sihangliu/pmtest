@@ -18,12 +18,11 @@ void C_getNewMetadataPtr();
 /* Nvmveri */
 void *C_createMetadataVector(void);
 void C_deleteMetadataVector(void *);
-void C_createMetadata_OpInfo(void *, char *, void *, size_t);
 void C_createMetadata_Assign(void *, void *, size_t, const char[], unsigned short);
 void C_createMetadata_Flush(void *, void *, size_t);
-void C_createMetadata_Commit(void *);
-void C_createMetadata_Barrier(void *);
-void C_createMetadata_Fence(void *);
+void C_createMetadata_Commit(void *, const char[], unsigned short);
+void C_createMetadata_Barrier(void *, const char[], unsigned short);
+void C_createMetadata_Fence(void *, const char[], unsigned short);
 void C_createMetadata_Persist(void *, void *, size_t, const char[], unsigned short);
 void C_createMetadata_Order(void *, void *, size_t, void *, size_t, const char[], unsigned short);
 void C_registerVariable(char*, void*, size_t);
@@ -47,9 +46,13 @@ extern void* veriInstancePtr;
 #define TX_CHECKER_START C_transactionBegin(metadataPtr)
 #define TX_CHECKER_END C_transactionEnd(metadataPtr)
 
-#define assign(addr, size) C_createMetadata_Assign(metadataPtr, (addr), (size), __FILE__, __LINE__)
-#define isPersistent(addr, size) C_createMetadata_Persist(metadataPtr, (addr), (size), __FILE__, __LINE__)
-#define isPersistedBefore(addrA, sizeA, addrB, sizeB) C_createMetadata_Order(metadataPtr, (addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define NVTest_assign(addr, size) C_createMetadata_Assign(metadataPtr, (addr), (size), __FILE__, __LINE__)
+#define NVTest_flush(addr, size) C_createMetadata_Flush(metadataPtr, (addr), (size), __FILE__, __LINE__)
+#define NVTest_commit() C_createMetadata_Commit(metadataPtr, __FILE__, __LINE__)
+#define NVTest_barrier() C_createMetadata_Barrier(metadataPtr, __FILE__, __LINE__)
+#define NVTest_fence() C_createMetadata_Fence(metadataPtr, __FILE__, __LINE__)
+#define NVTest_isPersistent(addr, size) C_createMetadata_Persist(metadataPtr, (addr), (size), __FILE__, __LINE__)
+#define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) C_createMetadata_Order(metadataPtr, (addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
 
 
 #endif // !NVMVERI_KERNEL_CODE

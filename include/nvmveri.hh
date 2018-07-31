@@ -10,24 +10,18 @@
    library part that may be used by C program
 ***********************************************/
 #include "stddef.h"
+#include "stdlib.h"
 // typedef unsigned long long addr_t;
 
 typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING, _TRANSACTIONBEGIN, _TRANSACTIONEND, _TRANSACTIONADD } MetadataType;
 
 // the corresponding MetadataTypeStr is defined in nvmveri.cc
 
-// typedef struct Metadata_OpInfo {
-// 	enum State {NONE, WORK, COMMIT, ABORT, FINAL} state;
-// 	char opName[MAX_OP_NAME_SIZE]; // function name
-// 	addr_t address;		    	   // address of object being operated
-// 	int size;					   // size of object
-// } Metadata_OpInfo;
-#define FILENAME_LEN 10
+
+#define FILENAME_LEN 50
 
 typedef struct Metadata_Assign {
 	unsigned short size;
-	unsigned short line_num;
-	char file_name[FILENAME_LEN];
 	void *addr;
 } Metadata_Assign;
 
@@ -38,16 +32,12 @@ typedef struct Metadata_Flush {
 
 typedef struct Metadata_Persist {
 	unsigned short size;
-	unsigned short line_num;
-	char file_name[FILENAME_LEN];
 	void *addr;
 }  Metadata_Persist;
 
 typedef struct Metadata_Order {
 	unsigned short early_size;
 	unsigned short late_size;
-	unsigned short line_num;
-	char file_name[FILENAME_LEN];
 	void *early_addr;
 	void *late_addr;
 } Metadata_Order;
@@ -60,6 +50,8 @@ typedef struct Metadata_TransactionAdd {
 
 typedef struct Metadata {
 	MetadataType type;
+	unsigned short line_num;
+	char file_name[FILENAME_LEN];
 	union {
 		//Metadata_OpInfo op;
 		Metadata_Assign assign;
@@ -275,12 +267,11 @@ extern "C" void C_getVeriDefault(void *);
 
 extern "C" void *C_createMetadataVector();
 extern "C" void C_deleteMetadataVector(void *);
-extern "C" void C_createMetadata_OpInfo(void *, char *, void *, size_t);
 extern "C" void C_createMetadata_Assign(void *, void *, size_t, const char[], unsigned short);
-extern "C" void C_createMetadata_Flush(void *, void *, size_t);
-extern "C" void C_createMetadata_Commit(void *);
-extern "C" void C_createMetadata_Barrier(void *);
-extern "C" void C_createMetadata_Fence(void *);
+extern "C" void C_createMetadata_Flush(void *, void *, size_t, const char[], unsigned short);
+extern "C" void C_createMetadata_Commit(void *, const char[], unsigned short);
+extern "C" void C_createMetadata_Barrier(void *, const char[], unsigned short);
+extern "C" void C_createMetadata_Fence(void *, const char[], unsigned short);
 extern "C" void C_createMetadata_Persist(void *, void *, size_t, const char[], unsigned short);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t, const char[], unsigned short);
 extern "C" void C_registerVariable(char*, void*, size_t);

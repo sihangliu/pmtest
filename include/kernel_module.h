@@ -23,19 +23,16 @@ void NVMVeriFifoWrite(Metadata *input);
 int kC_initNVMVeriDevice(void);
 int kC_exitNVMVeriDevice(void);
 
-void kC_createMetadataVector(void);
-void kC_deleteMetadataVector(void);
-void kC_createMetadata_OpInfo(char *, void *, size_t);
-void kC_createMetadata_Assign(void *, size_t);
-void kC_createMetadata_Flush(void *, size_t);
-void kC_createMetadata_Commit(void);
-void kC_createMetadata_Barrier(void);
-void kC_createMetadata_Fence(void);
+void kC_createMetadata_Assign(void *, size_t, const char[], unsigned short);
+void kC_createMetadata_Flush(void *, size_t, const char[], unsigned short);
+void kC_createMetadata_Commit(const char[], unsigned short);
+void kC_createMetadata_Barrier(const char[], unsigned short);
+void kC_createMetadata_Fence(const char[], unsigned short);
 void kC_createMetadata_Persist(void *, size_t, const char[], unsigned short);
 void kC_createMetadata_Order(void *, size_t, void *, size_t, const char[], unsigned short);
 
-void kC_createMetadata_TransactionDelim(void);
-void kC_createMetadata_Ending(void);
+void kC_createMetadata_TransactionDelim();
+void kC_createMetadata_Ending();
 
 void kC_createMetadata_TransactionBegin(void);
 void kC_createMetadata_TransactionEnd(void);
@@ -45,8 +42,15 @@ extern int existVeriInstance;
 
 #define NVTest_START existVeriInstance = 1
 #define NVTest_END existVeriInstance = 0
-#define isPersistent(addr,size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
-#define isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define NVTest_assign(addr, size) kC_createMetadata_Assign((addr), (size), __FILE__, __LINE__)
+#define NVTest_flush(addr, size) kC_createMetadata_Flush((addr), (size), __FILE__, __LINE__)
+#define NVTest_commit() kC_createMetadata_Commit(__FILE__, __LINE__)
+#define NVTest_barrier() kC_createMetadata_Barrier(__FILE__, __LINE__)
+#define NVTest_fence() kC_createMetadata_Fence(__FILE__, __LINE__)
+#define NVTest_isPersistent(addr, size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
+#define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define NVTest_transactionDelim() kC_createMetadata_transactionDelim()
+#define NVTest_ending() kC_createMetadata_Ending()
 #define TX_CHECKER_START kC_createMetadata_TransactionBegin()
 #define TX_CHECKER_END kC_createMetadata_TransactionEnd()
 

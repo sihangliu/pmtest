@@ -86,7 +86,7 @@ int kC_exitNVMVeriDevice(void)
 }
 
 
-void kC_createMetadata_Assign(void *addr, size_t size)
+void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -115,7 +115,7 @@ void kC_createMetadata_Assign(void *addr, size_t size)
 }
 
 
-void kC_createMetadata_Flush(void *addr, size_t size)
+void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -135,7 +135,7 @@ void kC_createMetadata_Flush(void *addr, size_t size)
 }
 
 
-void kC_createMetadata_Commit(void)
+void kC_createMetadata_Commit(const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -152,7 +152,7 @@ void kC_createMetadata_Commit(void)
 }
 
 
-void kC_createMetadata_Barrier(void)
+void kC_createMetadata_Barrier(const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -169,7 +169,7 @@ void kC_createMetadata_Barrier(void)
 }
 
 
-void kC_createMetadata_Fence(void)
+void kC_createMetadata_Fence(const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -198,9 +198,10 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 		input.persist.addr = addr;
 		input.persist.size = size;
 		input.persist.line_num = line_num;
+		int file_offset = strlen(file_name)-FILENAME_LEN;
 		strncpy(
 			input.persist.file_name,
-			(file_name+strlen(file_name)-FILENAME_LEN),
+			(file_name+max(0, strlen(file_name)-FILENAME_LEN)),
 			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
@@ -222,7 +223,11 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 		input.order.late_addr = late_addr;
 		input.order.late_size = late_size;
 		input.order.line_num = line_num;
-		strncpy(input.order.file_name, (file_name+strlen(file_name)-FILENAME_LEN), FILENAME_LEN);
+		int file_offset = strlen(file_name)-FILENAME_LEN;
+		strncpy(
+			input.order.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		//log("order_aa\n");
 
@@ -234,7 +239,7 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 }
 
 
-void kC_createMetadata_TransactionDelim(void)
+void kC_createMetadata_TransactionDelim()
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -252,7 +257,7 @@ void kC_createMetadata_TransactionDelim(void)
 	}
 }
 
-void kC_createMetadata_Ending(void)
+void kC_createMetadata_Ending()
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -270,7 +275,7 @@ void kC_createMetadata_Ending(void)
 	}
 }
 
-void kC_createMetadata_TransactionBegin(void)
+void kC_createMetadata_TransactionBegin()
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -288,7 +293,7 @@ void kC_createMetadata_TransactionBegin(void)
 	}
 }
 
-void kC_createMetadata_TransactionEnd(void)
+void kC_createMetadata_TransactionEnd()
 {
 	if (existVeriInstance) {
 		Metadata input;

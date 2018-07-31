@@ -59,8 +59,8 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 				m->type = _PERSIST;
 				m->persist.addr = buf->assign.addr;
 				m->persist.size = buf->assign.size;
-				m->persist.line_num = 0;
-				strncpy(m->persist.file_name, "in TX", FILENAME_LEN);
+				m->line_num = 0;
+				strncpy(m->file_name, "in TX", FILENAME_LEN);
 				transactionLog->push_back(m);
 			}
 		default:
