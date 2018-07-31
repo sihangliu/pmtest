@@ -28,7 +28,6 @@ __thread void *metadataPtr;
 //void *metadataManagerPtr;
 __thread int thread_id;
 __thread int existVeriInstance = 0;
-__thread int isInTransaction;
 __thread int nvmveri_cur_idx;
 __thread void **metadataVectorPtr;
 void* veriInstancePtr;
@@ -102,7 +101,6 @@ bool NVMVeri::initVeri()
 	assignTo = 0;
 
 	existVeriInstance = 0;
-	isInTransaction = 0;
 	return true;
 }
 
@@ -278,7 +276,7 @@ bool timestamp_isexacttime(int t)
 	return (t >= 0);
 }
 
-inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline int VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, FastVector<Metadata *> &TransactionPersistInfo, int &timestamp, int &transactionCount)
 {
 	if (cur->assign.size > 0) {
 		size_t startaddr = (size_t)(cur->assign.addr);
@@ -293,10 +291,29 @@ inline void VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, inter
 			cur->line_num);
 		PersistInfo += addrinterval;
 		OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
+		if (transactionCount > 0) {
+			TransactionPersistInfo.push_back(cur);
+
+			auto iter = TransactionAddInfo.find(addrinterval);
+			if (iter == TransactionAddInfo.end()) {
+				char filename_temp[FILENAME_LEN + 1];
+				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+				filename_temp[FILENAME_LEN] = '\0';
+				printf(
+					COLOR_RED "ASSIGN ERROR: " COLOR_RESET
+					"%s:%hu: Address range [0x%lx, 0x%lx) is not TransactionAdded before modified.\n",
+					filename_temp,
+					cur->line_num,
+					addrinterval.lower(),
+					addrinterval.upper());
+				return -1;
+			}
+		}
 	}
+	return 0;
 }
 
-inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline int VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->flush.size > 0) {
 		size_t startaddr = (size_t)(cur->flush.addr);
@@ -308,12 +325,13 @@ inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interv
 			cur->flush.size);
 	#ifdef NVMVERI_WARN
 		auto iter = PersistInfo.find(addrinterval);
-		if (iter == PersistInfo.end())
+		if (iter == PersistInfo.end()) {
 			printf(
 				COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
 				"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
 				addrinterval.lower(),
 				addrinterval.upper());
+		}
 		else
 			PersistInfo -= addrinterval;
 	#else
@@ -321,15 +339,17 @@ inline void VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interv
 	#endif
 		OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
 	}
+	return 0;
 }
 
-inline void VeriProc_Fence(int &timestamp)
+inline int VeriProc_Fence(int &timestamp)
 {
 	log("%s\n", MetadataTypeStr[_FENCE]);
 	timestamp++;
+	return 0;
 }
 
-inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline int VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo)
 {
 	if (cur->persist.size > 0) {
 		size_t startaddr = (size_t)(cur->persist.addr);
@@ -339,6 +359,7 @@ inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, inte
 			MetadataTypeStr[_PERSIST],
 			cur->persist.addr,
 			cur->persist.size);
+
 		auto iter = PersistInfo.find(addrinterval);
 
 		if (iter != PersistInfo.end()) {
@@ -353,11 +374,13 @@ inline void VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo, inte
 				cur->line_num,
 				addrinterval.lower(),
 				addrinterval.upper());
+			return -1;
 		}
 	}
+	return 0;
 }
 
-void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->order.early_size > 0 && cur->order.late_size > 0) {
 		size_t startaddr = (size_t)(cur->order.early_addr);
@@ -368,8 +391,7 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_set_
 		endaddr = startaddr + cur->order.late_size;
 		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
 
-		log(
-			"%s %p %lu %p %lu\n",
+		log("%s %p %lu %p %lu\n",
 			MetadataTypeStr[_ORDER],
 			cur->order.early_addr,
 			cur->order.early_size,
@@ -406,6 +428,7 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_set_
 					(size_t)(cur->order.early_addr) + cur->order.early_size,
 					(size_t)(cur->order.late_addr),
 					(size_t)(cur->order.late_addr) + cur->order.late_size);
+				return -1;
 			}
 		}
 		else {
@@ -417,7 +440,64 @@ void VeriProc_Order(Metadata *cur, interval_set_addr &PersistInfo, interval_set_
 				"%s:%hu: Queried address range not yet assigned.\n",
 				filename_temp,
 				cur->line_num);
+			return -1;
 		}
+	}
+	return 0;
+}
+
+int VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &TransactionPersistInfo,int &transactionCount)
+{
+	if (transactionCount == 0) {
+		TransactionPersistInfo.clear();
+	}
+	transactionCount++;
+	log("%s\n",
+		MetadataTypeStr[_TRANSACTIONBEGIN]);
+	return 0;
+}
+
+int VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &PersistInfo, FastVector<Metadata *> &TransactionPersistInfo, int &transactionCount)
+{
+	transactionCount--;
+	log("%s\n",
+		MetadataTypeStr[_TRANSACTIONEND]);
+	if (transactionCount == 0) {
+		for (int i = 0; i < TransactionPersistInfo.size(); i++) {
+			TransactionPersistInfo[i]->type = _PERSIST;
+			VeriProc_Persist(TransactionPersistInfo[i], PersistInfo);
+			// This is not the exactly correct usage, but the behavior is correct because _ASSIGN and _PERSIST metadata have the same layout.
+		}
+	}
+	return 0;
+}
+
+void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInfo, int &transactionCount)
+{
+	log("%s %p %lu %s %hu\n",
+		MetadataTypeStr[_TRANSACTIONADD],
+		cur->transactionadd.addr,
+		cur->transactionadd.size,
+		cur->file_name,
+		cur->line_num);
+	if (transactionCount > 0) {
+		if (cur->transactionadd.size > 0) {
+			size_t startaddr = (size_t)(cur->transactionadd.addr);
+			size_t endaddr = startaddr + cur->transactionadd.size;
+			discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+			
+			TransactionAddInfo += addrinterval;
+		}
+	}
+	else {
+		char filename_temp[FILENAME_LEN + 1];
+		strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+		filename_temp[FILENAME_LEN] = '\0';
+		printf(
+			COLOR_RED "TRANSACTIONADD ERROR: " COLOR_RESET
+			"%s:%hu: Not inside a transaction.\n",
+			filename_temp,
+			cur->line_num);
 	}
 }
 
@@ -427,8 +507,12 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	interval_set_addr PersistInfo;
 	interval_set_addr TransactionAddInfo;
 	interval_map_addr_timestamp OrderInfo;
+	FastVector<Metadata *> TransactionPersistInfo;
 	int timestamp = 1; // because we want to use the sign of timestamp to store whether this is an exact timestamp, so start from 1
+	int transactionCount = 0; // this also determines the matching of _TRANSACTIONBEGIN and _TRANSACTIONEND
+
 	size_t startaddr, endaddr;
+	
 
 	int prev = 0;
 	int cur = 0;
@@ -439,15 +523,21 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 			for (int i = prev; i != cur; i++) {
 				switch(((*veriptr)[i])->type) {
 				case _ASSIGN:
-					VeriProc_Assign(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+					VeriProc_Assign((*veriptr)[i], PersistInfo, TransactionAddInfo, OrderInfo, TransactionPersistInfo, timestamp, transactionCount); break;
 				case _FLUSH:
-					VeriProc_Flush(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+					VeriProc_Flush((*veriptr)[i], PersistInfo, OrderInfo, timestamp); break;
 				case _FENCE:
 					VeriProc_Fence(timestamp); break;
 				case _PERSIST:
-					VeriProc_Persist(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+					VeriProc_Persist((*veriptr)[i], PersistInfo); break;
 				case _ORDER:
-					VeriProc_Order(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+					VeriProc_Order((*veriptr)[i], OrderInfo, timestamp); break;
+				case _TRANSACTIONBEGIN:
+					VeriProc_TransactionBegin((*veriptr)[i], TransactionPersistInfo, transactionCount); break;
+				case _TRANSACTIONEND:
+					VeriProc_TransactionEnd((*veriptr)[i], PersistInfo, TransactionPersistInfo, transactionCount); break;
+				case _TRANSACTIONADD:
+					VeriProc_TransactionAdd((*veriptr)[i], TransactionAddInfo, transactionCount); break;
 				default:
 					log("Unidentified or unprocessed type.");
 				}
@@ -461,18 +551,30 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	for (int i = prev; i != cur; i++) {
 		switch(((*veriptr)[i])->type) {
 		case _ASSIGN:
-			VeriProc_Assign(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+			VeriProc_Assign(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, TransactionPersistInfo, timestamp, transactionCount); break;
 		case _FLUSH:
 			/* do nothing */ break;
 		case _FENCE:
 			VeriProc_Fence(timestamp); break;
 		case _PERSIST:
-			VeriProc_Persist(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+			VeriProc_Persist(((*veriptr)[i]), PersistInfo); break;
 		case _ORDER:
-			VeriProc_Order(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, timestamp); break;
+			VeriProc_Order(((*veriptr)[i]), OrderInfo, timestamp); break;
+		case _TRANSACTIONBEGIN:
+			VeriProc_TransactionBegin((*veriptr)[i], TransactionPersistInfo, transactionCount); break;
+		case _TRANSACTIONEND:
+			VeriProc_TransactionEnd((*veriptr)[i], PersistInfo, TransactionPersistInfo, transactionCount); break;
+		case _TRANSACTIONADD:
+			VeriProc_TransactionAdd((*veriptr)[i], TransactionAddInfo, transactionCount); break;
 		default:
 			log("Unidentified or unprocessed type.");
 		}
+	}
+
+	if (transactionCount > 0) {
+		printf(
+			COLOR_RED "TRANSACTIONEND ERROR: " COLOR_RESET
+			"TransactionBegin and TransactionEnd does not match.\n");
 	}
 }
 
@@ -534,7 +636,6 @@ void C_initThread() {
 	thread_id = thread_info.cur_thread_id;
 	++(thread_info.cur_thread_id);
 	existVeriInstance = 0;
-	isInTransaction = 0;
 	nvmveri_cur_idx = 0;
 }
 
@@ -683,6 +784,13 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 		m->type = _TRANSACTIONADD;
 		m->transactionadd.addr = addr;
 		m->transactionadd.size = size;
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+
 		log("create metadata transactionadd %p, %lu, %d\n", m->transactionadd.addr, m->transactionadd.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}

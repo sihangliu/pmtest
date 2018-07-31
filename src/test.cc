@@ -362,14 +362,22 @@ void tx_wrapper()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
-	for (int i = 0; i < 2; ++i) {
-	  C_transactionBegin(metadataPtr);
-	  NVTest_assign((void *)(&arr[0]), 4);
-	  NVTest_fence();
-	  NVTest_assign((void *)(&arr[4]), 4);
-	  NVTest_flush((void *)(&arr[0]), 4);
-	  C_transactionEnd(metadataPtr);
-	}
+
+	TX_CHECKER_START;
+	NVTest_transactionAdd((void *)(&arr[0]), 4);
+	NVTest_assign((void *)(&arr[0]), 4);
+	NVTest_fence();
+	NVTest_assign((void *)(&arr[4]), 4);
+	NVTest_flush((void *)(&arr[0]), 4);
+	TX_CHECKER_END;
+	TX_CHECKER_START;
+	NVTest_transactionAdd((void *)(&arr[0]), 4);
+	NVTest_assign((void *)(&arr[0]), 4);
+	NVTest_fence();
+	NVTest_assign((void *)(&arr[4]), 4);
+	NVTest_flush((void *)(&arr[0]), 4);
+	TX_CHECKER_END;
+	
 
 	C_execVeri(p, metadataPtr);
 

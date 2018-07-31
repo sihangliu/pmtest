@@ -34,14 +34,19 @@ void kC_createMetadata_Order(void *, size_t, void *, size_t, const char[], unsig
 void kC_createMetadata_TransactionDelim(void);
 void kC_createMetadata_Ending(void);
 
-void kC_createMetadata_TransactionBegin(void);
-void kC_createMetadata_TransactionEnd(void);
+void kC_createMetadata_TransactionBegin(const char[], unsigned short);
+void kC_createMetadata_TransactionEnd(const char[], unsigned short);
+void kC_createMetadata_TransactionAdd(void *, size_t, const char[], unsigned short);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
 
+/* Interface macro */
 #define NVTest_START existVeriInstance = 1
 #define NVTest_END existVeriInstance = 0
+#define TX_CHECKER_START kC_createMetadata_TransactionBegin(__FILE__, __LINE__)
+#define TX_CHECKER_END kC_createMetadata_TransactionEnd(__FILE__, __LINE__)
+#define NVTest_transactionAdd() kC_createMetadata_TransactionAdd((addr), (size), __FILE__, __LINE__)
 #define NVTest_assign(addr, size) kC_createMetadata_Assign((addr), (size), __FILE__, __LINE__)
 #define NVTest_flush(addr, size) kC_createMetadata_Flush((addr), (size), __FILE__, __LINE__)
 #define NVTest_commit() kC_createMetadata_Commit(__FILE__, __LINE__)
@@ -51,8 +56,7 @@ extern int existVeriInstance;
 #define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
 #define NVTest_transactionDelim() kC_createMetadata_TransactionDelim()
 #define NVTest_ending() kC_createMetadata_Ending()
-#define TX_CHECKER_START kC_createMetadata_TransactionBegin()
-#define TX_CHECKER_END kC_createMetadata_TransactionEnd()
+
 
 #endif // NVMVERI_KERNEL_CODE && !NVMVERI_USER_CODE
 

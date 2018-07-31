@@ -46,23 +46,7 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 			return 0;
 		case _ENDING:
 			return -1;
-		case _TRANSACTIONBEGIN:
-			C_transactionBegin((void *) tx);
-			break;
-		case _TRANSACTIONEND:
-			C_transactionEnd((void *) tx);
-			break;
 		/* Metadata that shall be pushed to tx */
-		case _ASSIGN:
-			if (transactionLog != NULL) {
-				Metadata *m = new Metadata;
-				m->type = _PERSIST;
-				m->persist.addr = buf->assign.addr;
-				m->persist.size = buf->assign.size;
-				m->line_num = 0;
-				strncpy(m->file_name, "in TX", FILENAME_LEN);
-				transactionLog->push_back(m);
-			}
 		default:
 			tx->push_back(buf);
 		}

@@ -40,10 +40,11 @@ public:
 	FastVector();
 	~FastVector();
 	void push_back(T);
-	int size();
 	//void insert(int pos, FastVector<T> &inputFV, int begin, int end);
 	void append(FastVector<T> &);
 	void append(T *, size_t);
+	int size();
+	void clear();
 	const T& operator[](int idx) const { return arr_vector[idx]; }
 private:
 	T* arr_vector;
@@ -125,6 +126,15 @@ template <class T>
 int FastVector<T>::size()
 {
 	return cur_size;
+}
+
+
+template <class T>
+void FastVector<T>::clear()
+{
+	cur_size = 0;
+	vector_max_size = 200;
+	arr_vector = (T *) realloc(arr_vector, vector_max_size * sizeof(T));
 }
 
 /*

@@ -90,6 +90,7 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside assign %p %lu. \n", addr, size);
 		input.type = _ASSIGN;
 
@@ -98,7 +99,7 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 		input.assign.addr = addr;
 		input.assign.size = size;
 		input.line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
+		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
 			input.file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
@@ -115,9 +116,6 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 		//	kfifo_put(&nvmveri_dev, suspend_signal);
 		//}
 	}
-	else {
-		//log("assign\n");
-	}
 }
 
 
@@ -125,6 +123,7 @@ void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], un
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside flush %p %lu. \n", addr, size);
 		input.type = _FLUSH;
 
@@ -133,16 +132,13 @@ void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], un
 		input.flush.addr = addr;
 		input.flush.size = size;
 		input.line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
+		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
 			input.file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
-	}
-	else {
-		//log("flush\n");
 	}
 }
 
@@ -158,9 +154,6 @@ void kC_createMetadata_Commit(const char file_name[], unsigned short line_num)
 
 		NVMVeriFifoWrite(&input);
 	}
-	else {
-		//log("commit\n");
-	}
 }
 
 
@@ -174,9 +167,6 @@ void kC_createMetadata_Barrier(const char file_name[], unsigned short line_num)
 		//log("barrier_aa\n");
 
 		NVMVeriFifoWrite(&input);
-	}
-	else {
-		//log("barrier\n");
 	}
 }
 
@@ -192,9 +182,6 @@ void kC_createMetadata_Fence(const char file_name[], unsigned short line_num)
 
 		NVMVeriFifoWrite(&input);
 	}
-	else {
-		//log("fence\n");
-	}
 }
 
 
@@ -202,6 +189,7 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside persist %p %lu. \n", addr, size);
 		input.type = _PERSIST;
 
@@ -210,16 +198,13 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 		input.persist.addr = addr;
 		input.persist.size = size;
 		input.line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
+		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
 			input.file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
-	}
-	else {
-		//log("persist\n");
 	}
 }
 
@@ -228,6 +213,7 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside order %p %lu %p %lu. \n", early_addr, early_size, late_addr, late_size);
 		input.type = _ORDER;
 		input.order.early_addr = early_addr;
@@ -235,7 +221,7 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 		input.order.late_addr = late_addr;
 		input.order.late_size = late_size;
 		input.line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
+		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
 			input.file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
@@ -244,9 +230,6 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 		//log("order_aa\n");
 
 		NVMVeriFifoWrite(&input);
-	}
-	else {
-		//log("order\n");
 	}
 }
 
@@ -264,9 +247,6 @@ void kC_createMetadata_TransactionDelim()
 
 		//printk(KERN_INFO "@ Complete transactiondelim metadata. \n");
 	}
-	else {
-		//log("transactiondelim\n");
-	}
 }
 
 void kC_createMetadata_Ending()
@@ -282,17 +262,21 @@ void kC_createMetadata_Ending()
 
 		//printk(KERN_INFO "@ Complete ending metadata. \n");
 	}
-	else {
-		//log("ending\n");
-	}
 }
 
-void kC_createMetadata_TransactionBegin()
+void kC_createMetadata_TransactionBegin(const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside transactionbegin metadata. \n");
 		input.type = _TRANSACTIONBEGIN;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		//log("transactionbegin_aa\n");
 
@@ -300,17 +284,21 @@ void kC_createMetadata_TransactionBegin()
 
 		//printk(KERN_INFO "@ Complete transactionbegin metadata. \n");
 	}
-	else {
-		//log("transactionbegin\n");
-	}
 }
 
-void kC_createMetadata_TransactionEnd()
+void kC_createMetadata_TransactionEnd(const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside transactionend metadata. \n");
 		input.type = _TRANSACTIONEND;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		//log("transactionend_aa\n");
 
@@ -318,7 +306,28 @@ void kC_createMetadata_TransactionEnd()
 
 		//printk(KERN_INFO "@ Complete transactionend metadata. \n");
 	}
-	else {
-		//log("transactionend\n");
+}
+
+void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_name[], unsigned short line_num)
+{
+	if (existVeriInstance) {
+		Metadata input;
+		int file_offset;
+		//printk(KERN_INFO "@ Inside transactionadd metadata. \n");
+		input.type = _TRANSACTIONADD;
+		input.transactionadd.addr = addr;
+		input.transactionadd.size = size;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+
+		//log("transactionadd_aa\n");
+
+		NVMVeriFifoWrite(&input);
+
+		//printk(KERN_INFO "@ Complete transactionadd metadata. \n");
 	}
 }

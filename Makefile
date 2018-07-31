@@ -1,5 +1,5 @@
 ifndef $(NUM_CORES)
-NUM_CORES	:= 1
+NUM_CORES	:= 2
 endif
 
 CC			:= -gcc

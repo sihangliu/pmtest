@@ -62,7 +62,9 @@ typedef struct Metadata {
 } Metadata;
 
 void Metadata_print(Metadata *);
-
+/***********************************************
+   part that can only be used by user space C++ program
+***********************************************/
 # ifndef NVMVERI_KERNEL_CODE
 
 // C++ Libary for verification
@@ -106,6 +108,7 @@ using std::vector;
 using namespace boost::icl;
 
 #include "common.hh"
+#include "global.h"
 
 #define MAX_THREAD_POOL_SIZE NUM_CORES
 #define MAX_OP_NAME_SIZE 50
@@ -273,22 +276,12 @@ extern "C" void C_createMetadata_Barrier(void *, const char[], unsigned short);
 extern "C" void C_createMetadata_Fence(void *, const char[], unsigned short);
 extern "C" void C_createMetadata_Persist(void *, void *, size_t, const char[], unsigned short);
 extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t, const char[], unsigned short);
+extern "C" void C_createMetadata_TransactionBegin(void *, const char[], unsigned short);
+extern "C" void C_createMetadata_TransactionEnd(void *, const char[], unsigned short);
+extern "C" void C_createMetadata_TransactionAdd(void *, void *, size_t, const char[], unsigned short);
 extern "C" void C_registerVariable(char*, void*, size_t);
 extern "C" void C_unregisterVariable(char*);
 extern "C" void* C_getVariable(char*, size_t*);
-
-extern __thread void *metadataPtr;
-extern __thread int existVeriInstance;
-extern __thread int isInTransaction;
-
-//extern void *metadataManagerPtr;
-extern __thread int thread_id;
-extern __thread int nvmveri_cur_idx;
-extern __thread void **metadataVectorPtr;
-extern __thread int nvmveri_cur_idx;
-//extern ThreadInfo thread_info;
-
-extern void* veriInstancePtr;
 
 #endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__
