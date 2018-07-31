@@ -97,6 +97,12 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 
 		input.assign.addr = addr;
 		input.assign.size = size;
+		input.line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
 
@@ -126,6 +132,12 @@ void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], un
 
 		input.flush.addr = addr;
 		input.flush.size = size;
+		input.line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
 	}
@@ -197,11 +209,11 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 
 		input.persist.addr = addr;
 		input.persist.size = size;
-		input.persist.line_num = line_num;
-		int file_offset = strlen(file_name)-FILENAME_LEN;
+		input.line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
-			input.persist.file_name,
-			(file_name+max(0, strlen(file_name)-FILENAME_LEN)),
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
 		NVMVeriFifoWrite(&input);
@@ -222,10 +234,10 @@ void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_add
 		input.order.early_size = early_size;
 		input.order.late_addr = late_addr;
 		input.order.late_size = late_size;
-		input.order.line_num = line_num;
-		int file_offset = strlen(file_name)-FILENAME_LEN;
+		input.line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
-			input.order.file_name,
+			input.file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 

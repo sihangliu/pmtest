@@ -10,7 +10,6 @@
    library part that may be used by C program
 ***********************************************/
 #include "stddef.h"
-#include "stdlib.h"
 // typedef unsigned long long addr_t;
 
 typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING, _TRANSACTIONBEGIN, _TRANSACTIONEND, _TRANSACTIONADD } MetadataType;

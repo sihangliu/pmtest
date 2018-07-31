@@ -31,8 +31,8 @@ void kC_createMetadata_Fence(const char[], unsigned short);
 void kC_createMetadata_Persist(void *, size_t, const char[], unsigned short);
 void kC_createMetadata_Order(void *, size_t, void *, size_t, const char[], unsigned short);
 
-void kC_createMetadata_TransactionDelim();
-void kC_createMetadata_Ending();
+void kC_createMetadata_TransactionDelim(void);
+void kC_createMetadata_Ending(void);
 
 void kC_createMetadata_TransactionBegin(void);
 void kC_createMetadata_TransactionEnd(void);
@@ -49,7 +49,7 @@ extern int existVeriInstance;
 #define NVTest_fence() kC_createMetadata_Fence(__FILE__, __LINE__)
 #define NVTest_isPersistent(addr, size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
 #define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
-#define NVTest_transactionDelim() kC_createMetadata_transactionDelim()
+#define NVTest_transactionDelim() kC_createMetadata_TransactionDelim()
 #define NVTest_ending() kC_createMetadata_Ending()
 #define TX_CHECKER_START kC_createMetadata_TransactionBegin()
 #define TX_CHECKER_END kC_createMetadata_TransactionEnd()
