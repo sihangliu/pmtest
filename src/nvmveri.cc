@@ -670,7 +670,7 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 	}
 }
 
-void C_createMetadata_TransactionBegin(void *metadata_vector)
+void C_createMetadata_TransactionBegin(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -680,7 +680,7 @@ void C_createMetadata_TransactionBegin(void *metadata_vector)
 	}
 }
 
-void C_createMetadata_TransactionEnd(void *metadata_vector)
+void C_createMetadata_TransactionEnd(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -690,7 +690,7 @@ void C_createMetadata_TransactionEnd(void *metadata_vector)
 	}
 }
 
-void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t size)
+void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;

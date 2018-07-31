@@ -25,6 +25,9 @@ void C_createMetadata_Barrier(void *, const char[], unsigned short);
 void C_createMetadata_Fence(void *, const char[], unsigned short);
 void C_createMetadata_Persist(void *, void *, size_t, const char[], unsigned short);
 void C_createMetadata_Order(void *, void *, size_t, void *, size_t, const char[], unsigned short);
+void C_createMetadata_TransactionBegin(void *, const char[], unsigned short);
+void C_createMetadata_TransactionEnd(void *, const char[], unsigned short);
+void C_createMetadata_TransactionAdd(void *, void *, size_t, const char[], unsigned short);
 void C_registerVariable(char*, void*, size_t);
 void C_unregisterVariable(char*);
 void* C_getVariable(char*, size_t*);
@@ -53,6 +56,7 @@ extern void* veriInstancePtr;
 #define NVTest_fence() C_createMetadata_Fence(metadataPtr, __FILE__, __LINE__)
 #define NVTest_isPersistent(addr, size) C_createMetadata_Persist(metadataPtr, (addr), (size), __FILE__, __LINE__)
 #define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) C_createMetadata_Order(metadataPtr, (addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define NVTest_transactionAdd(addr, size) C_createMetadata_TransactionAdd(metadataPtr, (addr), (size), __FILE__, __LINE__)
 
 
 #endif // !NVMVERI_KERNEL_CODE
