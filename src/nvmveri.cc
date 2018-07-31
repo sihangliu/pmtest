@@ -77,6 +77,14 @@ void log(const char *format, ...)
 	va_end(args);
 }
 
+void error_msg(const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+}
+
 
 bool NVMVeri::initVeri()
 {
@@ -299,13 +307,12 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interv
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-				printf(
-					COLOR_RED "ASSIGN ERROR: " COLOR_RESET
-					"%s:%hu: Address range [0x%lx, 0x%lx) is not TransactionAdded before modified.\n",
-					filename_temp,
-					cur->line_num,
-					addrinterval.lower(),
-					addrinterval.upper());
+				std::cout << COLOR_RED << "ASSIGN ERROR: " << COLOR_RESET
+					<< filename_temp << ":" << cur->line_num 
+					<< ": Address range " << std::hex << std::showbase
+					<< addrinterval << " is not TransactionAdded before modified." << std::endl;
+				std::cout.unsetf(std::ios_base::hex);
+				std::cout.unsetf(std::ios_base::showbase);
 				return -1;
 			}
 		}
@@ -326,11 +333,11 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interva
 	#ifdef NVMVERI_WARN
 		auto iter = PersistInfo.find(addrinterval);
 		if (iter == PersistInfo.end()) {
-			printf(
-				COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
-				"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
-				addrinterval.lower(),
-				addrinterval.upper());
+			std::cout << COLOR_YELLOW << "FLUSH WARNING: " << COLOR_RESET
+				<< "Address range " << std::hex << std::showbase
+				<< addrinterval << " is not modified, no need to flush." << std::endl;
+				std::cout.unsetf(std::ios_base::hex);
+				std::cout.unsetf(std::ios_base::showbase);
 		}
 		else
 			PersistInfo -= addrinterval;
@@ -367,13 +374,13 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo)
 			char filename_temp[FILENAME_LEN + 1];
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
-			printf(
-				COLOR_RED "PERSIST ERROR: " COLOR_RESET
-				"%s:%hu: Address range [0x%lx, 0x%lx) not persisted.\n",
-				filename_temp,
-				cur->line_num,
-				addrinterval.lower(),
-				addrinterval.upper());
+
+			std::cout << COLOR_RED << "PERSIST ERROR: " << COLOR_RESET
+				<< filename_temp << ":" << cur->line_num 
+				<< ": Address range " << std::hex << std::showbase
+				<< addrinterval << " not persisted." << std::endl;
+			std::cout.unsetf(std::ios_base::hex);
+			std::cout.unsetf(std::ios_base::showbase);
 			return -1;
 		}
 	}
@@ -419,15 +426,12 @@ inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo,
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-				printf(
-					COLOR_RED "ORDER ERROR: " COLOR_RESET
-					"%s:%hu: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
-					filename_temp,
-					cur->line_num,
-					(size_t)(cur->order.early_addr),
-					(size_t)(cur->order.early_addr) + cur->order.early_size,
-					(size_t)(cur->order.late_addr),
-					(size_t)(cur->order.late_addr) + cur->order.late_size);
+				std::cout << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
+					<< filename_temp << ":" << cur->line_num 
+					<< ": Address range " << std::hex << std::showbase
+					<< addrinterval << " not before " << addrinterval_late << "." << std::endl;
+				std::cout.unsetf(std::ios_base::hex);
+				std::cout.unsetf(std::ios_base::showbase);
 				return -1;
 			}
 		}
@@ -435,11 +439,9 @@ inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo,
 			char filename_temp[FILENAME_LEN + 1];
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
-			printf(
-				COLOR_RED "ORDER ERROR: " COLOR_RESET
-				"%s:%hu: Queried address range not yet assigned.\n",
-				filename_temp,
-				cur->line_num);
+			std::cout << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
+					<< filename_temp << ":" << cur->line_num 
+					<< ": Queried address range not yet assigned." << std::endl;
 			return -1;
 		}
 	}
@@ -493,11 +495,9 @@ void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInf
 		char filename_temp[FILENAME_LEN + 1];
 		strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 		filename_temp[FILENAME_LEN] = '\0';
-		printf(
-			COLOR_RED "TRANSACTIONADD ERROR: " COLOR_RESET
-			"%s:%hu: Not inside a transaction.\n",
-			filename_temp,
-			cur->line_num);
+		std::cout << COLOR_RED << "TRANSACTIONADD ERROR: " << COLOR_RESET
+			<< filename_temp << ":" << cur->line_num 
+			<< ": Not inside a transaction." << std::endl;
 	}
 }
 
@@ -572,9 +572,8 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	}
 
 	if (transactionCount > 0) {
-		printf(
-			COLOR_RED "TRANSACTIONEND ERROR: " COLOR_RESET
-			"TransactionBegin and TransactionEnd does not match.\n");
+		std::cout << COLOR_RED << "TRANSACTIONEND ERROR: " << COLOR_RESET
+			<< "TransactionBegin and TransactionEnd does not match." << std::endl;
 	}
 }
 
@@ -825,7 +824,5 @@ void* C_getVariable(char* name, size_t* size)
 	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
 	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
 }
-
-
 
 #endif // !NVMVERI_KERNEL_CODE

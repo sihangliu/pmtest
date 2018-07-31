@@ -377,6 +377,7 @@ void tx_wrapper()
 	NVTest_assign((void *)(&arr[4]), 4);
 	NVTest_flush((void *)(&arr[0]), 4);
 	TX_CHECKER_END;
+	NVTest_transactionAdd((void *)(&arr[0]), 4);
 	
 
 	C_execVeri(p, metadataPtr);
