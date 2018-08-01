@@ -22,7 +22,12 @@ atomic<int> NVMVeri::completedThread;
 */
 
 #ifndef NVMVERI_KERNEL_CODE
-const char MetadataTypeStr[20][30] = {"_OPINFO", "_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE", "_PERSIST", "_ORDER", "_TRANSACTIONDELIM", "_ENDING", "_TRANSACTIONBEGIN", "_TRANSACTIONEND", "_TRANSACTIONADD"};
+const char MetadataTypeStr[20][30] = {
+	"_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE",
+	"_PERSIST", "_ORDER",
+	"_TRANSACTIONDELIM", "_ENDING",
+	"_TRANSACTIONBEGIN", "_TRANSACTIONEND", "_TRANSACTIONADD", "_EXCLUDE", "_INCLUDE"
+};
 
 __thread void *metadataPtr;
 //void *metadataManagerPtr;
@@ -33,6 +38,7 @@ __thread void **metadataVectorPtr;
 void* veriInstancePtr;
 
 ThreadInfo thread_info;
+
 
 NVMVeri::NVMVeri()
 {
@@ -760,6 +766,42 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 			FILENAME_LEN);
 
 		LOG("create metadata transactionadd %p, %d, %d\n", m->transactionadd.addr, m->transactionadd.size, m->type);
+		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+}
+
+void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _EXCLUDE;
+		m->exclude.addr = addr;
+		m->exclude.size = size;
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+		LOG("create metadata exclude %p, %d, %d\n", m->exclude.addr, m->exclude.size, m->type);
+		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
+	}
+}
+
+void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
+{
+	if (existVeriInstance) {
+		Metadata *m = new Metadata;
+		m->type = _INCLUDE;
+		m->include.addr = addr;
+		m->include.size = size;
+		m->line_num = line_num;
+		int file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			m->file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+		LOG("create metadata include %p, %d, %d\n", m->include.addr, m->include.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }

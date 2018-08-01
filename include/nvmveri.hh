@@ -14,7 +14,13 @@
 #include "stddef.h"
 // typedef unsigned long long addr_t;
 
-typedef enum MetadataType {_OPINFO, _ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE, _PERSIST, _ORDER, _TRANSACTIONDELIM, _ENDING, _TRANSACTIONBEGIN, _TRANSACTIONEND, _TRANSACTIONADD } MetadataType;
+typedef enum MetadataType {
+	_ASSIGN, _FLUSH, _COMMIT, _BARRIER, _FENCE,
+	_PERSIST, _ORDER,
+	_TRANSACTIONDELIM, _ENDING,
+	_TRANSACTIONBEGIN, _TRANSACTIONEND, _TRANSACTIONADD,
+	_EXCLUDE, _INCLUDE
+} MetadataType;
 
 // the corresponding MetadataTypeStr is defined in nvmveri.cc
 
@@ -43,11 +49,20 @@ typedef struct Metadata_Order {
 	void *late_addr;
 } Metadata_Order;
 
-
 typedef struct Metadata_TransactionAdd {
 	unsigned short size;
 	void *addr;
 } Metadata_TransactionAdd;
+
+typedef struct Metadata_Exclude {
+	unsigned short size;
+	void *addr;
+} Metadata_Exclude;
+
+typedef struct Metadata_Include {
+	unsigned short size;
+	void *addr;
+} Metadata_Include;
 
 typedef struct Metadata {
 	MetadataType type;
@@ -60,6 +75,8 @@ typedef struct Metadata {
 		Metadata_Persist persist;
 		Metadata_Order order;
 		Metadata_TransactionAdd transactionadd;
+		Metadata_Exclude exclude;
+		Metadata_Include include;
 	};
 } Metadata;
 
@@ -256,6 +273,7 @@ public:
 
 	//bool assignTask(tid_t);
 };
+
 
 /* Thread control */
 extern "C" void C_initThread();
