@@ -71,10 +71,6 @@ int main(int argc, char *argv[])
 		printf("transaction head %p\n", tx);
 		int flag = read_transaction(tx, fd);
 		tx_vector.push_back(tx);
-		// for (int i = 0; i < tx->size(); i++) {
-		// 	printf("local ");
-		// 	Metadata_print((*tx)[i]);
-		// }
 		if (flag == -1) break;
 		veriInstance.execVeri(tx);
 	}

@@ -2,13 +2,15 @@
 #define __NVMVERI_HH__
 
 
-#ifndef DEBUG_FLAG
-#define DEBUG_FLAG false
-#endif // DEBUG_FLAG
-
 /***********************************************
    library part that may be used by C program
 ***********************************************/
+#ifdef DEBUG_FLAG
+#define LOG(...) printf(__VA_ARGS__)
+#else
+#define LOG(...) 
+#endif // DEBUG_FLAG
+
 #include "stddef.h"
 // typedef unsigned long long addr_t;
 
@@ -61,7 +63,6 @@ typedef struct Metadata {
 	};
 } Metadata;
 
-void Metadata_print(Metadata *);
 /***********************************************
    part that can only be used by user space C++ program
 ***********************************************/

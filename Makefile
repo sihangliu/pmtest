@@ -54,7 +54,7 @@ build:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
-debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG=true -g
+debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG -g
 debug: all
 
 release: CXXFLAGS += -O3

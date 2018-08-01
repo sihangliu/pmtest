@@ -34,26 +34,6 @@ void* veriInstancePtr;
 
 ThreadInfo thread_info;
 
-void Metadata_print(Metadata *m)
-{
-	printf("%s ", MetadataTypeStr[m->type]);
-	if (m->type == _ASSIGN) {
-		printf("%p %u", m->assign.addr, m->assign.size);
-	}
-	else if (m->type == _FLUSH) {
-		printf("%p %u", m->flush.addr, m->flush.size);
-	}
-	else if (m->type == _PERSIST) {
-		printf("%p %u", m->persist.addr, m->persist.size);
-	}
-	else if (m->type == _ORDER) {
-		printf("%p %u %p %u", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size);
-	}
-	else {}
-	printf("\n");
-}
-
-
 NVMVeri::NVMVeri()
 {
 	initVeri();
@@ -65,17 +45,6 @@ NVMVeri::~NVMVeri()
 	termVeri();
 }
 
-
-const bool _debug = DEBUG_FLAG;
-
-void log(const char *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	if (_debug == true)
-		vprintf(format, args);
-	va_end(args);
-}
 
 void error_msg(const char *format, ...)
 {
@@ -290,8 +259,8 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interv
 		size_t startaddr = (size_t)(cur->assign.addr);
 		size_t endaddr = startaddr + cur->assign.size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-		log(
-			"%s %p %lu %s %hu\n",
+		LOG(
+			"%s %p %d %s %hu\n",
 			MetadataTypeStr[_ASSIGN],
 			cur->assign.addr,
 			cur->assign.size,
@@ -307,12 +276,12 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interv
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-				std::cout << COLOR_RED << "ASSIGN ERROR: " << COLOR_RESET
+				std::cerr << COLOR_RED << "ASSIGN ERROR: " << COLOR_RESET
 					<< filename_temp << ":" << cur->line_num 
 					<< ": Address range " << std::hex << std::showbase
 					<< addrinterval << " is not TransactionAdded before modified." << std::endl;
-				std::cout.unsetf(std::ios_base::hex);
-				std::cout.unsetf(std::ios_base::showbase);
+				std::cerr.unsetf(std::ios_base::hex);
+				std::cerr.unsetf(std::ios_base::showbase);
 				return -1;
 			}
 		}
@@ -326,18 +295,18 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interva
 		size_t startaddr = (size_t)(cur->flush.addr);
 		size_t endaddr = startaddr + cur->flush.size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-		log("%s %p %lu\n",
+		LOG("%s %p %d\n",
 			MetadataTypeStr[_FLUSH],
 			cur->flush.addr,
 			cur->flush.size);
 	#ifdef NVMVERI_WARN
 		auto iter = PersistInfo.find(addrinterval);
 		if (iter == PersistInfo.end()) {
-			std::cout << COLOR_YELLOW << "FLUSH WARNING: " << COLOR_RESET
+			std::cerr << COLOR_YELLOW << "FLUSH WARNING: " << COLOR_RESET
 				<< "Address range " << std::hex << std::showbase
 				<< addrinterval << " is not modified, no need to flush." << std::endl;
-				std::cout.unsetf(std::ios_base::hex);
-				std::cout.unsetf(std::ios_base::showbase);
+			std::cerr.unsetf(std::ios_base::hex);
+			std::cerr.unsetf(std::ios_base::showbase);
 		}
 		else
 			PersistInfo -= addrinterval;
@@ -351,7 +320,7 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interva
 
 inline int VeriProc_Fence(int &timestamp)
 {
-	log("%s\n", MetadataTypeStr[_FENCE]);
+	LOG("%s\n", MetadataTypeStr[_FENCE]);
 	timestamp++;
 	return 0;
 }
@@ -362,7 +331,7 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo)
 		size_t startaddr = (size_t)(cur->persist.addr);
 		size_t endaddr = startaddr + cur->persist.size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-		log("%s %p %lu\n",
+		LOG("%s %p %d\n",
 			MetadataTypeStr[_PERSIST],
 			cur->persist.addr,
 			cur->persist.size);
@@ -375,12 +344,12 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo)
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
 
-			std::cout << COLOR_RED << "PERSIST ERROR: " << COLOR_RESET
+			std::cerr << COLOR_RED << "PERSIST ERROR: " << COLOR_RESET
 				<< filename_temp << ":" << cur->line_num 
 				<< ": Address range " << std::hex << std::showbase
 				<< addrinterval << " not persisted." << std::endl;
-			std::cout.unsetf(std::ios_base::hex);
-			std::cout.unsetf(std::ios_base::showbase);
+			std::cerr.unsetf(std::ios_base::hex);
+			std::cerr.unsetf(std::ios_base::showbase);
 			return -1;
 		}
 	}
@@ -398,7 +367,7 @@ inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo,
 		endaddr = startaddr + cur->order.late_size;
 		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
 
-		log("%s %p %lu %p %lu\n",
+		LOG("%s %p %d %p %d\n",
 			MetadataTypeStr[_ORDER],
 			cur->order.early_addr,
 			cur->order.early_size,
@@ -426,12 +395,12 @@ inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo,
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-				std::cout << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
+				std::cerr << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
 					<< filename_temp << ":" << cur->line_num 
 					<< ": Address range " << std::hex << std::showbase
 					<< addrinterval << " not before " << addrinterval_late << "." << std::endl;
-				std::cout.unsetf(std::ios_base::hex);
-				std::cout.unsetf(std::ios_base::showbase);
+				std::cerr.unsetf(std::ios_base::hex);
+				std::cerr.unsetf(std::ios_base::showbase);
 				return -1;
 			}
 		}
@@ -439,7 +408,7 @@ inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo,
 			char filename_temp[FILENAME_LEN + 1];
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
-			std::cout << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
+			std::cerr << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
 					<< filename_temp << ":" << cur->line_num 
 					<< ": Queried address range not yet assigned." << std::endl;
 			return -1;
@@ -454,7 +423,7 @@ int VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &Transaction
 		TransactionPersistInfo.clear();
 	}
 	transactionCount++;
-	log("%s\n",
+	LOG("%s\n",
 		MetadataTypeStr[_TRANSACTIONBEGIN]);
 	return 0;
 }
@@ -462,7 +431,7 @@ int VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &Transaction
 int VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &PersistInfo, FastVector<Metadata *> &TransactionPersistInfo, int &transactionCount)
 {
 	transactionCount--;
-	log("%s\n",
+	LOG("%s\n",
 		MetadataTypeStr[_TRANSACTIONEND]);
 	if (transactionCount == 0) {
 		for (int i = 0; i < TransactionPersistInfo.size(); i++) {
@@ -476,7 +445,7 @@ int VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &PersistInfo, FastV
 
 void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInfo, int &transactionCount)
 {
-	log("%s %p %lu %s %hu\n",
+	LOG("%s %p %d %s %hu\n",
 		MetadataTypeStr[_TRANSACTIONADD],
 		cur->transactionadd.addr,
 		cur->transactionadd.size,
@@ -495,7 +464,7 @@ void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInf
 		char filename_temp[FILENAME_LEN + 1];
 		strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 		filename_temp[FILENAME_LEN] = '\0';
-		std::cout << COLOR_RED << "TRANSACTIONADD ERROR: " << COLOR_RESET
+		std::cerr << COLOR_RED << "TRANSACTIONADD ERROR: " << COLOR_RESET
 			<< filename_temp << ":" << cur->line_num 
 			<< ": Not inside a transaction." << std::endl;
 	}
@@ -539,7 +508,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 				case _TRANSACTIONADD:
 					VeriProc_TransactionAdd((*veriptr)[i], TransactionAddInfo, transactionCount); break;
 				default:
-					log("Unidentified or unprocessed type.");
+					LOG("Unidentified or unprocessed type.");
 				}
 			}
 
@@ -567,12 +536,12 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 		case _TRANSACTIONADD:
 			VeriProc_TransactionAdd((*veriptr)[i], TransactionAddInfo, transactionCount); break;
 		default:
-			log("Unidentified or unprocessed type.");
+			LOG("Unidentified or unprocessed type.");
 		}
 	}
 
 	if (transactionCount > 0) {
-		std::cout << COLOR_RED << "TRANSACTIONEND ERROR: " << COLOR_RESET
+		std::cerr << COLOR_RED << "TRANSACTIONEND ERROR: " << COLOR_RESET
 			<< "TransactionBegin and TransactionEnd does not match." << std::endl;
 	}
 }
@@ -657,7 +626,7 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		log("create metadata assign %p, %lu, %d\n", m->assign.addr, m->assign.size, m->type);
+		LOG("create metadata assign %p, %d, %d\n", m->assign.addr, m->assign.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -677,7 +646,7 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, cons
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		log("create metadata flush %p, %lu, %d\n", m->flush.addr, m->flush.size, m->type);
+		LOG("create metadata flush %p, %d, %d\n", m->flush.addr, m->flush.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -688,7 +657,7 @@ void C_createMetadata_Commit(void *metadata_vector, const char file_name[], unsi
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _COMMIT;
-		log("create metadata commit\n");
+		LOG("create metadata commit\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -699,7 +668,7 @@ void C_createMetadata_Barrier(void *metadata_vector, const char file_name[], uns
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _BARRIER;
-		log("create metadata barrier\n");
+		LOG("create metadata barrier\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -710,7 +679,7 @@ void C_createMetadata_Fence(void *metadata_vector, const char file_name[], unsig
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _FENCE;
-		log("create metadata fence\n");
+		LOG("create metadata fence\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -729,7 +698,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		log("create metadata persist %p, %lu, %d\n", m->persist.addr, m->persist.size, m->type);
+		LOG("create metadata persist %p, %d, %d\n", m->persist.addr, m->persist.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -751,7 +720,7 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		log("create metadata order %p, %lu, %p, %lu, %d\n", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size, m->type);
+		LOG("create metadata order %p, %d, %p, %d, %d\n", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -761,7 +730,7 @@ void C_createMetadata_TransactionBegin(void *metadata_vector, const char file_na
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _TRANSACTIONBEGIN;
-		log("create metadata transactionbegin\n");
+		LOG("create metadata transactionbegin\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -771,7 +740,7 @@ void C_createMetadata_TransactionEnd(void *metadata_vector, const char file_name
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _TRANSACTIONEND;
-		log("create metadata transactionend\n");
+		LOG("create metadata transactionend\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -790,7 +759,7 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		log("create metadata transactionadd %p, %lu, %d\n", m->transactionadd.addr, m->transactionadd.size, m->type);
+		LOG("create metadata transactionadd %p, %d, %d\n", m->transactionadd.addr, m->transactionadd.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
