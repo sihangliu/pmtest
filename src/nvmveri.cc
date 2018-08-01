@@ -143,7 +143,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 			unique_lock<mutex> lock(VeriQueueMutex[i]);
 			VeriQueueCV[i].notify_all();
 		}
-	};
+	}
 	*/
 
 	while (true) {
@@ -157,7 +157,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 			unique_lock<mutex> lock(VeriQueueMutex[i]);
 			VeriQueueCV[i].notify_all();
 		}
-	};
+	}
 
 
 	// Merge results

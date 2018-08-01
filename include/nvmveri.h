@@ -22,7 +22,7 @@ void C_getNewMetadataPtr();
 void *C_createMetadataVector(void);
 void C_deleteMetadataVector(void *);
 void C_createMetadata_Assign(void *, void *, size_t, const char[], unsigned short);
-void C_createMetadata_Flush(void *, void *, size_t);
+void C_createMetadata_Flush(void *, void *, size_t, const char[], unsigned short);
 void C_createMetadata_Commit(void *, const char[], unsigned short);
 void C_createMetadata_Barrier(void *, const char[], unsigned short);
 void C_createMetadata_Fence(void *, const char[], unsigned short);
