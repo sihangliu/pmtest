@@ -838,6 +838,7 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 
 void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
+#ifdef NVMVERI_EXCLUDE
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _EXCLUDE;
@@ -852,10 +853,12 @@ void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, co
 		LOG("create metadata exclude %p, %d, %d\n", m->exclude.addr, m->exclude.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
+#endif // NVMVERI_EXCLUDE
 }
 
 void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
+#ifdef NVMVERI_EXCLUDE
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _INCLUDE;
@@ -870,6 +873,7 @@ void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, co
 		LOG("create metadata include %p, %d, %d\n", m->include.addr, m->include.size, m->type);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
+#endif // NVMVERI_EXCLUDE
 }
 
 void C_registerVariable(char* name, void* addr, size_t size)
