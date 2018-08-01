@@ -37,6 +37,8 @@ void kC_createMetadata_Ending(void);
 void kC_createMetadata_TransactionBegin(const char[], unsigned short);
 void kC_createMetadata_TransactionEnd(const char[], unsigned short);
 void kC_createMetadata_TransactionAdd(void *, size_t, const char[], unsigned short);
+void kC_createMetadata_Exclude(void *, void *, size_t, const char[], unsigned short);
+void kC_createMetadata_Include(void *, void *, size_t, const char[], unsigned short);
 
 extern void* metadataPtr;
 extern int existVeriInstance;

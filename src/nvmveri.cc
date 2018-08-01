@@ -259,7 +259,7 @@ bool timestamp_isexacttime(int t)
 	return (t >= 0);
 }
 
-inline int VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, FastVector<Metadata *> &TransactionPersistInfo, int &timestamp, int &transactionCount)
+inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, FastVector<Metadata *> &TransactionPersistInfo, int &timestamp, int &transactionCount)
 {
 	if (cur->assign.size > 0) {
 		size_t startaddr = (size_t)(cur->assign.addr);
@@ -282,20 +282,33 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &PersistInfo, interv
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-				std::cerr << COLOR_RED << "ASSIGN ERROR: " << COLOR_RESET
-					<< filename_temp << ":" << cur->line_num 
-					<< ": Address range " << std::hex << std::showbase
-					<< addrinterval << " is not TransactionAdded before modified." << std::endl;
-				std::cerr.unsetf(std::ios_base::hex);
-				std::cerr.unsetf(std::ios_base::showbase);
-				return -1;
+			#ifdef NVMVERI_EXCLUDE
+				auto it = ExcludeInfo.find(addrinterval);		
+				if (!(it == ExcludeInfo.end()) && !contains(*it, addrinterval)) {
+					addrinterval = (
+						lower_less(addrinterval, *it) ?
+						right_subtract(addrinterval, *it) :
+						left_subtract(addrinterval, *it)
+					);
+				}
+				if (it == ExcludeInfo.end() || !contains(*it, addrinterval))
+			#endif // NVMVERI_EXCLUDE
+				{
+					std::cerr << COLOR_RED << "ASSIGN ERROR: " << COLOR_RESET
+						<< filename_temp << ":" << cur->line_num 
+						<< ": Address range " << std::hex << std::showbase
+						<< addrinterval << " is not TransactionAdded before modified." << std::endl;
+					std::cerr.unsetf(std::ios_base::hex);
+					std::cerr.unsetf(std::ios_base::showbase);
+					return -1;
+				}
 			}
 		}
 	}
 	return 0;
 }
 
-inline int VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->flush.size > 0) {
 		size_t startaddr = (size_t)(cur->flush.addr);
@@ -318,7 +331,7 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &PersistInfo, interva
 			PersistInfo -= addrinterval;
 	#else
 		PersistInfo -= addrinterval;
-	#endif
+	#endif // NVMVERI_WARN
 		OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
 	}
 	return 0;
@@ -331,7 +344,7 @@ inline int VeriProc_Fence(int &timestamp)
 	return 0;
 }
 
-inline int VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo)
+inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo)
 {
 	if (cur->persist.size > 0) {
 		size_t startaddr = (size_t)(cur->persist.addr);
@@ -349,20 +362,32 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &PersistInfo)
 			char filename_temp[FILENAME_LEN + 1];
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
-
-			std::cerr << COLOR_RED << "PERSIST ERROR: " << COLOR_RESET
-				<< filename_temp << ":" << cur->line_num 
-				<< ": Address range " << std::hex << std::showbase
-				<< addrinterval << " not persisted." << std::endl;
-			std::cerr.unsetf(std::ios_base::hex);
-			std::cerr.unsetf(std::ios_base::showbase);
-			return -1;
+		#ifdef NVMVERI_EXCLUDE
+			auto it = ExcludeInfo.find(addrinterval);		
+			if (!(it == ExcludeInfo.end()) && !contains(*it, addrinterval)) {
+				addrinterval = (
+					lower_less(addrinterval, *it) ?
+					right_subtract(addrinterval, *it) :
+					left_subtract(addrinterval, *it)
+				);
+			}
+			if (it == ExcludeInfo.end() || !contains(*it, addrinterval))
+		#endif // NVMVERI_EXCLUDE
+			{
+				std::cerr << COLOR_RED << "PERSIST ERROR: " << COLOR_RESET
+					<< filename_temp << ":" << cur->line_num 
+					<< ": Address range " << std::hex << std::showbase
+					<< addrinterval << " not persisted." << std::endl;
+				std::cerr.unsetf(std::ios_base::hex);
+				std::cerr.unsetf(std::ios_base::showbase);
+				return -1;
+			}
 		}
 	}
 	return 0;
 }
 
-inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo, int &timestamp)
+inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
 	if (cur->order.early_size > 0 && cur->order.late_size > 0) {
 		size_t startaddr = (size_t)(cur->order.early_addr);
@@ -423,7 +448,7 @@ inline int VeriProc_Order(Metadata *cur, interval_map_addr_timestamp &OrderInfo,
 	return 0;
 }
 
-int VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &TransactionPersistInfo,int &transactionCount)
+inline void VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &TransactionPersistInfo,int &transactionCount)
 {
 	if (transactionCount == 0) {
 		TransactionPersistInfo.clear();
@@ -431,10 +456,9 @@ int VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &Transaction
 	transactionCount++;
 	LOG("%s\n",
 		MetadataTypeStr[_TRANSACTIONBEGIN]);
-	return 0;
 }
 
-int VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &PersistInfo, FastVector<Metadata *> &TransactionPersistInfo, int &transactionCount)
+inline void VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, FastVector<Metadata *> &TransactionPersistInfo, int &transactionCount)
 {
 	transactionCount--;
 	LOG("%s\n",
@@ -442,14 +466,13 @@ int VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &PersistInfo, FastV
 	if (transactionCount == 0) {
 		for (int i = 0; i < TransactionPersistInfo.size(); i++) {
 			TransactionPersistInfo[i]->type = _PERSIST;
-			VeriProc_Persist(TransactionPersistInfo[i], PersistInfo);
+			VeriProc_Persist(TransactionPersistInfo[i], ExcludeInfo, PersistInfo);
 			// This is not the exactly correct usage, but the behavior is correct because _ASSIGN and _PERSIST metadata have the same layout.
 		}
 	}
-	return 0;
 }
 
-void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInfo, int &transactionCount)
+inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInfo, int &transactionCount)
 {
 	LOG("%s %p %d %s %hu\n",
 		MetadataTypeStr[_TRANSACTIONADD],
@@ -476,9 +499,44 @@ void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInf
 	}
 }
 
+inline void VeriProc_Exclude(Metadata *cur, interval_set_addr &ExcludeInfo)
+{
+	if (cur->exclude.size > 0) {
+		size_t startaddr = (size_t)(cur->exclude.addr);
+		size_t endaddr = startaddr + cur->exclude.size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		LOG(
+			"%s %p %d %s %hu\n",
+			MetadataTypeStr[_EXCLUDE],
+			cur->exclude.addr,
+			cur->exclude.size,
+			cur->file_name,
+			cur->line_num);
+		ExcludeInfo += addrinterval;
+	}
+}
+
+inline void VeriProc_Include(Metadata *cur, interval_set_addr &ExcludeInfo)
+{
+	if (cur->include.size > 0) {
+		size_t startaddr = (size_t)(cur->include.addr);
+		size_t endaddr = startaddr + cur->include.size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		LOG(
+			"%s %p %d %s %hu\n",
+			MetadataTypeStr[_INCLUDE],
+			cur->include.addr,
+			cur->include.size,
+			cur->file_name,
+			cur->line_num);
+		ExcludeInfo -= addrinterval;
+	}
+}
+
 void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 {
 	// usually sizeof(size_t) = 8 on 64-bit system
+	interval_set_addr ExcludeInfo;
 	interval_set_addr PersistInfo;
 	interval_set_addr TransactionAddInfo;
 	interval_map_addr_timestamp OrderInfo;
@@ -498,23 +556,27 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 			for (int i = prev; i != cur; i++) {
 				switch(((*veriptr)[i])->type) {
 				case _ASSIGN:
-					VeriProc_Assign((*veriptr)[i], PersistInfo, TransactionAddInfo, OrderInfo, TransactionPersistInfo, timestamp, transactionCount); break;
+					VeriProc_Assign((*veriptr)[i], ExcludeInfo, PersistInfo, TransactionAddInfo, OrderInfo, TransactionPersistInfo, timestamp, transactionCount); break;
 				case _FLUSH:
-					VeriProc_Flush((*veriptr)[i], PersistInfo, OrderInfo, timestamp); break;
+					VeriProc_Flush((*veriptr)[i], ExcludeInfo, PersistInfo, OrderInfo, timestamp); break;
 				case _FENCE:
 					VeriProc_Fence(timestamp); break;
 				case _PERSIST:
-					VeriProc_Persist((*veriptr)[i], PersistInfo); break;
+					VeriProc_Persist((*veriptr)[i], ExcludeInfo, PersistInfo); break;
 				case _ORDER:
-					VeriProc_Order((*veriptr)[i], OrderInfo, timestamp); break;
+					VeriProc_Order((*veriptr)[i], ExcludeInfo, OrderInfo, timestamp); break;
 				case _TRANSACTIONBEGIN:
 					VeriProc_TransactionBegin((*veriptr)[i], TransactionPersistInfo, transactionCount); break;
 				case _TRANSACTIONEND:
-					VeriProc_TransactionEnd((*veriptr)[i], PersistInfo, TransactionPersistInfo, transactionCount); break;
+					VeriProc_TransactionEnd((*veriptr)[i], ExcludeInfo, PersistInfo, TransactionPersistInfo, transactionCount); break;
 				case _TRANSACTIONADD:
 					VeriProc_TransactionAdd((*veriptr)[i], TransactionAddInfo, transactionCount); break;
+				case _EXCLUDE:
+					VeriProc_Exclude((*veriptr)[i], ExcludeInfo); break;
+				case _INCLUDE:
+					VeriProc_Include((*veriptr)[i], ExcludeInfo); break;
 				default:
-					LOG("Unidentified or unprocessed type.");
+					LOG("Unidentified or unprocessed type.\n");
 				}
 			}
 
@@ -526,23 +588,27 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 	for (int i = prev; i != cur; i++) {
 		switch(((*veriptr)[i])->type) {
 		case _ASSIGN:
-			VeriProc_Assign(((*veriptr)[i]), PersistInfo, TransactionAddInfo, OrderInfo, TransactionPersistInfo, timestamp, transactionCount); break;
+			VeriProc_Assign(((*veriptr)[i]), ExcludeInfo, PersistInfo, TransactionAddInfo, OrderInfo, TransactionPersistInfo, timestamp, transactionCount); break;
 		case _FLUSH:
 			/* do nothing */ break;
 		case _FENCE:
 			VeriProc_Fence(timestamp); break;
 		case _PERSIST:
-			VeriProc_Persist(((*veriptr)[i]), PersistInfo); break;
+			VeriProc_Persist(((*veriptr)[i]), ExcludeInfo, PersistInfo); break;
 		case _ORDER:
-			VeriProc_Order(((*veriptr)[i]), OrderInfo, timestamp); break;
+			VeriProc_Order(((*veriptr)[i]), ExcludeInfo, OrderInfo, timestamp); break;
 		case _TRANSACTIONBEGIN:
 			VeriProc_TransactionBegin((*veriptr)[i], TransactionPersistInfo, transactionCount); break;
 		case _TRANSACTIONEND:
-			VeriProc_TransactionEnd((*veriptr)[i], PersistInfo, TransactionPersistInfo, transactionCount); break;
+			VeriProc_TransactionEnd((*veriptr)[i], ExcludeInfo, PersistInfo, TransactionPersistInfo, transactionCount); break;
 		case _TRANSACTIONADD:
 			VeriProc_TransactionAdd((*veriptr)[i], TransactionAddInfo, transactionCount); break;
+		case _EXCLUDE:
+			VeriProc_Exclude((*veriptr)[i], ExcludeInfo); break;
+		case _INCLUDE:
+			VeriProc_Include((*veriptr)[i], ExcludeInfo); break;
 		default:
-			LOG("Unidentified or unprocessed type.");
+			LOG("Unidentified or unprocessed type.\n");
 		}
 	}
 

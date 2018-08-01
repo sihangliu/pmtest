@@ -298,6 +298,8 @@ extern "C" void C_createMetadata_Order(void *, void *, size_t, void *, size_t, c
 extern "C" void C_createMetadata_TransactionBegin(void *, const char[], unsigned short);
 extern "C" void C_createMetadata_TransactionEnd(void *, const char[], unsigned short);
 extern "C" void C_createMetadata_TransactionAdd(void *, void *, size_t, const char[], unsigned short);
+extern "C" void C_createMetadata_Exclude(void *, void *, size_t, const char[], unsigned short);
+extern "C" void C_createMetadata_Include(void *, void *, size_t, const char[], unsigned short);
 extern "C" void C_registerVariable(char*, void*, size_t);
 extern "C" void C_unregisterVariable(char*);
 extern "C" void* C_getVariable(char*, size_t*);

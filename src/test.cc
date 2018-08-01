@@ -289,19 +289,36 @@ void test_icl()
 	interval_set<size_t> persist;
 	interval_map<size_t, int, partial_enricher, std::less, inplace_assign> order;
 	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(10, 20);
-	order += make_pair(addrinterval, 0);
-	// addrinterval = interval<size_t>::right_open(10, 10);
-	// auto iter = order.find(addrinterval);
+	persist += addrinterval;
+	addrinterval = interval<size_t>::right_open(30, 40);
+	persist += addrinterval;
+	addrinterval = interval<size_t>::right_open(50, 60);
+	persist += addrinterval;
+	addrinterval = interval<size_t>::right_open(45, 55);
+	auto it = persist.find(addrinterval);
+	
+	if (!contains(*it, addrinterval)) {
+		addrinterval = (lower_less(addrinterval, *it) ? right_subtract(addrinterval, *it) : left_subtract(addrinterval, *it)
+		);
+	}
+	if (it == persist.end() || !contains(*it, addrinterval)) {
+		std::cerr << addrinterval << " is not TransactionAdded before modified." << std::endl;
+	}
+	// addrinterval -= (*it);
+	// std::cout << addrinterval << std::endl;
 
-	for (auto it = order.begin(); it != order.end(); it++)
-		std::cout << it->first << " " << it->second << std::endl;
-	addrinterval = interval<size_t>::right_open(15, 30);
-	order += make_pair(addrinterval, -1);
-	for (auto it = order.begin(); it != order.end(); it++)
-		std::cout << it->first << " " << it->second << std::endl;
-	order += make_pair(addrinterval, 2);
-	for (auto it = order.begin(); it != order.end(); it++)
-		std::cout << it->first << " " << it->second << std::endl;
+
+	// order += make_pair(addrinterval, 0);
+
+	// for (auto it = order.begin(); it != order.end(); it++)
+	// 	std::cout << it->first << " " << it->second << std::endl;
+	// addrinterval = interval<size_t>::right_open(15, 30);
+	// order += make_pair(addrinterval, -1);
+	// for (auto it = order.begin(); it != order.end(); it++)
+	// 	std::cout << it->first << " " << it->second << std::endl;
+	// order += make_pair(addrinterval, 2);
+	// for (auto it = order.begin(); it != order.end(); it++)
+	// 	std::cout << it->first << " " << it->second << std::endl;
 }
 
 
@@ -363,21 +380,14 @@ void tx_wrapper()
 	existVeriInstance = 1;
 
 
-	TX_CHECKER_START;
-	NVTest_transactionAdd((void *)(&arr[0]), 4);
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	TX_CHECKER_END;
-	TX_CHECKER_START;
-	NVTest_transactionAdd((void *)(&arr[0]), 4);
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	TX_CHECKER_END;
-	NVTest_transactionAdd((void *)(&arr[0]), 4);
+	for (int i = 0; i < 1; i++) {
+		TX_CHECKER_START;
+		NVTest_exclude((void *)(&arr[0]), 6);
+		NVTest_assign((void *)(&arr[4]), 4);
+		NVTest_assign((void *)(&arr[8]), 4);
+		NVTest_flush((void *)(&arr[0]), 4);
+		TX_CHECKER_END;
+	}
 	
 
 	C_execVeri(p, metadataPtr);

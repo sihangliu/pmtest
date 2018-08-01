@@ -146,39 +146,4 @@ inline int getThreadID()
 }
 */
 
-class ConditionalFilter {
-private:
-	std::ostream& stream;
-	bool flag;
-public:
-	ConditionalFilter(std::ostream& s): stream(s), flag(true) {};
-	void enable() { flag = true; }
-	void disable() { flag = false; }
-
-	void unsetf(std::ios_base::fmtflags func)
-	{
-		stream.unsetf(func);
-	}
-	
-	template<typename T>
-	ConditionalFilter& operator << (T x) 
-	{
-		if (flag)
-			stream << x;
-		return *this;
-	}
-
-	typedef std::ostream& (*STRFUNC)(std::ostream&);
-
-	ConditionalFilter& operator << (STRFUNC func)
-	{
-		if (flag)
-			stream << func;
-		return *this;
-	}
-
-	
-	
-};
-
 #endif // __COMMON__HH__

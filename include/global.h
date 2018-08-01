@@ -25,6 +25,8 @@ extern void* veriInstancePtr;
 #define NVTest_fence() C_createMetadata_Fence(metadataPtr, __FILE__, __LINE__)
 #define NVTest_isPersistent(addr, size) C_createMetadata_Persist(metadataPtr, (addr), (size), __FILE__, __LINE__)
 #define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) C_createMetadata_Order(metadataPtr, (addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define NVTest_exclude(addr, size) C_createMetadata_Exclude(metadataPtr, (addr), (size), __FILE__, __LINE__)
+#define NVTest_include(addr, size) C_createMetadata_Include(metadataPtr, (addr), (size), __FILE__, __LINE__)
 
 
 #endif // !NVMVERI_KERNEL_CODE

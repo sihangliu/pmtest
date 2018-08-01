@@ -63,6 +63,9 @@ release: all
 warning: CXXFLAGS += -DNVMVERI_WARN
 warning: all
 
+exclude: CXXFLAGS += -DNVMVERI_EXCLUDE -DDEBUG -DDEBUG_FLAG -g
+exclude: all
+
 clean:
 	-@rm -rf $(BUILD)
 
