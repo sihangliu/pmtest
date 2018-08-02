@@ -261,10 +261,18 @@ bool timestamp_isexacttime(int t)
 
 inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, FastVector<Metadata *> &TransactionPersistInfo, int &timestamp, int &transactionCount)
 {
+	
+	size_t startaddr = (size_t)(cur->assign.addr);
+	size_t endaddr = startaddr + cur->assign.size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	
+#ifdef NVMVERI_EXCLUDE
+	auto it = ExcludeInfo.find(addrinterval);
+	if (it != ExcludeInfo.end()) {
+		return -2;
+	}
+#endif // NVMVERI_EXCLUDE
 	if (cur->assign.size > 0) {
-		size_t startaddr = (size_t)(cur->assign.addr);
-		size_t endaddr = startaddr + cur->assign.size;
-		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 		LOG(
 			"%s %p %d %s %hu\n",
 			MetadataTypeStr[_ASSIGN],
@@ -282,26 +290,14 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interv
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-			#ifdef NVMVERI_EXCLUDE
-				auto it = ExcludeInfo.find(addrinterval);		
-				if (!(it == ExcludeInfo.end()) && !contains(*it, addrinterval)) {
-					addrinterval = (
-						lower_less(addrinterval, *it) ?
-						right_subtract(addrinterval, *it) :
-						left_subtract(addrinterval, *it)
-					);
-				}
-				if (it == ExcludeInfo.end() || !contains(*it, addrinterval))
-			#endif // NVMVERI_EXCLUDE
-				{
-					std::cerr << COLOR_RED << "ASSIGN ERROR: " << COLOR_RESET
-						<< filename_temp << ":" << cur->line_num 
-						<< ": Address range " << std::hex << std::showbase
-						<< addrinterval << " is not TransactionAdded before modified." << std::endl;
-					std::cerr.unsetf(std::ios_base::hex);
-					std::cerr.unsetf(std::ios_base::showbase);
-					return -1;
-				}
+				printf(
+					COLOR_RED "ASSIGN ERROR: " COLOR_RESET
+					"%s:%hu: Address range [0x%lx, 0x%lx) is not TransactionAdded before modified.\n",
+					filename_temp,
+					cur->line_num,
+					addrinterval.lower(),
+					addrinterval.upper());
+				return -1;
 			}
 		}
 	}
@@ -310,10 +306,16 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interv
 
 inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
+	size_t startaddr = (size_t)(cur->flush.addr);
+	size_t endaddr = startaddr + cur->flush.size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+#ifdef NVMVERI_EXCLUDE
+	auto it = ExcludeInfo.find(addrinterval);
+	if (it != ExcludeInfo.end()) {
+		return -2;
+	}
+#endif // NVMVERI_EXCLUDE
 	if (cur->flush.size > 0) {
-		size_t startaddr = (size_t)(cur->flush.addr);
-		size_t endaddr = startaddr + cur->flush.size;
-		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 		LOG("%s %p %d\n",
 			MetadataTypeStr[_FLUSH],
 			cur->flush.addr,
@@ -321,11 +323,11 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 	#ifdef NVMVERI_WARN
 		auto iter = PersistInfo.find(addrinterval);
 		if (iter == PersistInfo.end()) {
-			std::cerr << COLOR_YELLOW << "FLUSH WARNING: " << COLOR_RESET
-				<< "Address range " << std::hex << std::showbase
-				<< addrinterval << " is not modified, no need to flush." << std::endl;
-			std::cerr.unsetf(std::ios_base::hex);
-			std::cerr.unsetf(std::ios_base::showbase);
+			printf(
+				COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
+				"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
+				addrinterval.lower(),
+				addrinterval.upper());
 		}
 		else
 			PersistInfo -= addrinterval;
@@ -346,10 +348,16 @@ inline int VeriProc_Fence(int &timestamp)
 
 inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo)
 {
+	size_t startaddr = (size_t)(cur->persist.addr);
+	size_t endaddr = startaddr + cur->persist.size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+#ifdef NVMVERI_EXCLUDE
+	auto it = ExcludeInfo.find(addrinterval);
+	if (it != ExcludeInfo.end()) {
+		return -2;
+	}
+#endif // NVMVERI_EXCLUDE
 	if (cur->persist.size > 0) {
-		size_t startaddr = (size_t)(cur->persist.addr);
-		size_t endaddr = startaddr + cur->persist.size;
-		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 		LOG("%s %p %d\n",
 			MetadataTypeStr[_PERSIST],
 			cur->persist.addr,
@@ -362,26 +370,14 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 			char filename_temp[FILENAME_LEN + 1];
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
-		#ifdef NVMVERI_EXCLUDE
-			auto it = ExcludeInfo.find(addrinterval);		
-			if (!(it == ExcludeInfo.end()) && !contains(*it, addrinterval)) {
-				addrinterval = (
-					lower_less(addrinterval, *it) ?
-					right_subtract(addrinterval, *it) :
-					left_subtract(addrinterval, *it)
-				);
-			}
-			if (it == ExcludeInfo.end() || !contains(*it, addrinterval))
-		#endif // NVMVERI_EXCLUDE
-			{
-				std::cerr << COLOR_RED << "PERSIST ERROR: " << COLOR_RESET
-					<< filename_temp << ":" << cur->line_num 
-					<< ": Address range " << std::hex << std::showbase
-					<< addrinterval << " not persisted." << std::endl;
-				std::cerr.unsetf(std::ios_base::hex);
-				std::cerr.unsetf(std::ios_base::showbase);
-				return -1;
-			}
+			printf(
+				COLOR_RED "PERSIST ERROR: " COLOR_RESET
+				"%s:%hu: Address range [0x%lx, 0x%lx) not persisted.\n",
+				filename_temp,
+				cur->line_num,
+				addrinterval.lower(),
+				addrinterval.upper());
+			return -1;
 		}
 	}
 	return 0;
@@ -389,15 +385,24 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 
 inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
+	size_t startaddr = (size_t)(cur->order.early_addr);
+	size_t endaddr = startaddr + cur->order.early_size;
+	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+
+	startaddr = (size_t)(cur->order.late_addr);
+	endaddr = startaddr + cur->order.late_size;
+	discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
+#ifdef NVMVERI_EXCLUDE
+	auto it = ExcludeInfo.find(addrinterval);
+	if (it != ExcludeInfo.end()) {
+		return -2;
+	}
+	it = ExcludeInfo.find(addrinterval_late);
+	if (it != ExcludeInfo.end()) {
+		return -2;
+	}
+#endif // NVMVERI_EXCLUDE
 	if (cur->order.early_size > 0 && cur->order.late_size > 0) {
-		size_t startaddr = (size_t)(cur->order.early_addr);
-		size_t endaddr = startaddr + cur->order.early_size;
-		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-
-		startaddr = (size_t)(cur->order.late_addr);
-		endaddr = startaddr + cur->order.late_size;
-		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
-
 		LOG("%s %p %d %p %d\n",
 			MetadataTypeStr[_ORDER],
 			cur->order.early_addr,
@@ -426,12 +431,15 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 				char filename_temp[FILENAME_LEN + 1];
 				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 				filename_temp[FILENAME_LEN] = '\0';
-				std::cerr << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
-					<< filename_temp << ":" << cur->line_num 
-					<< ": Address range " << std::hex << std::showbase
-					<< addrinterval << " not before " << addrinterval_late << "." << std::endl;
-				std::cerr.unsetf(std::ios_base::hex);
-				std::cerr.unsetf(std::ios_base::showbase);
+				printf(
+					COLOR_RED "ORDER ERROR: " COLOR_RESET
+					"%s:%hu: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+					filename_temp,
+					cur->line_num,
+					(size_t)(cur->order.early_addr),
+					(size_t)(cur->order.early_addr) + cur->order.early_size,
+					(size_t)(cur->order.late_addr),
+					(size_t)(cur->order.late_addr) + cur->order.late_size);
 				return -1;
 			}
 		}
@@ -439,9 +447,11 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 			char filename_temp[FILENAME_LEN + 1];
 			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
 			filename_temp[FILENAME_LEN] = '\0';
-			std::cerr << COLOR_RED << "ORDER ERROR: " << COLOR_RESET
-					<< filename_temp << ":" << cur->line_num 
-					<< ": Queried address range not yet assigned." << std::endl;
+			printf(
+				COLOR_RED "ORDER ERROR: " COLOR_RESET
+				"%s:%hu: Queried address range not yet assigned.\n",
+				filename_temp,
+				cur->line_num);
 			return -1;
 		}
 	}
