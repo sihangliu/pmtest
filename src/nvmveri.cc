@@ -262,22 +262,22 @@ bool timestamp_isexacttime(int t)
 inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, interval_set_addr &TransactionAddInfo, interval_map_addr_timestamp &OrderInfo, FastVector<Metadata *> &TransactionPersistInfo, int &timestamp, int &transactionCount)
 {
 	
-	size_t startaddr = (size_t)(cur->addr);
-	size_t endaddr = startaddr + cur->size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-	
-#ifdef NVMVERI_EXCLUDE
-	auto it = ExcludeInfo.find(addrinterval);
-	if (it != ExcludeInfo.end()) {
-		return -2;
-	}
-#endif // NVMVERI_EXCLUDE
 	if (cur->size > 0) {
+		size_t startaddr = (size_t)(cur->addr);
+		size_t endaddr = startaddr + cur->size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		
+	#ifdef NVMVERI_EXCLUDE
+		auto it = ExcludeInfo.find(addrinterval);
+		if (it != ExcludeInfo.end()) {
+			return -2;
+		}
+	#endif // NVMVERI_EXCLUDE
 		LOG(
 			"%s %p %d %s %hu\n",
 			MetadataTypeStr[_ASSIGN],
-			cur->assign.addr,
-			cur->assign.size,
+			cur->addr,
+			cur->size,
 			cur->file_name,
 			cur->line_num);
 		PersistInfo += addrinterval;
@@ -306,16 +306,16 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interv
 
 inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
-	size_t startaddr = (size_t)(cur->addr);
-	size_t endaddr = startaddr + cur->size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-#ifdef NVMVERI_EXCLUDE
-	auto it = ExcludeInfo.find(addrinterval);
-	if (it != ExcludeInfo.end()) {
-		return -2;
-	}
-#endif // NVMVERI_EXCLUDE
 	if (cur->size > 0) {
+		size_t startaddr = (size_t)(cur->addr);
+		size_t endaddr = startaddr + cur->size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	#ifdef NVMVERI_EXCLUDE
+		auto it = ExcludeInfo.find(addrinterval);
+		if (it != ExcludeInfo.end()) {
+			return -2;
+		}
+	#endif // NVMVERI_EXCLUDE
 		LOG("%s %p %d\n",
 			MetadataTypeStr[_FLUSH],
 			cur->addr,
@@ -348,16 +348,16 @@ inline int VeriProc_Fence(int &timestamp)
 
 inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo)
 {
-	size_t startaddr = (size_t)(cur->addr);
-	size_t endaddr = startaddr + cur->size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-#ifdef NVMVERI_EXCLUDE
-	auto it = ExcludeInfo.find(addrinterval);
-	if (it != ExcludeInfo.end()) {
-		return -2;
-	}
-#endif // NVMVERI_EXCLUDE
 	if (cur->size > 0) {
+		size_t startaddr = (size_t)(cur->addr);
+		size_t endaddr = startaddr + cur->size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+	#ifdef NVMVERI_EXCLUDE
+		auto it = ExcludeInfo.find(addrinterval);
+		if (it != ExcludeInfo.end()) {
+			return -2;
+		}
+	#endif // NVMVERI_EXCLUDE
 		LOG("%s %p %d\n",
 			MetadataTypeStr[_PERSIST],
 			cur->addr,
@@ -385,24 +385,24 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 
 inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interval_map_addr_timestamp &OrderInfo, int &timestamp)
 {
-	size_t startaddr = (size_t)(cur->addr);
-	size_t endaddr = startaddr + cur->size;
-	discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-
-	startaddr = (size_t)(cur->addr_late);
-	endaddr = startaddr + cur->size_late;
-	discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
-#ifdef NVMVERI_EXCLUDE
-	auto it = ExcludeInfo.find(addrinterval);
-	if (it != ExcludeInfo.end()) {
-		return -2;
-	}
-	it = ExcludeInfo.find(addrinterval_late);
-	if (it != ExcludeInfo.end()) {
-		return -2;
-	}
-#endif // NVMVERI_EXCLUDE
 	if (cur->size > 0 && cur->size_late > 0) {
+		size_t startaddr = (size_t)(cur->addr);
+		size_t endaddr = startaddr + cur->size;
+		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+
+		startaddr = (size_t)(cur->addr_late);
+		endaddr = startaddr + cur->size_late;
+		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
+	#ifdef NVMVERI_EXCLUDE
+		auto it = ExcludeInfo.find(addrinterval);
+		if (it != ExcludeInfo.end()) {
+			return -2;
+		}
+		it = ExcludeInfo.find(addrinterval_late);
+		if (it != ExcludeInfo.end()) {
+			return -2;
+		}
+	#endif // NVMVERI_EXCLUDE
 		LOG("%s %p %d %p %d\n",
 			MetadataTypeStr[_ORDER],
 			cur->addr,
@@ -486,8 +486,8 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 {
 	LOG("%s %p %d %s %hu\n",
 		MetadataTypeStr[_TRANSACTIONADD],
-		cur->transactionadd.addr,
-		cur->transactionadd.size,
+		cur->addr,
+		cur->size,
 		cur->file_name,
 		cur->line_num);
 	if (transactionCount > 0) {
@@ -728,7 +728,7 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, cons
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata flush %p, %d, %s, %hu\n", m->flush.addr, m->flush.size, m->file_name, m->line_num);
+		LOG("create metadata flush %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }

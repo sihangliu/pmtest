@@ -25,16 +25,16 @@ typedef enum MetadataType {
 // the corresponding MetadataTypeStr is defined in nvmveri.cc
 
 
-#define FILENAME_LEN 50
+#define FILENAME_LEN 48
 
 
 typedef struct Metadata {
-	MetadataType type;
-	unsigned short line_num;
-	unsigned int size;
 	void *addr;
-	unsigned int size_late;
 	void *addr_late;
+	MetadataType type;
+	unsigned int size;
+	unsigned int size_late;
+	unsigned int line_num;
 	char file_name[FILENAME_LEN];
 } Metadata;
 
