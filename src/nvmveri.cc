@@ -484,18 +484,27 @@ inline void VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &ExcludeInf
 
 inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &TransactionAddInfo, int &transactionCount)
 {
-	LOG("%s %p %d %s %hu\n",
-		MetadataTypeStr[_TRANSACTIONADD],
-		cur->addr,
-		cur->size,
-		cur->file_name,
-		cur->line_num);
 	if (transactionCount > 0) {
 		if (cur->size > 0) {
+			LOG("%s %p %d %s %hu\n",
+				MetadataTypeStr[_TRANSACTIONADD],
+				cur->addr,
+				cur->size,
+				cur->file_name,
+				cur->line_num);
 			size_t startaddr = (size_t)(cur->addr);
 			size_t endaddr = startaddr + cur->size;
 			discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-			
+		#ifdef NVMVERI_WARN
+			auto iter = TransactionAddInfo.find(addrinterval);
+			if (iter != TransactionAddInfo.end()) {
+				printf(
+					COLOR_YELLOW "TRANSACTIONADD WARNING: " COLOR_RESET
+					"Address range [0x%lx, 0x%lx) overlaps with previously TransactionAdded addresses.\n",
+					addrinterval.lower(),
+					addrinterval.upper());
+			}
+		#endif // NVMVERI_WARN
 			TransactionAddInfo += addrinterval;
 		}
 	}

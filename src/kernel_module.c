@@ -331,3 +331,55 @@ void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_n
 		//printk(KERN_INFO "@ Complete transactionadd metadata. \n");
 	}
 }
+
+void kC_createMetadata_Exclude(void *addr, size_t size, const char file_name[], unsigned short line_num)
+{
+#ifdef NVMVERI_EXCLUDE
+	if (existVeriInstance) {
+		Metadata input;
+		int file_offset;
+		//printk(KERN_INFO "@ Inside exclude metadata. \n");
+		input.type = _EXCLUDE;
+		input.addr = addr;
+		input.size = size;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+
+		//log("exclude_aa\n");
+
+		NVMVeriFifoWrite(&input);
+
+		//printk(KERN_INFO "@ Complete transactionadd metadata. \n");
+	}
+#endif // NVMVERI_EXCLUDE
+}
+
+void kC_createMetadata_Include(void *addr, size_t size, const char file_name[], unsigned short line_num)
+{
+#ifdef NVMVERI_EXCLUDE
+	if (existVeriInstance) {
+		Metadata input;
+		int file_offset;
+		//printk(KERN_INFO "@ Inside include metadata. \n");
+		input.type = _INCLUDE;
+		input.addr = addr;
+		input.size = size;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
+
+		//log("include_aa\n");
+
+		NVMVeriFifoWrite(&input);
+
+		//printk(KERN_INFO "@ Complete include metadata. \n");
+	}
+#endif // NVMVERI_EXCLUDE
+}
