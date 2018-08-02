@@ -57,7 +57,7 @@ build:
 debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG -g
 debug: all
 
-release: CXXFLAGS += -O3
+release: CXXFLAGS += -O3 -DDEBUG -DDEBUG_FLAG -g
 release: all
 
 warning: CXXFLAGS += -DNVMVERI_WARN
