@@ -19,7 +19,6 @@
 ssize_t NVMVeriDeviceRead(struct file *, char __user *, size_t, loff_t *);
 void NVMVeriFifoWrite(Metadata *input);
 
-
 int kC_initNVMVeriDevice(void);
 int kC_exitNVMVeriDevice(void);
 

@@ -27,57 +27,15 @@ typedef enum MetadataType {
 
 #define FILENAME_LEN 50
 
-typedef struct Metadata_Assign {
-	unsigned int size;
-	void *addr;
-} Metadata_Assign;
-
-typedef struct Metadata_Flush {
-	unsigned int size;
-	void *addr;
-} Metadata_Flush;
-
-typedef struct Metadata_Persist {
-	unsigned int size;
-	void *addr;
-}  Metadata_Persist;
-
-typedef struct Metadata_Order {
-	unsigned int early_size;
-	unsigned int late_size;
-	void *early_addr;
-	void *late_addr;
-} Metadata_Order;
-
-typedef struct Metadata_TransactionAdd {
-	unsigned int size;
-	void *addr;
-} Metadata_TransactionAdd;
-
-typedef struct Metadata_Exclude {
-	unsigned int size;
-	void *addr;
-} Metadata_Exclude;
-
-typedef struct Metadata_Include {
-	unsigned int size;
-	void *addr;
-} Metadata_Include;
 
 typedef struct Metadata {
 	MetadataType type;
 	unsigned short line_num;
+	unsigned int size;
+	void *addr;
+	unsigned int size_late;
+	void *addr_late;
 	char file_name[FILENAME_LEN];
-	union {
-		//Metadata_OpInfo op;
-		Metadata_Assign assign;
-		Metadata_Flush flush;
-		Metadata_Persist persist;
-		Metadata_Order order;
-		Metadata_TransactionAdd transactionadd;
-		Metadata_Exclude exclude;
-		Metadata_Include include;
-	};
 } Metadata;
 
 /***********************************************

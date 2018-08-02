@@ -96,8 +96,8 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 
 		//log("assign_aa\n");
 
-		input.assign.addr = addr;
-		input.assign.size = size;
+		input.addr = addr;
+		input.size = size;
 		input.line_num = line_num;
 		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
@@ -129,8 +129,8 @@ void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], un
 
 		//log("flush_aa\n");
 
-		input.flush.addr = addr;
-		input.flush.size = size;
+		input.addr = addr;
+		input.size = size;
 		input.line_num = line_num;
 		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
@@ -195,8 +195,8 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 
 		//log("persist_aa\n");
 
-		input.persist.addr = addr;
-		input.persist.size = size;
+		input.addr = addr;
+		input.size = size;
 		input.line_num = line_num;
 		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
@@ -209,17 +209,17 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 }
 
 
-void kC_createMetadata_Order(void *early_addr, size_t early_size, void *late_addr, size_t late_size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Order(void *addr, size_t size, void *addr_late, size_t size_late, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
 		int file_offset;
 		//printk(KERN_INFO "@ Inside order %p %lu %p %lu. \n", early_addr, early_size, late_addr, late_size);
 		input.type = _ORDER;
-		input.order.early_addr = early_addr;
-		input.order.early_size = early_size;
-		input.order.late_addr = late_addr;
-		input.order.late_size = late_size;
+		input.addr = addr;
+		input.size = size;
+		input.addr_late = addr_late;
+		input.size_late = size_late;
 		input.line_num = line_num;
 		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(
@@ -315,8 +315,8 @@ void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_n
 		int file_offset;
 		//printk(KERN_INFO "@ Inside transactionadd metadata. \n");
 		input.type = _TRANSACTIONADD;
-		input.transactionadd.addr = addr;
-		input.transactionadd.size = size;
+		input.addr = addr;
+		input.size = size;
 		input.line_num = line_num;
 		file_offset = strlen(file_name) - FILENAME_LEN;
 		strncpy(

@@ -379,13 +379,18 @@ void tx_wrapper()
 	metadataPtr = metadataVectorPtr;
 	existVeriInstance = 1;
 
+	struct fuc{
+		int a;
+		int b;
+		int c;
+	} fc;
+
 
 	for (int i = 0; i < 1; i++) {
 		TX_CHECKER_START;
-		NVTest_exclude((void *)(&arr[0]), 6);
-		NVTest_assign((void *)(&arr[4]), 4);
-		NVTest_assign((void *)(&arr[8]), 4);
-		NVTest_flush((void *)(&arr[0]), 4);
+		//NVTest_exclude(&fc, sizeof(fc));
+		NVTest_assign(&fc.a, sizeof(fc.a));
+		NVTest_assign(&fc.b, sizeof(fc.b));
 		TX_CHECKER_END;
 	}
 	
