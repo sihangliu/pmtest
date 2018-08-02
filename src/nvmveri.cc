@@ -708,7 +708,7 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata assign %p, %d, %d\n", m->assign.addr, m->assign.size, m->type);
+		LOG("create metadata assign %p, %d, %s, %hu\n", m->assign.addr, m->assign.size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -728,7 +728,7 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, cons
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata flush %p, %d, %d\n", m->flush.addr, m->flush.size, m->type);
+		LOG("create metadata flush %p, %d, %s, %hu\n", m->flush.addr, m->flush.size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -780,7 +780,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata persist %p, %d, %d\n", m->persist.addr, m->persist.size, m->type);
+		LOG("create metadata persist %p, %d, %s, %hu\n", m->persist.addr, m->persist.size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -802,7 +802,7 @@ void C_createMetadata_Order(void *metadata_vector, void *early_addr, size_t earl
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata order %p, %d, %p, %d, %d\n", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size, m->type);
+		LOG("create metadata order %p, %d, %p, %d, %s, %hu\n", m->order.early_addr, m->order.early_size, m->order.late_addr, m->order.late_size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -841,7 +841,7 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata transactionadd %p, %d, %d\n", m->transactionadd.addr, m->transactionadd.size, m->type);
+		LOG("create metadata transactionadd %p, %d, %s, %hu\n", m->transactionadd.addr, m->transactionadd.size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -860,7 +860,7 @@ void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata exclude %p, %d, %d\n", m->exclude.addr, m->exclude.size, m->type);
+		LOG("create metadata exclude %p, %d, %s, %hu\n", m->exclude.addr, m->exclude.size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 #endif // NVMVERI_EXCLUDE
@@ -880,7 +880,7 @@ void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata include %p, %d, %d\n", m->include.addr, m->include.size, m->type);
+		LOG("create metadata include %p, %d, %s, %hu\n", m->include.addr, m->include.size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 #endif // NVMVERI_EXCLUDE

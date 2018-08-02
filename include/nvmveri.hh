@@ -28,39 +28,39 @@ typedef enum MetadataType {
 #define FILENAME_LEN 50
 
 typedef struct Metadata_Assign {
-	unsigned short size;
+	unsigned int size;
 	void *addr;
 } Metadata_Assign;
 
 typedef struct Metadata_Flush {
-	unsigned short size;
+	unsigned int size;
 	void *addr;
 } Metadata_Flush;
 
 typedef struct Metadata_Persist {
-	unsigned short size;
+	unsigned int size;
 	void *addr;
 }  Metadata_Persist;
 
 typedef struct Metadata_Order {
-	unsigned short early_size;
-	unsigned short late_size;
+	unsigned int early_size;
+	unsigned int late_size;
 	void *early_addr;
 	void *late_addr;
 } Metadata_Order;
 
 typedef struct Metadata_TransactionAdd {
-	unsigned short size;
+	unsigned int size;
 	void *addr;
 } Metadata_TransactionAdd;
 
 typedef struct Metadata_Exclude {
-	unsigned short size;
+	unsigned int size;
 	void *addr;
 } Metadata_Exclude;
 
 typedef struct Metadata_Include {
-	unsigned short size;
+	unsigned int size;
 	void *addr;
 } Metadata_Include;
 

@@ -10,6 +10,7 @@ int main()
 	test_icl();
 	tx_wrapper();
 	// fastvector();
+	printf("%d\n", sizeof(Metadata));
 
 	return 0;
 }
