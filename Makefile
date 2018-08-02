@@ -5,7 +5,7 @@ endif
 CC			:= -gcc
 CXX			:= -g++-4.8
 CFLAGS		:= -fPIC -std=c11 -DNUM_CORES=$(NUM_CORES)
-CXXFLAGS	:= -std=c++11 -fPIC -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
+CXXFLAGS	:= -std=c++11 -fPIC -DNVMVERI_EXCLUDE -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
 LDFLAGS		:= -L/usr/lib -lstdc++ -lm -pthread
 INCLUDE		:= -Iinclude/
 
