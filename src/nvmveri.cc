@@ -267,19 +267,19 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interv
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 		
+		LOG(
+			"%s %p %d %s %u\n",
+			MetadataTypeStr[_ASSIGN],
+			cur->addr,
+			cur->size,
+			cur->file_name,
+			cur->line_num);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
 	#endif // NVMVERI_EXCLUDE
-		LOG(
-			"%s %p %d %s %hu\n",
-			MetadataTypeStr[_ASSIGN],
-			cur->addr,
-			cur->size,
-			cur->file_name,
-			cur->line_num);
 		PersistInfo += addrinterval;
 		OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
 		if (transactionCount > 0) {
@@ -292,7 +292,7 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interv
 				filename_temp[FILENAME_LEN] = '\0';
 				printf(
 					COLOR_RED "ASSIGN ERROR: " COLOR_RESET
-					"%s:%hu: Address range [0x%lx, 0x%lx) is not TransactionAdded before modified.\n",
+					"%s:%u: Address range [0x%lx, 0x%lx) is not TransactionAdded before modified.\n",
 					filename_temp,
 					cur->line_num,
 					addrinterval.lower(),
@@ -310,22 +310,27 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 		size_t startaddr = (size_t)(cur->addr);
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		LOG("%s %p %d\n",
+			MetadataTypeStr[_FLUSH],
+			cur->addr,
+			cur->size);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
 	#endif // NVMVERI_EXCLUDE
-		LOG("%s %p %d\n",
-			MetadataTypeStr[_FLUSH],
-			cur->addr,
-			cur->size);
 	#ifdef NVMVERI_WARN
 		auto iter = PersistInfo.find(addrinterval);
 		if (iter == PersistInfo.end()) {
+			char filename_temp[FILENAME_LEN + 1];
+			strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+			filename_temp[FILENAME_LEN] = '\0';
 			printf(
 				COLOR_YELLOW "FLUSH WARNING: " COLOR_RESET
-				"Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
+				"%s:%u: Address range [0x%lx, 0x%lx) is not modified, no need to flush.\n",
+				filename_temp,
+				cur->line_num,
 				addrinterval.lower(),
 				addrinterval.upper());
 		}
@@ -352,16 +357,16 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 		size_t startaddr = (size_t)(cur->addr);
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
+		LOG("%s %p %d\n",
+			MetadataTypeStr[_PERSIST],
+			cur->addr,
+			cur->size);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
 	#endif // NVMVERI_EXCLUDE
-		LOG("%s %p %d\n",
-			MetadataTypeStr[_PERSIST],
-			cur->addr,
-			cur->size);
 
 		auto iter = PersistInfo.find(addrinterval);
 
@@ -372,7 +377,7 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 			filename_temp[FILENAME_LEN] = '\0';
 			printf(
 				COLOR_RED "PERSIST ERROR: " COLOR_RESET
-				"%s:%hu: Address range [0x%lx, 0x%lx) not persisted.\n",
+				"%s:%u: Address range [0x%lx, 0x%lx) not persisted.\n",
 				filename_temp,
 				cur->line_num,
 				addrinterval.lower(),
@@ -393,6 +398,12 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 		startaddr = (size_t)(cur->addr_late);
 		endaddr = startaddr + cur->size_late;
 		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
+		LOG("%s %p %d %p %d\n",
+			MetadataTypeStr[_ORDER],
+			cur->addr,
+			cur->size,
+			cur->addr_late,
+			cur->size_late);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
@@ -403,12 +414,6 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 			return -2;
 		}
 	#endif // NVMVERI_EXCLUDE
-		LOG("%s %p %d %p %d\n",
-			MetadataTypeStr[_ORDER],
-			cur->addr,
-			cur->size,
-			cur->addr_late,
-			cur->size_late);
 
 		// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestamp of the "late" address range
 		if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
@@ -433,7 +438,7 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 				filename_temp[FILENAME_LEN] = '\0';
 				printf(
 					COLOR_RED "ORDER ERROR: " COLOR_RESET
-					"%s:%hu: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
+					"%s:%u: Address range [0x%lx, 0x%lx) not before [0x%lx, 0x%lx).\n",
 					filename_temp,
 					cur->line_num,
 					(size_t)(cur->addr),
@@ -449,7 +454,7 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 			filename_temp[FILENAME_LEN] = '\0';
 			printf(
 				COLOR_RED "ORDER ERROR: " COLOR_RESET
-				"%s:%hu: Queried address range not yet assigned.\n",
+				"%s:%u: Queried address range not yet assigned.\n",
 				filename_temp,
 				cur->line_num);
 			return -1;
@@ -486,7 +491,7 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 {
 	if (transactionCount > 0) {
 		if (cur->size > 0) {
-			LOG("%s %p %d %s %hu\n",
+			LOG("%s %p %d %s %u\n",
 				MetadataTypeStr[_TRANSACTIONADD],
 				cur->addr,
 				cur->size,
@@ -498,9 +503,14 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 		#ifdef NVMVERI_WARN
 			auto iter = TransactionAddInfo.find(addrinterval);
 			if (iter != TransactionAddInfo.end()) {
+				char filename_temp[FILENAME_LEN + 1];
+				strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+				filename_temp[FILENAME_LEN] = '\0';
 				printf(
 					COLOR_YELLOW "TRANSACTIONADD WARNING: " COLOR_RESET
-					"Address range [0x%lx, 0x%lx) overlaps with previously TransactionAdded addresses.\n",
+					"%s:%u: Address range [0x%lx, 0x%lx) overlaps with previously TransactionAdded addresses.\n",
+					filename_temp,
+					cur->line_num,
 					addrinterval.lower(),
 					addrinterval.upper());
 			}
@@ -525,7 +535,7 @@ inline void VeriProc_Exclude(Metadata *cur, interval_set_addr &ExcludeInfo)
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 		LOG(
-			"%s %p %d %s %hu\n",
+			"%s %p %d %s %u\n",
 			MetadataTypeStr[_EXCLUDE],
 			cur->addr,
 			cur->size,
@@ -542,7 +552,7 @@ inline void VeriProc_Include(Metadata *cur, interval_set_addr &ExcludeInfo)
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
 		LOG(
-			"%s %p %d %s %hu\n",
+			"%s %p %d %s %u\n",
 			MetadataTypeStr[_INCLUDE],
 			cur->addr,
 			cur->size,
@@ -717,7 +727,7 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata assign %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
+		LOG_NOTE("create metadata assign %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -737,7 +747,7 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, cons
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata flush %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
+		LOG_NOTE("create metadata flush %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -748,7 +758,7 @@ void C_createMetadata_Commit(void *metadata_vector, const char file_name[], unsi
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _COMMIT;
-		LOG("create metadata commit\n");
+		LOG_NOTE("create metadata commit\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -759,7 +769,7 @@ void C_createMetadata_Barrier(void *metadata_vector, const char file_name[], uns
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _BARRIER;
-		LOG("create metadata barrier\n");
+		LOG_NOTE("create metadata barrier\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -770,7 +780,7 @@ void C_createMetadata_Fence(void *metadata_vector, const char file_name[], unsig
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _FENCE;
-		LOG("create metadata fence\n");
+		LOG_NOTE("create metadata fence\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -789,7 +799,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata persist %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
+		LOG_NOTE("create metadata persist %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -811,7 +821,7 @@ void C_createMetadata_Order(void *metadata_vector, void *addr, size_t size, void
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata order %p, %d, %p, %d, %s, %hu\n", m->addr, m->size, m->addr_late, m->size_late, m->file_name, m->line_num);
+		LOG_NOTE("create metadata order %p, %d, %p, %d, %s, %u\n", m->addr, m->size, m->addr_late, m->size_late, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -821,7 +831,7 @@ void C_createMetadata_TransactionBegin(void *metadata_vector, const char file_na
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _TRANSACTIONBEGIN;
-		LOG("create metadata transactionbegin\n");
+		LOG_NOTE("create metadata transactionbegin\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -831,7 +841,7 @@ void C_createMetadata_TransactionEnd(void *metadata_vector, const char file_name
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _TRANSACTIONEND;
-		LOG("create metadata transactionend\n");
+		LOG_NOTE("create metadata transactionend\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -850,7 +860,7 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		LOG("create metadata transactionadd %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
+		LOG_NOTE("create metadata transactionadd %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
@@ -869,7 +879,7 @@ void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata exclude %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
+		LOG_NOTE("create metadata exclude %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 #endif // NVMVERI_EXCLUDE
@@ -889,7 +899,7 @@ void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, co
 			m->file_name,
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
-		LOG("create metadata include %p, %d, %s, %hu\n", m->addr, m->size, m->file_name, m->line_num);
+		LOG_NOTE("create metadata include %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 #endif // NVMVERI_EXCLUDE

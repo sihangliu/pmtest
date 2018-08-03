@@ -109,3 +109,38 @@ Assign(&B, 4)
 Persist(&B, 4)		// == false
 Order(&A, 4, &B, 4)	// == false
 ```
+
+
+## Run PMFS with mysql server:
+in `whisper/PMFS-new`:
+```shell
+sudo ./init.sh
+```
+in `nvmveri`:
+```shell
+./build/apps/nvmveri_kernel_client
+```
+in `mysql-5.7.6-m16-linux-glibc2.5-x86_64`:
+```shell
+sudo ./mysql_init.sh
+sudo ./mysql_run.sh
+```
+You may `Ctrl-C` after executing this command and bring MySQL to background.
+```shell
+./sysbench_init.sh
+```
+```
+./sysbench_complex.sh
+``` 
+or 
+```
+./sysbench_simple.sh
+```
+```shell
+./mysql_shutdown.sh
+```
+The password is empty.
+in `whisper/PMFS-new`:
+```shell
+umount /mnt/pmfs
+```

@@ -1,0 +1,20 @@
+diff --git a/PMFS-new/xip.c b/PMFS-new/xip.c
+index de72385..f19b24b 100644
+--- a/PMFS-new/xip.c
++++ b/PMFS-new/xip.c
+@@ -213,6 +213,7 @@ __pmfs_xip_file_write(struct address_space *mapping, const char __user *buf,
+ 		PMFS_START_TIMING(memcpy_w_t, memcpy_time);
+ 		pmfs_xip_mem_protect(sb, xmem + offset, bytes, 1);
+ 		copied = memcpy_to_nvmm((char *)xmem, offset, buf, bytes);
++		pmfs_flush_buffer(xmem + offset, copied, 0);
+ 		pmfs_xip_mem_protect(sb, xmem + offset, bytes, 0);
+ 		PMFS_END_TIMING(memcpy_w_t, memcpy_time);
+ 
+@@ -267,6 +268,7 @@ static ssize_t pmfs_file_write_fast(struct super_block *sb, struct inode *inode,
+ 	PMFS_START_TIMING(memcpy_w_t, memcpy_time);
+ 	pmfs_xip_mem_protect(sb, xmem + offset, count, 1);
+ 	copied = memcpy_to_nvmm((char *)xmem, offset, buf, count);
++	pmfs_flush_buffer(xmem + offset, copied, 0);
+ 	pmfs_xip_mem_protect(sb, xmem + offset, count, 0);
+ 	PMFS_END_TIMING(memcpy_w_t, memcpy_time);
+ 

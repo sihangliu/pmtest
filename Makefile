@@ -1,5 +1,5 @@
 ifndef $(NUM_CORES)
-NUM_CORES	:= 2
+NUM_CORES	:= 1
 endif
 
 CC			:= -gcc
@@ -54,16 +54,16 @@ build:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
-debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG -g
+debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG=0 -g
 debug: all
 
 release: CXXFLAGS += -O3
 release: all
 
-warning: CXXFLAGS += -DNVMVERI_WARN
+warning: CXXFLAGS += -O3 -DNVMVERI_WARN -DDEBUG -DDEBUG_FLAG=0 -g
 warning: all
 
-exclude: CXXFLAGS += -DNVMVERI_EXCLUDE -DDEBUG -DDEBUG_FLAG -g
+exclude: CXXFLAGS += -O3 -DNVMVERI_EXCLUDE -DDEBUG -DDEBUG_FLAG=0 -g
 exclude: all
 
 clean:

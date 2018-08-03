@@ -5,11 +5,21 @@
 /***********************************************
    library part that may be used by C program
 ***********************************************/
-#ifdef DEBUG_FLAG
+#ifndef DEBUG_FLAG
+#define DEBUG_FLAG -1
+#endif // DEBUG_FLAG >= 0
+
+#if DEBUG_FLAG >= 0
 #define LOG(...) printf(__VA_ARGS__)
 #else
 #define LOG(...) 
-#endif // DEBUG_FLAG
+#endif // DEBUG_FLAG >= 0
+
+#if DEBUG_FLAG >= 1
+#define LOG_NOTE(...) printf(__VA_ARGS__)
+#else
+#define LOG_NOTE(...) 
+#endif // DEBUG_FLAG >= 0
 
 #include "stddef.h"
 // typedef unsigned long long addr_t;

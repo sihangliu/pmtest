@@ -45,6 +45,8 @@ extern int existVeriInstance;
 /* Interface macro */
 #define NVTest_START existVeriInstance = 1
 #define NVTest_END existVeriInstance = 0
+#define NVTest_initDevice() kC_initNVMVeriDevice()
+#define NVTest_exitDevice() kC_exitNVMVeriDevice()
 #define TX_CHECKER_START kC_createMetadata_TransactionBegin(__FILE__, __LINE__)
 #define TX_CHECKER_END kC_createMetadata_TransactionEnd(__FILE__, __LINE__)
 #define NVTest_transactionAdd() kC_createMetadata_TransactionAdd((addr), (size), __FILE__, __LINE__)
