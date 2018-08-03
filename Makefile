@@ -4,9 +4,9 @@ endif
 
 CC			:= -gcc
 CXX			:= -g++-4.8
-CFLAGS		:= -fPIC -std=c11 -DNUM_CORES=$(NUM_CORES)
-CXXFLAGS	:= -std=c++11 -fPIC -DNVMVERI_EXCLUDE -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
-LDFLAGS		:= -L/usr/lib -lstdc++ -lm -pthread
+CFLAGS		:= -fPIC -std=c11 -Wall -DNUM_CORES=$(NUM_CORES)
+CXXFLAGS	:= -std=c++11 -fPIC -Wall -DNVMVERI_EXCLUDE -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
+LDFLAGS		:= -L/usr/lib -lstdc++ -lm -lbacktrace -ldl -pthread
 INCLUDE		:= -Iinclude/
 
 BUILD		:= ./build
@@ -39,11 +39,11 @@ kernel: $(APP_DIR)/$(KERNEL_CLIENT_TARGET)
 
 $(APP_DIR)/$(UNIT_TEST_TARGET): $(UNIT_TEST_OBJECT)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ $^ $(LDFLAGS)
 
 $(APP_DIR)/$(KERNEL_CLIENT_TARGET): $(KERNEL_CLIENT_OBJECT)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ $^ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(@D)
