@@ -1,0 +1,18 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+index 17aebf5..d2ccb87 100755
+--- a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+@@ -168,10 +168,12 @@ ctree_map_insert_leaf(struct tree_map_entry *p,
+ 	/* insert the found destination in the other slot */
+ 	PM_EQU(D_RW(new_node)->entries[!d], *p);
+ 
+-	pmemobj_tx_add_range_direct(p, sizeof(*p));
++	
+ 	
+ 	PM_EQU(p->key, 0);
+ 	PM_EQU(p->slot, new_node.oid);
++
++	pmemobj_tx_add_range_direct(p, sizeof(*p));
+ }
+ 
+ /*

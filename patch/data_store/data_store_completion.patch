@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/map/data_store.c b/nvml/src/examples/libpmemobj/map/data_store.c
+index d24c52f..35f1843 100755
+--- a/nvml/src/examples/libpmemobj/map/data_store.c
++++ b/nvml/src/examples/libpmemobj/map/data_store.c
+@@ -213,7 +213,7 @@ int main(int argc, const char *argv[]) {
+ 			map_insert(mapc, D_RW(root)->map, rand(),
+ 					new_store_item().oid);
+ 			} TX_END
+-			TX_CHECKER_END;
++			// TX_CHECKER_END;
+ 			NVTest_END;
+ 			C_execVeri(p, metadataPtr);
+ 		}

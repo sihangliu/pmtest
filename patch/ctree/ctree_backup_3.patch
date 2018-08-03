@@ -1,0 +1,22 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+index 140cc97..3d85b98 100755
+--- a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+@@ -145,7 +145,6 @@ ctree_map_insert_leaf(struct tree_map_entry *p,
+ 	struct tree_map_entry e, int diff)
+ {
+ 	TOID(struct tree_map_node) new_node = TX_NEW(struct tree_map_node);
+-	//isPersistent(&(D_RW(new_node)->diff), sizeof(D_RW(new_node)->diff));
+ 	PM_EQU(D_RW(new_node)->diff, diff);
+ 
+ 	int d = BIT_IS_SET(e.key, D_RO(new_node)->diff);
+@@ -221,8 +220,8 @@ ctree_map_insert(PMEMobjpool *pop, TOID(struct ctree_map) map,
+ 	struct tree_map_entry e = {key, value};
+ 	TX_BEGIN(pop) {
+ 		if (p->key == 0 || p->key == key) {
+-			pmemobj_tx_add_range_direct(p, sizeof(*p));
+ 			PM_EQU(*p, e);
++			pmemobj_tx_add_range_direct(p, sizeof(*p));
+ 		} else {
+ 			ctree_map_insert_leaf(&D_RW(map)->root, e,
+ 					find_crit_bit(p->key, key));

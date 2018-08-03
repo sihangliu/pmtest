@@ -1,0 +1,15 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+index 140cc97..c087f67 100755
+--- a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+@@ -301,8 +301,9 @@ ctree_map_remove(PMEMobjpool *pop, TOID(struct ctree_map) map, uint64_t key)
+ 		TX_BEGIN(pop) {
+ 			pmemobj_tx_add_range_direct(leaf, sizeof(*leaf));
+ 			PM_EQU(leaf->key, 0);
+-			PM_EQU(leaf->slot, OID_NULL);
++			// PM_EQU(leaf->slot, OID_NULL);
+ 		} TX_END
++		PM_EQU(leaf->slot, OID_NULL);
+ 	} else {
+ 		/*
+ 		 * In this situation:
