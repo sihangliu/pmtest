@@ -2,6 +2,7 @@
 #include "common.hh"
 #include "nvmveri.h"
 #include "test.hh"
+#include <boost/version.hpp>
 
 
 int main()
@@ -19,6 +20,7 @@ int main()
 		<< "size_late" << sizeof(m.size_late) << std::endl 
 		<< "addr_late" << sizeof(m.addr_late) << std::endl 
 		<< "file_name" << sizeof(m.file_name) << std::endl;
+	std::cout << BOOST_VERSION << std::endl;
 
 	return 0;
 }

@@ -86,7 +86,7 @@ int kC_exitNVMVeriDevice(void)
 }
 
 
-void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -119,7 +119,7 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 }
 
 
-void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -143,12 +143,19 @@ void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], un
 }
 
 
-void kC_createMetadata_Commit(const char file_name[], unsigned short line_num)
+void kC_createMetadata_Commit(const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside commit. \n");
 		input.type = _COMMIT;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		//log("commit_aa\n");
 
@@ -157,12 +164,19 @@ void kC_createMetadata_Commit(const char file_name[], unsigned short line_num)
 }
 
 
-void kC_createMetadata_Barrier(const char file_name[], unsigned short line_num)
+void kC_createMetadata_Barrier(const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside barrier. \n");
 		input.type = _BARRIER;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		//log("barrier_aa\n");
 
@@ -171,12 +185,19 @@ void kC_createMetadata_Barrier(const char file_name[], unsigned short line_num)
 }
 
 
-void kC_createMetadata_Fence(const char file_name[], unsigned short line_num)
+void kC_createMetadata_Fence(const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
+		int file_offset;
 		//printk(KERN_INFO "@ Inside fence. \n");
 		input.type = _FENCE;
+		input.line_num = line_num;
+		file_offset = strlen(file_name) - FILENAME_LEN;
+		strncpy(
+			input.file_name,
+			file_name + (file_offset>0 ? file_offset : 0),
+			FILENAME_LEN);
 
 		//log("fence_aa\n");
 
@@ -185,14 +206,14 @@ void kC_createMetadata_Fence(const char file_name[], unsigned short line_num)
 }
 
 
-void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
 		int file_offset;
 		//printk(KERN_INFO "@ Inside persist %p %lu. \n", addr, size);
 		input.type = _PERSIST;
-
+		
 		//log("persist_aa\n");
 
 		input.addr = addr;
@@ -209,7 +230,7 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 }
 
 
-void kC_createMetadata_Order(void *addr, size_t size, void *addr_late, size_t size_late, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Order(void *addr, size_t size, void *addr_late, size_t size_late, const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -264,7 +285,7 @@ void kC_createMetadata_Ending()
 	}
 }
 
-void kC_createMetadata_TransactionBegin(const char file_name[], unsigned short line_num)
+void kC_createMetadata_TransactionBegin(const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -286,7 +307,7 @@ void kC_createMetadata_TransactionBegin(const char file_name[], unsigned short l
 	}
 }
 
-void kC_createMetadata_TransactionEnd(const char file_name[], unsigned short line_num)
+void kC_createMetadata_TransactionEnd(const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -308,7 +329,7 @@ void kC_createMetadata_TransactionEnd(const char file_name[], unsigned short lin
 	}
 }
 
-void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
 	if (existVeriInstance) {
 		Metadata input;
@@ -332,7 +353,7 @@ void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_n
 	}
 }
 
-void kC_createMetadata_Exclude(void *addr, size_t size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Exclude(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
 #ifdef NVMVERI_EXCLUDE
 	if (existVeriInstance) {
@@ -358,7 +379,7 @@ void kC_createMetadata_Exclude(void *addr, size_t size, const char file_name[], 
 #endif // NVMVERI_EXCLUDE
 }
 
-void kC_createMetadata_Include(void *addr, size_t size, const char file_name[], unsigned short line_num)
+void kC_createMetadata_Include(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
 #ifdef NVMVERI_EXCLUDE
 	if (existVeriInstance) {

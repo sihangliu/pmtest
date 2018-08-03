@@ -1,0 +1,13 @@
+diff --git a/PMFS-new/super.c b/PMFS-new/super.c
+index ef164b5..924bbd5 100644
+--- a/PMFS-new/super.c
++++ b/PMFS-new/super.c
+@@ -1019,7 +1019,7 @@ static void destroy_inodecache(void)
+ 	 * Make sure all delayed rcu free inodes are flushed before
+ 	 * we destroy cache.
+ 	 */
+-	rcu_barrier();
++	// rcu_barrier();
+ 	kmem_cache_destroy(pmfs_inode_cachep);
+ }
+ 

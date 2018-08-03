@@ -22,22 +22,22 @@ void NVMVeriFifoWrite(Metadata *input);
 int kC_initNVMVeriDevice(void);
 int kC_exitNVMVeriDevice(void);
 
-void kC_createMetadata_Assign(void *, size_t, const char[], unsigned short);
-void kC_createMetadata_Flush(void *, size_t, const char[], unsigned short);
-void kC_createMetadata_Commit(const char[], unsigned short);
-void kC_createMetadata_Barrier(const char[], unsigned short);
-void kC_createMetadata_Fence(const char[], unsigned short);
-void kC_createMetadata_Persist(void *, size_t, const char[], unsigned short);
-void kC_createMetadata_Order(void *, size_t, void *, size_t, const char[], unsigned short);
+void kC_createMetadata_Assign(void *, size_t, const char[], unsigned int);
+void kC_createMetadata_Flush(void *, size_t, const char[], unsigned int);
+void kC_createMetadata_Commit(const char[], unsigned int);
+void kC_createMetadata_Barrier(const char[], unsigned int);
+void kC_createMetadata_Fence(const char[], unsigned int);
+void kC_createMetadata_Persist(void *, size_t, const char[], unsigned int);
+void kC_createMetadata_Order(void *, size_t, void *, size_t, const char[], unsigned int);
 
 void kC_createMetadata_TransactionDelim(void);
 void kC_createMetadata_Ending(void);
 
-void kC_createMetadata_TransactionBegin(const char[], unsigned short);
-void kC_createMetadata_TransactionEnd(const char[], unsigned short);
-void kC_createMetadata_TransactionAdd(void *, size_t, const char[], unsigned short);
-void kC_createMetadata_Exclude(void *, size_t, const char[], unsigned short);
-void kC_createMetadata_Include(void *, size_t, const char[], unsigned short);
+void kC_createMetadata_TransactionBegin(const char[], unsigned int);
+void kC_createMetadata_TransactionEnd(const char[], unsigned int);
+void kC_createMetadata_TransactionAdd(void *, size_t, const char[], unsigned int);
+void kC_createMetadata_Exclude(void *, size_t, const char[], unsigned int);
+void kC_createMetadata_Include(void *, size_t, const char[], unsigned int);
 
 extern void* metadataPtr;
 extern int existVeriInstance;
