@@ -1,0 +1,15 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+index 711e6fe..59d67ad 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+@@ -266,8 +266,8 @@ hm_atomic_insert(PMEMobjpool *pop, TOID(struct hashmap_atomic) hashmap,
+ 	}
+ 
+ 	PM_EQU(D_RW(hashmap)->count_dirty, 1);
+-	pmemobj_persist(pop, &D_RW(hashmap)->count_dirty,
+-			sizeof(D_RW(hashmap)->count_dirty));
++	// pmemobj_persist(pop, &D_RW(hashmap)->count_dirty,
++	// 		sizeof(D_RW(hashmap)->count_dirty));
+ 
+ 	struct entry_args args = {
+ 		.key = key,

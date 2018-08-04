@@ -1,0 +1,15 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+index 711e6fe..2471ba6 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+@@ -210,8 +210,8 @@ hm_atomic_rebuild_finish(PMEMobjpool *pop, TOID(struct hashmap_atomic) hashmap)
+ 	 * See recovery process in hm_init and TOID_IS_NULL macro definition.
+ 	 */
+ 	PM_EQU(D_RW(hashmap)->buckets_tmp.oid.off, 0);
+-	pmemobj_persist(pop, &D_RW(hashmap)->buckets_tmp,
+-			sizeof(D_RW(hashmap)->buckets_tmp));
++	// pmemobj_persist(pop, &D_RW(hashmap)->buckets_tmp,
++	// 		sizeof(D_RW(hashmap)->buckets_tmp));
+ 	
+ 	NVTest_isPersistent(&D_RW(hashmap)->buckets, sizeof(D_RW(hashmap)->buckets));
+ 	NVTest_isPersistent(&D_RW(hashmap)->buckets_tmp, sizeof(D_RW(hashmap)->buckets_tmp));

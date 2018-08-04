@@ -1,0 +1,15 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+index 711e6fe..050347b 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+@@ -199,8 +199,8 @@ hm_atomic_rebuild_finish(PMEMobjpool *pop, TOID(struct hashmap_atomic) hashmap)
+ 	POBJ_FREE(&D_RO(hashmap)->buckets);
+ 
+ 	PM_EQU(D_RW(hashmap)->buckets, D_RO(hashmap)->buckets_tmp);
+-	pmemobj_persist(pop, &D_RW(hashmap)->buckets,
+-			sizeof(D_RW(hashmap)->buckets));
++	// pmemobj_persist(pop, &D_RW(hashmap)->buckets,
++	// 		sizeof(D_RW(hashmap)->buckets));
+ 
+ 	/*
+ 	 * We have to set offset manually instead of substituting OID_NULL,

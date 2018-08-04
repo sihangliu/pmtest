@@ -21,7 +21,8 @@ To remove a corresponding patch:
 	* rbtree: RB-Tree
 	* hashmap_tx: Hashmap (TX)
 	* hashmap_atomic: Hashmap (no TX)
-* The types of bugs we create are listed as follows:
+* The types of patches we create are listed as follows:
 	* backup: Missing or misplaced backup of persistent objects.
 	* incompletetx: Incomplete transactions due to improper termination.
 	* extratxadd: Add persistent data that will not be modified in a transaction to the log.
+	* correct: Correct reorder of backup.
