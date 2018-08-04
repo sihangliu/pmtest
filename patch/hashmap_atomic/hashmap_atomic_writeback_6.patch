@@ -1,3 +1,16 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+index 711e6fe..937e14d 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_atomic.c
+@@ -149,7 +149,7 @@ create_hashmap(PMEMobjpool *pop, TOID(struct hashmap_atomic) hashmap,
+ 		abort();
+ 	}
+ 
+-	pmemobj_persist(pop, D_RW(hashmap), sizeof(*D_RW(hashmap)));
++	// pmemobj_persist(pop, D_RW(hashmap), sizeof(*D_RW(hashmap)));
+ 	NVTest_isPersistent(D_RW(hashmap), sizeof(*D_RW(hashmap)));
+ }
+ 
 diff --git a/nvml/src/examples/libpmemobj/map/data_store.c b/nvml/src/examples/libpmemobj/map/data_store.c
 index 075bd88..5cc2e07 100755
 --- a/nvml/src/examples/libpmemobj/map/data_store.c
