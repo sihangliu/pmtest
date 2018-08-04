@@ -39,24 +39,25 @@ index 075bd88..50929cd 100755
  		NVTest_END;
  		C_execVeri(p, metadataPtr);
  
-diff --git a/nvml/src/examples/libpmemobj/tree_map/btree_map.c b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
-index 57c3b35..1a1819f 100644
---- a/nvml/src/examples/libpmemobj/tree_map/btree_map.c
-+++ b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
-@@ -291,6 +291,7 @@ btree_map_insert(PMEMobjpool *pop, TOID(struct btree_map) map,
- 	uint64_t key, PMEMoid value)
+diff --git a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+index e185ad6..eaeb9ec 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+@@ -271,6 +271,7 @@ rbtree_map_insert(PMEMobjpool *pop, TOID(struct rbtree_map) map,
  {
- 	struct tree_map_node_item item = {key, value};
+ 	int ret = 0;
+ 
 +	TX_CHECKER_START;
  	TX_BEGIN(pop) {
- 		if (btree_map_is_empty(pop, map)) {
- 			btree_map_insert_empty(map, item);
-@@ -305,6 +306,8 @@ btree_map_insert(PMEMobjpool *pop, TOID(struct btree_map) map,
- 			btree_map_insert_item(dest, p, item);
- 		}
+ 		TOID(struct tree_map_node) n = TX_ZNEW(struct tree_map_node);
+ 		PM_EQU(D_RW(n)->key, key);
+@@ -284,7 +285,9 @@ rbtree_map_insert(PMEMobjpool *pop, TOID(struct rbtree_map) map,
+ 					NODE_LOCATION(NODE_P(n)));
+ 
+ 		TX_SET(RB_FIRST(map), color, COLOR_BLACK);
++		return ret;
  	} TX_END
-+	return 0;
 +	TX_CHECKER_END;
  
- 	return 0;
+ 	return ret;
  }

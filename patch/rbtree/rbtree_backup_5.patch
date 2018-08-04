@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+index e185ad6..d5c6a26 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+@@ -342,7 +342,7 @@ rbtree_map_repair_branch(TOID(struct rbtree_map) map,
+ {
+ 	TOID(struct tree_map_node) sb = NODE_PARENT_AT(n, !c); /* sibling */
+ 	if (D_RO(sb)->color == COLOR_RED) {
+-		TX_SET(sb, color, COLOR_BLACK);
++		PM_EQU(D_RW(sb)->color, COLOR_BLACK);
+ 		TX_SET(NODE_P(n), color, COLOR_RED);
+ 		rbtree_map_rotate(map, NODE_P(n), c);
+ 		sb = NODE_PARENT_AT(n, !c);

@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+index 0fb69a5..eb6fb02 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+@@ -230,7 +230,7 @@ rbtree_map_insert_bst(TOID(struct rbtree_map) map, TOID(struct tree_map_node) n)
+ 
+ 	TX_SET(n, parent, parent);
+ 
+-	pmemobj_tx_add_range_direct(dst, sizeof(*dst));
++	// pmemobj_tx_add_range_direct(dst, sizeof(*dst));
+ 	PM_EQU(*dst, n);
+ }
+ 
