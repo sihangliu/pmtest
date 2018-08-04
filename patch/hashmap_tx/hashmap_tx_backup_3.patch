@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+index 637369d..504c865 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+@@ -198,7 +198,7 @@ hm_tx_insert(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap,
+ 
+ 	int ret = 0;
+ 	TX_BEGIN(pop) {
+-		TX_ADD_FIELD(D_RO(hashmap)->buckets, bucket[h]);
++		// TX_ADD_FIELD(D_RO(hashmap)->buckets, bucket[h]);
+ 		//TX_ADD_FIELD(buckets, bucket[h]);
+ 		TX_ADD_FIELD(hashmap, count);
+ 		

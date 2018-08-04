@@ -1,0 +1,61 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+index 637369d..b35e5ed 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+@@ -197,6 +197,7 @@ hm_tx_insert(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap,
+ 	}
+ 
+ 	int ret = 0;
++	TX_CHECKER_START;
+ 	TX_BEGIN(pop) {
+ 		TX_ADD_FIELD(D_RO(hashmap)->buckets, bucket[h]);
+ 		//TX_ADD_FIELD(buckets, bucket[h]);
+@@ -220,6 +221,7 @@ hm_tx_insert(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap,
+ 			pmemobj_errormsg());
+ 		ret = -1;
+ 	} TX_END
++	TX_CHECKER_END;
+ 
+ 	if (ret)
+ 		return ret;
+diff --git a/nvml/src/examples/libpmemobj/map/data_store.c b/nvml/src/examples/libpmemobj/map/data_store.c
+index 075bd88..50929cd 100755
+--- a/nvml/src/examples/libpmemobj/map/data_store.c
++++ b/nvml/src/examples/libpmemobj/map/data_store.c
+@@ -208,14 +208,14 @@ int main(int argc, const char *argv[]) {
+ 			/* new_store_item is transactional! */
+ 			metadataPtr = metadataVectorPtr[i];
+ 			NVTest_START;
+-			if (strcmp("hashmap_atomic", type))
+-				TX_CHECKER_START;
++			// if (strcmp("hashmap_atomic", type))
++			// 	TX_CHECKER_START;
+ 			TX_BEGIN(pop) {
+ 			map_insert(mapc, D_RW(root)->map, rand(),
+ 					new_store_item().oid);
+ 			} TX_END
+-			if (strcmp("hashmap_atomic", type))
+-				TX_CHECKER_END;
++			// if (strcmp("hashmap_atomic", type))
++			// 	TX_CHECKER_END;
+ 			NVTest_END;
+ 			C_execVeri(p, metadataPtr);
+ 		}
+@@ -251,13 +251,13 @@ int main(int argc, const char *argv[]) {
+ 	for (int i = 0; i < nkeys; ++i) {
+ 		metadataPtr = metadataVectorPtr[i];
+ 		NVTest_START;
+-		if (strcmp("hashmap_atomic", type))
+-			TX_CHECKER_START;
++		// if (strcmp("hashmap_atomic", type))
++		// 	TX_CHECKER_START;
+ 
+ 		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
+ 	
+-		if (strcmp("hashmap_atomic", type))
+-			TX_CHECKER_END;
++		// if (strcmp("hashmap_atomic", type))
++		// 	TX_CHECKER_END;
+ 		NVTest_END;
+ 		C_execVeri(p, metadataPtr);
+ 

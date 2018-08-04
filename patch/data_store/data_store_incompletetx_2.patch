@@ -1,0 +1,15 @@
+diff --git a/nvml/src/examples/libpmemobj/map/data_store.c b/nvml/src/examples/libpmemobj/map/data_store.c
+index 075bd88..77b0903 100755
+--- a/nvml/src/examples/libpmemobj/map/data_store.c
++++ b/nvml/src/examples/libpmemobj/map/data_store.c
+@@ -256,8 +256,8 @@ int main(int argc, const char *argv[]) {
+ 
+ 		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
+ 	
+-		if (strcmp("hashmap_atomic", type))
+-			TX_CHECKER_END;
++		// if (strcmp("hashmap_atomic", type))
++		// 	TX_CHECKER_END;
+ 		NVTest_END;
+ 		C_execVeri(p, metadataPtr);
+ 

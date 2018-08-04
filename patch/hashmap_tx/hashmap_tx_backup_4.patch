@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+index 637369d..515d0aa 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+@@ -260,7 +260,7 @@ hm_tx_remove(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap, uint64_t key)
+ 			TX_ADD_FIELD(D_RO(hashmap)->buckets, bucket[h]);
+ 		else
+ 			TX_ADD_FIELD(prev, next);
+-		TX_ADD_FIELD(hashmap, count);
++		// TX_ADD_FIELD(hashmap, count);
+ 
+ 		if (TOID_IS_NULL(prev))
+ 			PM_EQU(D_RW(buckets)->bucket[h], D_RO(var)->next);

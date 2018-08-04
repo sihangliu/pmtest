@@ -1,0 +1,29 @@
+diff --git a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+index 637369d..6677afc 100644
+--- a/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
++++ b/nvml/src/examples/libpmemobj/hashmap/hashmap_tx.c
+@@ -152,7 +152,7 @@ hm_tx_rebuild(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap, size_t new_len)
+ 
+ 				PM_EQU((D_RW(buckets_old)->bucket[i]), (D_RO(en)->next));
+ 
+-				TX_ADD_FIELD(en, next);
++				// TX_ADD_FIELD(en, next);
+ 				PM_EQU((D_RW(en)->next), (D_RO(buckets_new)->bucket[h]));
+ 				PM_EQU((D_RW(buckets_new)->bucket[h]), (en));
+ 			}
+diff --git a/nvml/src/libpmemobj/tx.c b/nvml/src/libpmemobj/tx.c
+index b0ceffa..4391970 100644
+--- a/nvml/src/libpmemobj/tx.c
++++ b/nvml/src/libpmemobj/tx.c
+@@ -1863,9 +1863,9 @@ pmemobj_tx_free(PMEMoid oid)
+ 			ERR("free undo log too large");
+ 			return pmemobj_tx_abort_err(ENOMEM);
+ 		}
+-		NVTest_exclude(entry, sizeof(*entry));
++		NVTest_transactionAdd(entry, sizeof(*entry));
+ 		PM_EQU((*entry), (oid.off)); /* freud : making an entry in the undo log */
+-		NVTest_include(entry, sizeof(*entry));
++
+ 		lane->pop->persist(lane->pop, entry, sizeof(*entry));
+ 	} else {
+ 		struct oob_header *oobh = OOB_HEADER_FROM_OID(lane->pop, oid);
