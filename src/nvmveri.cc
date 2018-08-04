@@ -199,19 +199,13 @@ void NVMVeri::VeriWorker(int id)
 	while (WorkerInfo[id].termSignal == true);
 
 	while (true) {
-		//printf("startVeriWorkerloop %d, %d\n", id, bool(termSignal[id]));
-//		if (id == 0)
-//printf("a%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		unique_lock<mutex> veri_lock(VeriQueueMutex[id]);
+
 		// when no termSignal and no getResultSignal and VeriQueue is empty
-//		if (id == 0)
-//printf("b%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
 		while (!WorkerInfo[id].termSignal && !WorkerInfo[id].getResultSignal && VeriQueue[id].size() == 0) {
-		//	assert(completedStateMap[id] != true);
 			VeriQueueCV[id].wait(veri_lock);
 		}
-//		if (id == 0)
-//printf("c%d, %d, %d\n", int(completedThread), int(completedStateMap[id]), int(id));
+
 		if (WorkerInfo[id].termSignal) break;
 
 
@@ -310,12 +304,10 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 		size_t startaddr = (size_t)(cur->addr);
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-		LOG("%s %p %d %s %u\n",
+		LOG("%s %p %d\n",
 			MetadataTypeStr[_FLUSH],
 			cur->addr,
-			cur->size,
-			cur->file_name,
-			cur->line_num);
+			cur->size);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
@@ -346,12 +338,9 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 	return 0;
 }
 
-inline int VeriProc_Fence(Metadata *cur, int &timestamp)
+inline int VeriProc_Fence(int &timestamp)
 {
-	LOG("%s %s %u\n",
-		MetadataTypeStr[_FENCE],
-		cur->file_name,
-		cur->line_num);
+	LOG("%s\n", MetadataTypeStr[_FENCE]);
 	timestamp++;
 	return 0;
 }
@@ -362,12 +351,10 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 		size_t startaddr = (size_t)(cur->addr);
 		size_t endaddr = startaddr + cur->size;
 		discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-		LOG("%s %p %d %s %u\n",
+		LOG("%s %p %d\n",
 			MetadataTypeStr[_PERSIST],
 			cur->addr,
-			cur->size,
-			cur->file_name,
-			cur->line_num);
+			cur->size);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
@@ -405,14 +392,12 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 		startaddr = (size_t)(cur->addr_late);
 		endaddr = startaddr + cur->size_late;
 		discrete_interval<size_t> addrinterval_late = interval<size_t>::right_open(startaddr, endaddr);
-		LOG("%s %p %d %p %d %s %u\n",
+		LOG("%s %p %d %p %d\n",
 			MetadataTypeStr[_ORDER],
 			cur->addr,
 			cur->size,
 			cur->addr_late,
-			cur->size_late,
-			cur->file_name,
-			cur->line_num);
+			cur->size_late);
 	#ifdef NVMVERI_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
@@ -478,19 +463,15 @@ inline void VeriProc_TransactionBegin(Metadata *cur, FastVector<Metadata *> &Tra
 		TransactionPersistInfo.clear();
 	}
 	transactionCount++;
-	LOG("%s %s %u\n",
-		MetadataTypeStr[_TRANSACTIONBEGIN],
-		cur->file_name,
-		cur->line_num);
+	LOG("%s\n",
+		MetadataTypeStr[_TRANSACTIONBEGIN]);
 }
 
 inline void VeriProc_TransactionEnd(Metadata *cur, interval_set_addr &ExcludeInfo, interval_set_addr &PersistInfo, FastVector<Metadata *> &TransactionPersistInfo, int &transactionCount)
 {
 	transactionCount--;
-	LOG("%s %s %u\n",
-		MetadataTypeStr[_TRANSACTIONEND],
-		cur->file_name,
-		cur->line_num);
+	LOG("%s\n",
+		MetadataTypeStr[_TRANSACTIONEND]);
 	if (transactionCount == 0) {
 		for (int i = 0; i < TransactionPersistInfo.size(); i++) {
 			TransactionPersistInfo[i]->type = _PERSIST;
@@ -602,7 +583,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 				case _FLUSH:
 					VeriProc_Flush((*veriptr)[i], ExcludeInfo, PersistInfo, OrderInfo, timestamp); break;
 				case _FENCE:
-					VeriProc_Fence((*veriptr)[i], timestamp); break;
+					VeriProc_Fence(timestamp); break;
 				case _PERSIST:
 					VeriProc_Persist((*veriptr)[i], ExcludeInfo, PersistInfo); break;
 				case _ORDER:
@@ -634,7 +615,7 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 		case _FLUSH:
 			/* do nothing */ break;
 		case _FENCE:
-			VeriProc_Fence((*veriptr)[i], timestamp); break;
+			VeriProc_Fence(timestamp); break;
 		case _PERSIST:
 			VeriProc_Persist(((*veriptr)[i]), ExcludeInfo, PersistInfo); break;
 		case _ORDER:
@@ -726,7 +707,7 @@ void C_getNewMetadataPtr() {
 	nvmveri_cur_idx++;
 }
 
-void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
+void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -745,7 +726,7 @@ void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, con
 	}
 }
 
-void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
+void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -766,58 +747,40 @@ void C_createMetadata_Flush(void *metadata_vector, void *addr, size_t size, cons
 }
 
 
-void C_createMetadata_Commit(void *metadata_vector, const char file_name[], unsigned int line_num)
+void C_createMetadata_Commit(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _COMMIT;
-		m->line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
-		strncpy(
-			m->file_name,
-			file_name + (file_offset>0 ? file_offset : 0),
-			FILENAME_LEN);
 		LOG_NOTE("create metadata commit\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
 
 
-void C_createMetadata_Barrier(void *metadata_vector, const char file_name[], unsigned int line_num)
+void C_createMetadata_Barrier(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _BARRIER;
-		m->line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
-		strncpy(
-			m->file_name,
-			file_name + (file_offset>0 ? file_offset : 0),
-			FILENAME_LEN);
 		LOG_NOTE("create metadata barrier\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
 
 
-void C_createMetadata_Fence(void *metadata_vector, const char file_name[], unsigned int line_num)
+void C_createMetadata_Fence(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _FENCE;
-		m->line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
-		strncpy(
-			m->file_name,
-			file_name + (file_offset>0 ? file_offset : 0),
-			FILENAME_LEN);
 		LOG_NOTE("create metadata fence\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
 
 
-void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
+void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -836,7 +799,7 @@ void C_createMetadata_Persist(void *metadata_vector, void *addr, size_t size, co
 }
 
 
-void C_createMetadata_Order(void *metadata_vector, void *addr, size_t size, void *addr_late, size_t size_late, const char file_name[], unsigned int line_num)
+void C_createMetadata_Order(void *metadata_vector, void *addr, size_t size, void *addr_late, size_t size_late, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -857,39 +820,27 @@ void C_createMetadata_Order(void *metadata_vector, void *addr, size_t size, void
 	}
 }
 
-void C_createMetadata_TransactionBegin(void *metadata_vector, const char file_name[], unsigned int line_num)
+void C_createMetadata_TransactionBegin(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _TRANSACTIONBEGIN;
-		m->line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
-		strncpy(
-			m->file_name,
-			file_name + (file_offset>0 ? file_offset : 0),
-			FILENAME_LEN);
 		LOG_NOTE("create metadata transactionbegin\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
 
-void C_createMetadata_TransactionEnd(void *metadata_vector, const char file_name[], unsigned int line_num)
+void C_createMetadata_TransactionEnd(void *metadata_vector, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _TRANSACTIONEND;
-		m->line_num = line_num;
-		int file_offset = strlen(file_name) - FILENAME_LEN;
-		strncpy(
-			m->file_name,
-			file_name + (file_offset>0 ? file_offset : 0),
-			FILENAME_LEN);
 		LOG_NOTE("create metadata transactionend\n");
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
 }
 
-void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
+void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
@@ -908,7 +859,7 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 	}
 }
 
-void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
+void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 #ifdef NVMVERI_EXCLUDE
 	if (existVeriInstance) {
@@ -928,7 +879,7 @@ void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, co
 #endif // NVMVERI_EXCLUDE
 }
 
-void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
+void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned short line_num)
 {
 #ifdef NVMVERI_EXCLUDE
 	if (existVeriInstance) {
