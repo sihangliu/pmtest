@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/btree_map.c b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+index b488fed..fad6206 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/btree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+@@ -184,7 +184,7 @@ btree_map_create_split_node(TOID(struct tree_map_node) node,
+ {
+ 	TOID(struct tree_map_node) right = TX_ZNEW(struct tree_map_node);
+ 
+-	TX_ADD(node); // a bug
++	// TX_ADD(node); // a bug
+ 
+ 	int c = (BTREE_ORDER / 2);
+ 	*m = D_RO(node)->items[c - 1]; /* select median item */

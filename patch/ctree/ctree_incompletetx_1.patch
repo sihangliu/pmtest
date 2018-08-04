@@ -1,0 +1,38 @@
+diff --git a/nvml/src/examples/libpmemobj/map/data_store.c b/nvml/src/examples/libpmemobj/map/data_store.c
+index d24c52f..28e22ab 100755
+--- a/nvml/src/examples/libpmemobj/map/data_store.c
++++ b/nvml/src/examples/libpmemobj/map/data_store.c
+@@ -208,12 +208,10 @@ int main(int argc, const char *argv[]) {
+ 			/* new_store_item is transactional! */
+ 			metadataPtr = metadataVectorPtr[i];
+ 			NVTest_START;
+-			TX_CHECKER_START;
+ 			TX_BEGIN(pop) {
+ 			map_insert(mapc, D_RW(root)->map, rand(),
+ 					new_store_item().oid);
+ 			} TX_END
+-			TX_CHECKER_END;
+ 			NVTest_END;
+ 			C_execVeri(p, metadataPtr);
+ 		}
+diff --git a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+index 17aebf5..9de898d 100755
+--- a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+@@ -185,13 +185,16 @@ ctree_map_insert_new(PMEMobjpool *pop, TOID(struct ctree_map) map,
+ {
+ 	int ret = 0;
+ 
++	TX_CHECKER_START;
+ 	TX_BEGIN(pop) {
+ 		PMEMoid n = pmemobj_tx_alloc(size, type_num);
+ 		constructor(pop, pmemobj_direct(n), arg);
+ 		ctree_map_insert(pop, map, key, n);
++		return ret;
+ 	} TX_ONABORT {
+ 		ret = 1;
+ 	} TX_END
++	TX_CHECKER_END;
+ 
+ 	return ret;
+ }
