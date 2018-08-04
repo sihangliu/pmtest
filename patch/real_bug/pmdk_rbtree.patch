@@ -1,25 +1,25 @@
 diff --git a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
-index a9ac95c..a491e27 100644
+index 63897f3..110fce2 100644
 --- a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
 +++ b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
 @@ -204,7 +204,9 @@ rbtree_map_rotate(TOID(struct rbtree_map) map,
- 
+ 	
  	NODE_P(child) = NODE_P(node);
  
 -	TX_SET(NODE_P(node), slots[NODE_LOCATION(node)], child);
 +	TX_ADD(NODE_P(node));
-+	PM_EQU(NODE_PARENT_AT(node, NODE_LOCATION(node)), (child));
++	PM_EQU(NODE_PARENT_AT(node, NODE_LOCATION(node)), child);
 +	// TX_SET(NODE_P(node), slots[NODE_LOCATION(node)], child);
  
- 	D_RW(child)->slots[c] = node;
- 	D_RW(node)->parent = child;
+ 	PM_EQU(D_RW(child)->slots[c], node);
+ 	PM_EQU(D_RW(node)->parent, child);
 @@ -413,7 +415,9 @@ rbtree_map_remove(PMEMobjpool *pop, TOID(struct rbtree_map) map, uint64_t key)
  		if (TOID_EQUALS(NODE_P(x), r)) {
  			TX_SET(r, slots[RB_LEFT], x);
  		} else {
 -			TX_SET(NODE_P(y), slots[NODE_LOCATION(y)], x);
 +			TX_ADD(y);
-+			PM_EQU((NODE_PARENT_AT(y, NODE_LOCATION(y))), (x));
++			PM_EQU(NODE_PARENT_AT(y, NODE_LOCATION(y)), x);
 +			// TX_SET(NODE_P(y), slots[NODE_LOCATION(y)], x);
  		}
  
@@ -30,15 +30,8 @@ index a9ac95c..a491e27 100644
  
 -			TX_SET(NODE_P(n), slots[NODE_LOCATION(n)], y);
 +			TX_ADD(NODE_P(n));
-+			PM_EQU((NODE_PARENT_AT(n, NODE_LOCATION(n))), (y));
++			PM_EQU(NODE_PARENT_AT(n, NODE_LOCATION(n)), y);
 +			// TX_SET(NODE_P(n), slots[NODE_LOCATION(n)], y);
  		}
  		TX_FREE(n);
  	} TX_END
-@@ -550,6 +556,5 @@ rbtree_map_remove_free(PMEMobjpool *pop, TOID(struct rbtree_map) map,
- 	} TX_ONABORT {
- 		ret = 1;
- 	} TX_END
--
- 	return ret;
- }
