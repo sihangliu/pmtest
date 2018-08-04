@@ -531,14 +531,14 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 			TransactionAddInfo += addrinterval;
 		}
 	}
-	else {
-		char filename_temp[FILENAME_LEN + 1];
-		strncpy(filename_temp, cur->file_name, FILENAME_LEN);
-		filename_temp[FILENAME_LEN] = '\0';
-		std::cerr << COLOR_RED << "TRANSACTIONADD ERROR: " << COLOR_RESET
-			<< filename_temp << ":" << cur->line_num 
-			<< ": Not inside a transaction." << std::endl;
-	}
+	// else {
+	// 	char filename_temp[FILENAME_LEN + 1];
+	// 	strncpy(filename_temp, cur->file_name, FILENAME_LEN);
+	// 	filename_temp[FILENAME_LEN] = '\0';
+	// 	std::cerr << COLOR_RED << "TRANSACTIONADD ERROR: " << COLOR_RESET
+	// 		<< filename_temp << ":" << cur->line_num 
+	// 		<< ": Not inside a transaction." << std::endl;
+	// }
 }
 
 inline void VeriProc_Exclude(Metadata *cur, interval_set_addr &ExcludeInfo)
