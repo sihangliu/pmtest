@@ -54,13 +54,13 @@ build:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
-debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG=0 -g
+debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG=1 -g
 debug: all
 
 release: CXXFLAGS += -O3
 release: all
 
-warning: CXXFLAGS += -O3 -DNVMVERI_WARN -DDEBUG -DDEBUG_FLAG=0 -g
+warning: CXXFLAGS += -O3 -DNVMVERI_WARN -DDEBUG -DDEBUG_FLAG=1 -g
 warning: all
 
 exclude: CXXFLAGS += -O3 -DNVMVERI_EXCLUDE -DDEBUG -DDEBUG_FLAG=0 -g
