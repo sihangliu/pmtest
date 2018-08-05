@@ -12,6 +12,7 @@ To remove a corresponding patch:
 * `pmdk_rbtree.patch` reproduces the bug addressed in [this](https://github.com/pmem/pmdk/commit/04ec84e23ed40be92bd89b9d34c39fbf28cafe0b#diff-f2692f0bb21a212d07a5d1bc2115c071) git commit of PMDK. Note that we use PM_EQU from whisper to track the variable assignment.
 * `pmfs_doubleflush.patch` reproduces the bug addressed in [this](https://github.com/snalli/PMFS-new/commit/ded1b075eb911c469233433d83cb678ee800367c) git commit of PMFS-new. Note that double flush is treated as a warning, so NVTest needs to be compiled with preprocessor option -DNVMVERI_WARN to raise this warning.
 * `pmdk_btree.patch` reproduces the bug we found in `btree_map.c`.
+* `pmdk_btree_doubleadd.patch` reproduces the double TX_ADD performance issue we found in `btree_map.c`.
 
 ## Synthetic bugs
 * We modify the persistent operations in different examples and produce multiple bugs.
