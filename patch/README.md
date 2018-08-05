@@ -25,4 +25,6 @@ To remove a corresponding patch:
 	* backup: Missing or misplaced backup of persistent objects.
 	* incompletetx: Incomplete transactions due to improper termination.
 	* extratxadd: Add persistent data that will not be modified in a transaction to the log.
+	* writeback: Missing or misplaced writeback operations.
+	* ordering: Missing or misplaced ordering enforcement.
 	* correct: Correct reorder of backup.

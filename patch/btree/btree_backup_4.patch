@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/btree_map.c b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+index 57c3b35..e8d35b8 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/btree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+@@ -329,7 +329,7 @@ btree_map_rotate_right(TOID(struct tree_map_node) rsb,
+ 	TX_ADD_FIELD(node, slots[D_RO(node)->n]);
+ 	PM_EQU(D_RW(node)->slots[D_RO(node)->n], D_RO(rsb)->slots[0]);
+ 
+-	TX_ADD(rsb);
++	// TX_ADD(rsb);
+ 	PM_EQU(D_RW(rsb)->n, D_RO(rsb)->n - 1); /* it loses one element, but still > min */
+ 
+ 	/* move all existing elements back by one array slot */

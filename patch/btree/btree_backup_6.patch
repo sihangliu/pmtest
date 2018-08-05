@@ -1,0 +1,13 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/btree_map.c b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+index 57c3b35..3889c82 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/btree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+@@ -456,7 +456,7 @@ btree_map_remove_from_node(TOID(struct btree_map) map,
+ 	TOID(struct tree_map_node) parent, int p)
+ {
+ 	if (TOID_IS_NULL(D_RO(node)->slots[0])) { /* leaf */
+-		TX_ADD(node);
++		// TX_ADD(node);
+ 		if (D_RO(node)->n == 1 || p == BTREE_ORDER - 2)
+ 			PM_EQU(D_RW(node)->items[p], EMPTY_ITEM);
+ 		else if (D_RO(node)->n != 1) {
