@@ -271,6 +271,9 @@ extern "C" void C_createMetadata_Include(void *, void *, size_t, const char[], u
 extern "C" void C_registerVariable(char*, void*, size_t);
 extern "C" void C_unregisterVariable(char*);
 extern "C" void* C_getVariable(char*, size_t*);
+extern "C" void C_initVeri(void **, int);
+extern "C" void C_sendTrace(void *);
+extern "C" void C_exitVeri(void *);
 
 #endif // !NVMVERI_KERNEL_CODE
 #endif // __NVMVERI_HH__

@@ -36,6 +36,9 @@ void C_createMetadata_Include(void *, void *, size_t, const char[], unsigned int
 void C_registerVariable(char*, void*, size_t);
 void C_unregisterVariable(char*);
 void* C_getVariable(char*, size_t*);
+void C_initVeri(void **, int);
+void C_sendTrace(void *);
+void C_exitVeri(void *);
 
 
 #endif // !NVMVERI_KERNEL_CODE

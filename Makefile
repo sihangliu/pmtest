@@ -4,9 +4,9 @@ endif
 
 CC			:= -gcc
 CXX			:= -g++-4.8
-CFLAGS		:= -fPIC -std=c11 -Wall -DNUM_CORES=$(NUM_CORES)
-CXXFLAGS	:= -std=c++11 -fPIC -Wall -DNVMVERI_EXCLUDE -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
-LDFLAGS		:= -L/usr/lib -lstdc++ -lm -lbacktrace -ldl -pthread
+CFLAGS		:= -fPIC -std=c11 -DNUM_CORES=$(NUM_CORES)
+CXXFLAGS	:= -std=c++11 -fPIC -DNVMVERI_EXCLUDE -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
+LDFLAGS		:= -L/usr/lib -lstdc++ -lm -pthread #-lbacktrace -ldl
 INCLUDE		:= -Iinclude/
 
 BUILD		:= ./build
@@ -54,13 +54,13 @@ build:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
-debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG=1 -g
+debug: CXXFLAGS += -DDEBUG -DDEBUG_FLAG=0 -g
 debug: all
 
 release: CXXFLAGS += -O3
 release: all
 
-warning: CXXFLAGS += -O3 -DNVMVERI_WARN -DDEBUG -DDEBUG_FLAG=1 -g
+warning: CXXFLAGS += -O3 -DNVMVERI_WARN -DDEBUG -DDEBUG_FLAG=0 -g
 warning: all
 
 exclude: CXXFLAGS += -O3 -DNVMVERI_EXCLUDE -DDEBUG -DDEBUG_FLAG=0 -g

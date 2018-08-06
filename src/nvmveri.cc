@@ -531,14 +531,6 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 			TransactionAddInfo += addrinterval;
 		}
 	}
-	// else {
-	// 	char filename_temp[FILENAME_LEN + 1];
-	// 	strncpy(filename_temp, cur->file_name, FILENAME_LEN);
-	// 	filename_temp[FILENAME_LEN] = '\0';
-	// 	std::cerr << COLOR_RED << "TRANSACTIONADD ERROR: " << COLOR_RESET
-	// 		<< filename_temp << ":" << cur->line_num 
-	// 		<< ": Not inside a transaction." << std::endl;
-	// }
 }
 
 inline void VeriProc_Exclude(Metadata *cur, interval_set_addr &ExcludeInfo)
@@ -698,6 +690,7 @@ void C_getVeriDefault(void *veriInstance)
 	// TODO: cast veriResult
 }
 
+// TODO: this is not user friendly
 void *C_createMetadataVector()
 {
 	FastVector<Metadata *> *vec= new FastVector<Metadata *>;
@@ -977,5 +970,52 @@ void* C_getVariable(char* name, size_t* size)
 	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
 	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
 }
+
+
+void C_initVeri(void **veriInstance, int metadataVectorLen)
+{
+	*veriInstance = (void *)(new NVMVeri());
+	metadataVectorPtr = (void **)(new FastVector<FastVector<Metadata *> *>);
+	for (int i = 0; i < metadataVectorLen; i++) {
+		((FastVector<FastVector<Metadata *> *> *)metadataVectorPtr)->push_back(new FastVector<Metadata *>);
+	}
+	nvmveri_cur_idx = 0;
+	auto p = (FastVector<FastVector<Metadata *> *> *)metadataVectorPtr;
+	metadataPtr = (*p)[0];
+	
+}
+
+
+void C_sendTrace(void *veriInstance)
+{
+	auto p = (FastVector<FastVector<Metadata *> *> *)metadataVectorPtr;
+	if (nvmveri_cur_idx >= p->size()) {
+		printf(COLOR_RED "SENDTRACE ERROR: " COLOR_RESET "All metadata traces have been sent.\n");
+	}
+	else {
+		NVMVeri *in = (NVMVeri *)veriInstance;
+		in->execVeri((*p)[nvmveri_cur_idx]);
+		nvmveri_cur_idx++;
+		if (nvmveri_cur_idx < p->size()) {
+			metadataPtr = (*p)[nvmveri_cur_idx];
+		}
+		else {
+			metadataPtr = NULL;
+		}
+	}
+}
+
+void C_exitVeri(void *veriInstance)
+{
+	auto p = (FastVector<FastVector<Metadata *> *> *)metadataVectorPtr;
+	int metadataVectorLen = p->size();
+	for (int i = 0; i < metadataVectorLen; i++) {
+		delete (*p)[i];
+	}
+	delete p;
+	NVMVeri *in = (NVMVeri *)veriInstance;
+	delete in;
+}
+
 
 #endif // !NVMVERI_KERNEL_CODE

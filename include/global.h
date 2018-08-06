@@ -3,12 +3,12 @@
 
 #ifndef NVMVERI_KERNEL_CODE
 
-extern __thread void* metadataPtr;
-extern __thread int existVeriInstance;
-extern __thread int nvmveri_cur_idx;
+extern __thread void* metadataPtr; // point to the currently using metadata storage
+extern __thread int existVeriInstance; // indicate if metadata needs to be recorded to the metadata storage
+extern __thread int nvmveri_cur_idx; // indicate the used space in the current metadata storage
 extern __thread int thread_id;
 //extern void *metadataManagerPtr;
-extern __thread void **metadataVectorPtr;
+extern __thread void **metadataVectorPtr; // point to the entire storage vector
 
 extern void* veriInstancePtr;
 
@@ -27,6 +27,11 @@ extern void* veriInstancePtr;
 #define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) C_createMetadata_Order(metadataPtr, (addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
 #define NVTest_exclude(addr, size) C_createMetadata_Exclude(metadataPtr, (addr), (size), __FILE__, __LINE__)
 #define NVTest_include(addr, size) C_createMetadata_Include(metadataPtr, (addr), (size), __FILE__, __LINE__)
+
+#define NVTest_init(instancePtr, vectorLen) C_initVeri(&(instancePtr), (vectorLen))
+#define NVTest_sendTrace(instancePtr) C_sendTrace((instancePtr))
+#define NVTest_getResult(instancePtr) C_getVeriDefault((instancePtr))
+#define NVTest_exit(instancePtr) C_exitVeri((instancePtr))
 
 
 #endif // !NVMVERI_KERNEL_CODE

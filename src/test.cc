@@ -7,9 +7,8 @@ void transaction()
 {
 	char arr[100];
 
-	void *metadataVectorPtr;
 	Timer timer;
-	void *p;
+	void *p = NULL;
 
 	const int LOOP_CNT = 3;
 
@@ -17,10 +16,8 @@ void transaction()
 /****************************test1*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 2);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_fence();
@@ -32,15 +29,25 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
 
 
-	C_execVeri(p, metadataPtr);
+	NVTest_sendTrace(p);
 
-	existVeriInstance = 0;
+	NVTest_assign((void *)(&arr[0]), 4);
+	NVTest_fence();
+	NVTest_assign((void *)(&arr[4]), 4);
+	NVTest_flush((void *)(&arr[0]), 4);
+	NVTest_flush((void *)(&arr[0]), 4);
+	NVTest_isPersistent((void *)(&arr[0]), 4);
+	NVTest_isPersistent((void *)(&arr[0]), 0);
+	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
 
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
 
+	NVTest_sendTrace(p);
+	NVTest_sendTrace(p);
 
-	C_deleteVeriInstance(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test1*****************************/
@@ -49,10 +56,8 @@ void transaction()
 /****************************test2*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_fence();
@@ -64,15 +69,11 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 	NVTest_assign((void *)(&arr[0]), 4);
 
-	C_execVeri(p, metadataPtr);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
 
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test2*****************************/
@@ -81,10 +82,8 @@ void transaction()
 /****************************test3*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_fence();
@@ -97,15 +96,11 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
-	C_execVeri(p, metadataPtr);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
 
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test3*****************************/
@@ -114,10 +109,8 @@ void transaction()
 /****************************test4*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_assign((void *)(&arr[4]), 4);
@@ -127,15 +120,11 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test4*****************************/
@@ -143,10 +132,8 @@ void transaction()
 /****************************test5*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_fence();
@@ -156,15 +143,11 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
 
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test5*****************************/
@@ -172,10 +155,8 @@ void transaction()
 /****************************test6*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_flush((void *)(&arr[0]), 4);
@@ -185,15 +166,11 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test6*****************************/
@@ -201,10 +178,8 @@ void transaction()
 /****************************test7*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_fence();
@@ -212,15 +187,11 @@ void transaction()
 	NVTest_flush((void *)(&arr[0]), 4);
 	NVTest_isPersistent((void *)(&arr[0]), 4);
 
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test7*****************************/
@@ -228,10 +199,8 @@ void transaction()
 /****************************test8*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(&arr[0]), 4);
 	NVTest_fence();
@@ -241,15 +210,11 @@ void transaction()
 	NVTest_isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
 
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test8*****************************/
@@ -257,10 +222,8 @@ void transaction()
 /****************************test9*****************************/
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	NVTest_assign((void *)(128), 8);
 	NVTest_assign((void *)(256), 8);
@@ -269,16 +232,11 @@ void transaction()
 	NVTest_isPersistent((void *)(128), 8);
 	NVTest_isPersistent((void *)(256), 8);
 
-
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 /****************************test9*****************************/
