@@ -5,7 +5,7 @@ index 075bd88..67ab9fa 100755
 @@ -253,8 +253,11 @@ int main(int argc, const char *argv[]) {
  		NVTest_START;
  		if (strcmp("hashmap_atomic", type))
- 			TX_CHECKER_START;
+ 			NVTest_CHECKER_START;
 -
 -		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
 +		PMEMoid item;
@@ -15,4 +15,4 @@ index 075bd88..67ab9fa 100755
 +			item = map_remove(mapc, D_RW(root)->map, keys[nkeys-(i+1)/2]);
  	
  		if (strcmp("hashmap_atomic", type))
- 			TX_CHECKER_END;
+ 			NVTest_CHECKER_END;

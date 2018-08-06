@@ -7,17 +7,17 @@ index 075bd88..50929cd 100755
  			metadataPtr = metadataVectorPtr[i];
  			NVTest_START;
 -			if (strcmp("hashmap_atomic", type))
--				TX_CHECKER_START;
+-				NVTest_CHECKER_START;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	TX_CHECKER_START;
++			// 	NVTest_CHECKER_START;
  			TX_BEGIN(pop) {
  			map_insert(mapc, D_RW(root)->map, rand(),
  					new_store_item().oid);
  			} TX_END
 -			if (strcmp("hashmap_atomic", type))
--				TX_CHECKER_END;
+-				NVTest_CHECKER_END;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	TX_CHECKER_END;
++			// 	NVTest_CHECKER_END;
  			NVTest_END;
  			C_execVeri(p, metadataPtr);
  		}
@@ -26,16 +26,16 @@ index 075bd88..50929cd 100755
  		metadataPtr = metadataVectorPtr[i];
  		NVTest_START;
 -		if (strcmp("hashmap_atomic", type))
--			TX_CHECKER_START;
+-			NVTest_CHECKER_START;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	TX_CHECKER_START;
++		// 	NVTest_CHECKER_START;
  
  		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
  	
 -		if (strcmp("hashmap_atomic", type))
--			TX_CHECKER_END;
+-			NVTest_CHECKER_END;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	TX_CHECKER_END;
++		// 	NVTest_CHECKER_END;
  		NVTest_END;
  		C_execVeri(p, metadataPtr);
  
@@ -47,7 +47,7 @@ index 17aebf5..cbb4ead 100755
  	}
  
  	struct tree_map_entry e = {key, value};
-+	TX_CHECKER_START;
++	NVTest_CHECKER_START;
  	TX_BEGIN(pop) {
  		if (p->key == 0 || p->key == key) {
  			pmemobj_tx_add_range_direct(p, sizeof(*p));
@@ -59,7 +59,7 @@ index 17aebf5..cbb4ead 100755
  	} TX_ONABORT {
  		ret = 1;
  	} TX_END
-+	TX_CHECKER_END;
++	NVTest_CHECKER_END;
  
  	// not needed for now
  	// printf("ret = %d\n", ret);

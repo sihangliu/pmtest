@@ -7,9 +7,9 @@ index 075bd88..4a63f54 100755
  					new_store_item().oid);
  			} TX_END
 -			if (strcmp("hashmap_atomic", type))
--				TX_CHECKER_END;
+-				NVTest_CHECKER_END;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	TX_CHECKER_END;
++			// 	NVTest_CHECKER_END;
  			NVTest_END;
  			C_execVeri(p, metadataPtr);
  		}

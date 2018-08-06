@@ -7,7 +7,7 @@ int main()
 {
 	transaction();
 	// test_icl();
-	// tx_wrapper();
+	tx_wrapper();
 	// fastvector();
 	Metadata m;
 	std::cout << "Metadata" << sizeof(Metadata) << std::endl

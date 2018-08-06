@@ -324,7 +324,6 @@ void tx_wrapper()
 {
 	char arr[100];
 
-	void *metadataVectorPtr;
 	Timer timer;
 	void *p;
 
@@ -332,10 +331,8 @@ void tx_wrapper()
 
 	timer.startTimer();
 
-	p = C_createVeriInstance();
-	metadataVectorPtr = C_createMetadataVector();
-	metadataPtr = metadataVectorPtr;
-	existVeriInstance = 1;
+	NVTest_init(p, 1);
+	NVTest_START;
 
 	struct fuc{
 		int a;
@@ -345,23 +342,19 @@ void tx_wrapper()
 
 
 	for (int i = 0; i < 1; i++) {
-		TX_CHECKER_START;
+		NVTest_CHECKER_START;
 		//NVTest_exclude(&fc, sizeof(fc));
 		NVTest_assign(&fc.a, sizeof(fc.a));
 		NVTest_assign(&fc.b, sizeof(fc.b));
-		TX_CHECKER_END;
+		NVTest_CHECKER_END;
 	}
 	
 
-	C_execVeri(p, metadataPtr);
-
-	existVeriInstance = 0;
-
-	C_getVeri(p, (void *)(0));
-	C_deleteMetadataVector(metadataVectorPtr);
-
-
-	C_deleteVeriInstance(p);
+	NVTest_sendTrace(p);
+	NVTest_END;
+	NVTest_getResult(p);
+	NVTest_exit(p);
+	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
 }

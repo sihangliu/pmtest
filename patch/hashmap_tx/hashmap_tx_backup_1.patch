@@ -29,9 +29,9 @@ index 075bd88..5ff204d 100755
  	
  	//TX_BEGIN(pop) {
 +		metadataPtr = metadataVectorPtr[nops];
-+		TX_CHECKER_START;
++		NVTest_CHECKER_START;
  		map_new(mapc, &D_RW(root)->map, NULL);
-+		TX_CHECKER_END;
++		NVTest_CHECKER_END;
 +		C_execVeri(p, metadataPtr);
  
  		for (int i = 0; i < nops; ++i) {
@@ -40,12 +40,12 @@ index 075bd88..5ff204d 100755
 -			NVTest_START;
 +
  			if (strcmp("hashmap_atomic", type))
- 				TX_CHECKER_START;
+ 				NVTest_CHECKER_START;
  			TX_BEGIN(pop) {
 @@ -216,7 +221,7 @@ int main(int argc, const char *argv[]) {
  			} TX_END
  			if (strcmp("hashmap_atomic", type))
- 				TX_CHECKER_END;
+ 				NVTest_CHECKER_END;
 -			NVTest_END;
 +
  			C_execVeri(p, metadataPtr);

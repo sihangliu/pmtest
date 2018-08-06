@@ -38,12 +38,12 @@ index 075bd88..5cc2e07 100755
 -			NVTest_START;
 +
  			if (strcmp("hashmap_atomic", type))
- 				TX_CHECKER_START;
+ 				NVTest_CHECKER_START;
  			TX_BEGIN(pop) {
 @@ -216,7 +219,7 @@ int main(int argc, const char *argv[]) {
  			} TX_END
  			if (strcmp("hashmap_atomic", type))
- 				TX_CHECKER_END;
+ 				NVTest_CHECKER_END;
 -			NVTest_END;
 +
  			C_execVeri(p, metadataPtr);
