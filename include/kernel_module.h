@@ -5,22 +5,22 @@
 #define KFIFO_LEN 1024
 #define KFIFO_THRESHOLD_LEN (KFIFO_LEN / 2)
 
-#define PROC_NAME "nvmveri"
+#define PROC_NAME "pmtest"
 
 
-#define NVMVERI_MAJOR 0
+#define PMTEST_MAJOR 0
 
-#if defined (NVMVERI_KERNEL_CODE) && !defined(NVMVERI_USER_CODE)
+#if defined (PMTEST_KERNEL_CODE) && !defined(PMTEST_USER_CODE)
 
 #include <linux/fs.h>
 #include <linux/ioctl.h>
-#include "nvmveri.hh"
+#include "pmtest.hh"
 
-ssize_t NVMVeriDeviceRead(struct file *, char __user *, size_t, loff_t *);
-void NVMVeriFifoWrite(Metadata *input);
+ssize_t PMTestDeviceRead(struct file *, char __user *, size_t, loff_t *);
+void PMTestFifoWrite(Metadata *input);
 
-int kC_initNVMVeriDevice(void);
-int kC_exitNVMVeriDevice(void);
+int kC_initPMTestDevice(void);
+int kC_exitPMTestDevice(void);
 
 void kC_createMetadata_Assign(void *, size_t, const char[], unsigned int);
 void kC_createMetadata_Flush(void *, size_t, const char[], unsigned int);
@@ -43,26 +43,26 @@ extern void* metadataPtr;
 extern int existVeriInstance;
 
 /* Interface macro */
-#define NVTest_START existVeriInstance = 1
-#define NVTest_END existVeriInstance = 0
-#define NVTest_initDevice() kC_initNVMVeriDevice()
-#define NVTest_exitDevice() kC_exitNVMVeriDevice()
-#define NVTest_CHECKER_START kC_createMetadata_TransactionBegin(__FILE__, __LINE__)
-#define NVTest_CHECKER_END kC_createMetadata_TransactionEnd(__FILE__, __LINE__)
-#define NVTest_transactionAdd() kC_createMetadata_TransactionAdd((addr), (size), __FILE__, __LINE__)
-#define NVTest_assign(addr, size) kC_createMetadata_Assign((addr), (size), __FILE__, __LINE__)
-#define NVTest_flush(addr, size) kC_createMetadata_Flush((addr), (size), __FILE__, __LINE__)
-#define NVTest_commit() kC_createMetadata_Commit(__FILE__, __LINE__)
-#define NVTest_barrier() kC_createMetadata_Barrier(__FILE__, __LINE__)
-#define NVTest_fence() kC_createMetadata_Fence(__FILE__, __LINE__)
-#define NVTest_isPersistent(addr, size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
-#define NVTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
-#define NVTest_exclude(addr, size) kC_createMetadata_Exclude((addr), (size), __FILE__, __LINE__)
-#define NVTest_include(addr, size) kC_createMetadata_Include((addr), (size), __FILE__, __LINE__)
-#define NVTest_transactionDelim() kC_createMetadata_TransactionDelim()
-#define NVTest_ending() kC_createMetadata_Ending()
+#define PMTest_START existVeriInstance = 1
+#define PMTest_END existVeriInstance = 0
+#define PMTest_initDevice() kC_initPMTestDevice()
+#define PMTest_exitDevice() kC_exitPMTestDevice()
+#define PMTest_CHECKER_START kC_createMetadata_TransactionBegin(__FILE__, __LINE__)
+#define PMTest_CHECKER_END kC_createMetadata_TransactionEnd(__FILE__, __LINE__)
+#define PMTest_transactionAdd() kC_createMetadata_TransactionAdd((addr), (size), __FILE__, __LINE__)
+#define PMTest_assign(addr, size) kC_createMetadata_Assign((addr), (size), __FILE__, __LINE__)
+#define PMTest_flush(addr, size) kC_createMetadata_Flush((addr), (size), __FILE__, __LINE__)
+#define PMTest_commit() kC_createMetadata_Commit(__FILE__, __LINE__)
+#define PMTest_barrier() kC_createMetadata_Barrier(__FILE__, __LINE__)
+#define PMTest_fence() kC_createMetadata_Fence(__FILE__, __LINE__)
+#define PMTest_isPersistent(addr, size) kC_createMetadata_Persist((addr), (size), __FILE__, __LINE__)
+#define PMTest_isPersistedBefore(addrA, sizeA, addrB, sizeB) kC_createMetadata_Order((addrA), (sizeA), (addrB), (sizeB), __FILE__, __LINE__)
+#define PMTest_exclude(addr, size) kC_createMetadata_Exclude((addr), (size), __FILE__, __LINE__)
+#define PMTest_include(addr, size) kC_createMetadata_Include((addr), (size), __FILE__, __LINE__)
+#define PMTest_transactionDelim() kC_createMetadata_TransactionDelim()
+#define PMTest_ending() kC_createMetadata_Ending()
 
 
-#endif // NVMVERI_KERNEL_CODE && !NVMVERI_USER_CODE
+#endif // PMTEST_KERNEL_CODE && !PMTEST_USER_CODE
 
 #endif // __KERNEL_MODULE__

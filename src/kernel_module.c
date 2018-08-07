@@ -1,5 +1,5 @@
-#define NVMVERI_KERNEL_CODE
-#include "nvmveri.hh"
+#define PMTEST_KERNEL_CODE
+#include "pmtest.hh"
 #include "kernel_module.h"
 
 #include <linux/init.h>
@@ -11,30 +11,30 @@
 #include <linux/sched.h>
 
 int existVeriInstance;
-static DECLARE_KFIFO_PTR(nvmveri_dev, Metadata);
+static DECLARE_KFIFO_PTR(pmtest_dev, Metadata);
 int asleep = 0;
 static DECLARE_WAIT_QUEUE_HEAD(kfifo_wq);
 
-struct file_operations NVMVeriDeviceOps = {
+struct file_operations PMTestDeviceOps = {
 	.owner = 	THIS_MODULE,
-	.read = 	NVMVeriDeviceRead,
+	.read = 	PMTestDeviceRead,
 	.llseek = 	noop_llseek
 };
 
 // the user interface to read metadata from kfifo
-ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+ssize_t PMTestDeviceRead(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 	int ret;
 	unsigned int copied = 0;
-	// printk(KERN_INFO "@ NVMVERI: start reading\n");
+	// printk(KERN_INFO "@ PMTEST: start reading\n");
 
-	ret = kfifo_to_user(&nvmveri_dev, buf, count, &copied);
-	if (asleep != 0 && kfifo_avail(&nvmveri_dev) >= KFIFO_THRESHOLD_LEN) {
+	ret = kfifo_to_user(&pmtest_dev, buf, count, &copied);
+	if (asleep != 0 && kfifo_avail(&pmtest_dev) >= KFIFO_THRESHOLD_LEN) {
 		wake_up_interruptible(&kfifo_wq);
 		asleep = 0;
 	}
 
-	// printk(KERN_INFO "@ NVMVERI: end reading\n");
+	// printk(KERN_INFO "@ PMTEST: end reading\n");
 
 	if (copied == 0)
 		return 1;
@@ -45,32 +45,32 @@ ssize_t NVMVeriDeviceRead(struct file *file, char __user *buf, size_t count, lof
 }
 
 // the kernel interface to write metadata to kfifo
-void NVMVeriFifoWrite(Metadata *input)
+void PMTestFifoWrite(Metadata *input)
 {
-	if (kfifo_avail(&nvmveri_dev) > 0) {
-		kfifo_put(&nvmveri_dev, *input);
+	if (kfifo_avail(&pmtest_dev) > 0) {
+		kfifo_put(&pmtest_dev, *input);
 	}
-	if (kfifo_avail(&nvmveri_dev) == 0) {
+	if (kfifo_avail(&pmtest_dev) == 0) {
 		asleep = 1;
 		wait_event_interruptible(
 			kfifo_wq,
-			kfifo_avail(&nvmveri_dev) >= KFIFO_THRESHOLD_LEN);
+			kfifo_avail(&pmtest_dev) >= KFIFO_THRESHOLD_LEN);
 	}
 }
 
-int kC_initNVMVeriDevice(void)
+int kC_initPMTestDevice(void)
 {
 	int ret;
 
-	ret = kfifo_alloc(&nvmveri_dev, KFIFO_LEN, GFP_KERNEL);
+	ret = kfifo_alloc(&pmtest_dev, KFIFO_LEN, GFP_KERNEL);
 	if (ret) {
-		printk(KERN_ERR "@ NVMVERI: error kfifo_alloc\n");
+		printk(KERN_ERR "@ PMTEST: error kfifo_alloc\n");
 		return ret;
 	}
 
 	remove_proc_entry(PROC_NAME, NULL);
-	if (proc_create(PROC_NAME, 0, NULL, &NVMVeriDeviceOps) == NULL) {
-		kfifo_free(&nvmveri_dev);
+	if (proc_create(PROC_NAME, 0, NULL, &PMTestDeviceOps) == NULL) {
+		kfifo_free(&pmtest_dev);
 		return -ENOMEM;
 	}
 
@@ -78,10 +78,10 @@ int kC_initNVMVeriDevice(void)
 	return 0;
 }
 
-int kC_exitNVMVeriDevice(void)
+int kC_exitPMTestDevice(void)
 {
 	remove_proc_entry(PROC_NAME, NULL);
-	kfifo_free(&nvmveri_dev);
+	kfifo_free(&pmtest_dev);
 	return 0;
 }
 
@@ -105,15 +105,15 @@ void kC_createMetadata_Assign(void *addr, size_t size, const char file_name[], u
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete assign %p %lu. \n", addr, size);
 		
 		// prevent overflow kernel FIFO
-		//if (kfifo_size(&nvmveri_dev) > 0.7 * KFIFO_LEN) {
+		//if (kfifo_size(&pmtest_dev) > 0.7 * KFIFO_LEN) {
 		//	Metadata suspend_signal;
 		//	input.type = _SUSPEND;
-		//	kfifo_put(&nvmveri_dev, suspend_signal);
+		//	kfifo_put(&pmtest_dev, suspend_signal);
 		//}
 	}
 }
@@ -138,7 +138,7 @@ void kC_createMetadata_Flush(void *addr, size_t size, const char file_name[], un
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 	}
 }
 
@@ -159,7 +159,7 @@ void kC_createMetadata_Commit(const char file_name[], unsigned int line_num)
 
 		//log("commit_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 	}
 }
 
@@ -180,7 +180,7 @@ void kC_createMetadata_Barrier(const char file_name[], unsigned int line_num)
 
 		//log("barrier_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 	}
 }
 
@@ -201,7 +201,7 @@ void kC_createMetadata_Fence(const char file_name[], unsigned int line_num)
 
 		//log("fence_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 	}
 }
 
@@ -225,7 +225,7 @@ void kC_createMetadata_Persist(void *addr, size_t size, const char file_name[], 
 			file_name + (file_offset>0 ? file_offset : 0),
 			FILENAME_LEN);
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 	}
 }
 
@@ -250,7 +250,7 @@ void kC_createMetadata_Order(void *addr, size_t size, void *addr_late, size_t si
 
 		//log("order_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 	}
 }
 
@@ -264,7 +264,7 @@ void kC_createMetadata_TransactionDelim()
 
 		//log("transactiondelim_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete transactiondelim metadata. \n");
 	}
@@ -279,7 +279,7 @@ void kC_createMetadata_Ending()
 
 		//log("ending_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete ending metadata. \n");
 	}
@@ -301,7 +301,7 @@ void kC_createMetadata_TransactionBegin(const char file_name[], unsigned int lin
 
 		//log("transactionbegin_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete transactionbegin metadata. \n");
 	}
@@ -323,7 +323,7 @@ void kC_createMetadata_TransactionEnd(const char file_name[], unsigned int line_
 
 		//log("transactionend_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete transactionend metadata. \n");
 	}
@@ -347,7 +347,7 @@ void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_n
 
 		//log("transactionadd_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete transactionadd metadata. \n");
 	}
@@ -355,7 +355,7 @@ void kC_createMetadata_TransactionAdd(void *addr, size_t size, const char file_n
 
 void kC_createMetadata_Exclude(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
-#ifdef NVMVERI_EXCLUDE
+#ifdef PMTEST_EXCLUDE
 	if (existVeriInstance) {
 		Metadata input;
 		int file_offset;
@@ -372,16 +372,16 @@ void kC_createMetadata_Exclude(void *addr, size_t size, const char file_name[], 
 
 		//log("exclude_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete transactionadd metadata. \n");
 	}
-#endif // NVMVERI_EXCLUDE
+#endif // PMTEST_EXCLUDE
 }
 
 void kC_createMetadata_Include(void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
-#ifdef NVMVERI_EXCLUDE
+#ifdef PMTEST_EXCLUDE
 	if (existVeriInstance) {
 		Metadata input;
 		int file_offset;
@@ -398,9 +398,9 @@ void kC_createMetadata_Include(void *addr, size_t size, const char file_name[], 
 
 		//log("include_aa\n");
 
-		NVMVeriFifoWrite(&input);
+		PMTestFifoWrite(&input);
 
 		//printk(KERN_INFO "@ Complete include metadata. \n");
 	}
-#endif // NVMVERI_EXCLUDE
+#endif // PMTEST_EXCLUDE
 }

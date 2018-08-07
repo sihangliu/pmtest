@@ -24,29 +24,29 @@ index 075bd88..5ff204d 100755
  		metadataVectorPtr[i] = C_createMetadataVector();
  	}
  
-+	NVTest_START;
++	PMTest_START;
  	gettimeofday(&tv_start, 0);
  	
  	//TX_BEGIN(pop) {
 +		metadataPtr = metadataVectorPtr[nops];
-+		NVTest_CHECKER_START;
++		PMTest_CHECKER_START;
  		map_new(mapc, &D_RW(root)->map, NULL);
-+		NVTest_CHECKER_END;
++		PMTest_CHECKER_END;
 +		C_execVeri(p, metadataPtr);
  
  		for (int i = 0; i < nops; ++i) {
  			/* new_store_item is transactional! */
  			metadataPtr = metadataVectorPtr[i];
--			NVTest_START;
+-			PMTest_START;
 +
  			if (strcmp("hashmap_atomic", type))
- 				NVTest_CHECKER_START;
+ 				PMTest_CHECKER_START;
  			TX_BEGIN(pop) {
 @@ -216,7 +221,7 @@ int main(int argc, const char *argv[]) {
  			} TX_END
  			if (strcmp("hashmap_atomic", type))
- 				NVTest_CHECKER_END;
--			NVTest_END;
+ 				PMTest_CHECKER_END;
+-			PMTest_END;
 +
  			C_execVeri(p, metadataPtr);
  		}
@@ -55,7 +55,7 @@ index 075bd88..5ff204d 100755
  	//	map_ctx_free(mapc);
  	//	aborted = 1;
  	//} TX_END
-+	NVTest_END;
++	PMTest_END;
  
  
  	gettimeofday(&tv_end, 0);

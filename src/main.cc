@@ -1,6 +1,6 @@
-#include "nvmveri.hh"
+#include "pmtest.hh"
 #include "common.hh"
-#include "nvmveri.h"
+#include "pmtest.h"
 #include "test.hh"
 
 int main()

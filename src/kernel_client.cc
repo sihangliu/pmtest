@@ -9,9 +9,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "nvmveri.hh"
+#include "pmtest.hh"
 
-#define NVMVERI_USER_CODE
+#define PMTEST_USER_CODE
 #include "kernel_module.h"
 
 
@@ -19,7 +19,7 @@ FastVector<Metadata *> allocated;
 
 int read_transaction(FastVector<Metadata *> *tx, int fd)
 {
-	// open the virtual file with default name "/proc/nvmveri"
+	// open the virtual file with default name "/proc/pmtest"
 
 	int sleeptime = 1, sleeptime_max = 512;
 	while(true) {
@@ -27,7 +27,7 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 		allocated.push_back(buf);
 		ssize_t result = read(fd, buf, sizeof(Metadata));
 		if (result < 0) {
-			printf("NVMVeri read data error %ld\n", result);
+			printf("PMTest read data error %ld\n", result);
 			assert(0);
 		}
 		if (result == 1) {
@@ -53,12 +53,12 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 
 int main(int argc, char *argv[])
 {
-	NVMVeri veriInstance;
+	PMTest veriInstance;
 	FastVector<FastVector<Metadata *> *> tx_vector;
 
 	int fd = open((std::string("/proc/") + PROC_NAME).c_str(), O_RDONLY);
 	if (fd == -1) {
-		printf("NVMVeri: %d %s\n", errno, strerror(errno));
+		printf("PMTest: %d %s\n", errno, strerror(errno));
 		close(fd);
 		assert(0);
 	}

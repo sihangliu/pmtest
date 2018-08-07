@@ -6,7 +6,7 @@ index 637369d..b35e5ed 100644
  	}
  
  	int ret = 0;
-+	NVTest_CHECKER_START;
++	PMTest_CHECKER_START;
  	TX_BEGIN(pop) {
  		TX_ADD_FIELD(D_RO(hashmap)->buckets, bucket[h]);
  		//TX_ADD_FIELD(buckets, bucket[h]);
@@ -14,7 +14,7 @@ index 637369d..b35e5ed 100644
  			pmemobj_errormsg());
  		ret = -1;
  	} TX_END
-+	NVTest_CHECKER_END;
++	PMTest_CHECKER_END;
  
  	if (ret)
  		return ret;
@@ -25,37 +25,37 @@ index 075bd88..50929cd 100755
 @@ -208,14 +208,14 @@ int main(int argc, const char *argv[]) {
  			/* new_store_item is transactional! */
  			metadataPtr = metadataVectorPtr[i];
- 			NVTest_START;
+ 			PMTest_START;
 -			if (strcmp("hashmap_atomic", type))
--				NVTest_CHECKER_START;
+-				PMTest_CHECKER_START;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	NVTest_CHECKER_START;
++			// 	PMTest_CHECKER_START;
  			TX_BEGIN(pop) {
  			map_insert(mapc, D_RW(root)->map, rand(),
  					new_store_item().oid);
  			} TX_END
 -			if (strcmp("hashmap_atomic", type))
--				NVTest_CHECKER_END;
+-				PMTest_CHECKER_END;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	NVTest_CHECKER_END;
- 			NVTest_END;
++			// 	PMTest_CHECKER_END;
+ 			PMTest_END;
  			C_execVeri(p, metadataPtr);
  		}
 @@ -251,13 +251,13 @@ int main(int argc, const char *argv[]) {
  	for (int i = 0; i < nkeys; ++i) {
  		metadataPtr = metadataVectorPtr[i];
- 		NVTest_START;
+ 		PMTest_START;
 -		if (strcmp("hashmap_atomic", type))
--			NVTest_CHECKER_START;
+-			PMTest_CHECKER_START;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	NVTest_CHECKER_START;
++		// 	PMTest_CHECKER_START;
  
  		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
  	
 -		if (strcmp("hashmap_atomic", type))
--			NVTest_CHECKER_END;
+-			PMTest_CHECKER_END;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	NVTest_CHECKER_END;
- 		NVTest_END;
++		// 	PMTest_CHECKER_END;
+ 		PMTest_END;
  		C_execVeri(p, metadataPtr);
  

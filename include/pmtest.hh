@@ -1,5 +1,5 @@
-#ifndef __NVMVERI_HH__
-#define __NVMVERI_HH__
+#ifndef __PMTEST_HH__
+#define __PMTEST_HH__
 
 
 /***********************************************
@@ -32,7 +32,7 @@ typedef enum MetadataType {
 	_EXCLUDE, _INCLUDE
 } MetadataType;
 
-// the corresponding MetadataTypeStr is defined in nvmveri.cc
+// the corresponding MetadataTypeStr is defined in pmtest.cc
 
 
 #define FILENAME_LEN 48
@@ -51,7 +51,7 @@ typedef struct Metadata {
 /***********************************************
    part that can only be used by user space C++ program
 ***********************************************/
-# ifndef NVMVERI_KERNEL_CODE
+# ifndef PMTEST_KERNEL_CODE
 
 // C++ Libary for verification
 
@@ -164,7 +164,7 @@ public:
 	ResultType result;
 };
 
-class NVMVeriWorkerInfo {
+class PMTestWorkerInfo {
 public:
 	//char padding1[64-sizeof(atomic<bool>)*3 - sizeof(thread *)];
 	thread *WorkerThreadPool;
@@ -174,7 +174,7 @@ public:
 	char padding2[64-sizeof(bool)*3 - sizeof(thread *)];
 };
 
-class NVMVeri {
+class PMTest {
 public:
 	/* master and worker thread */
 	//thread *WorkerThreadPool[MAX_THREAD_POOL_SIZE];
@@ -187,7 +187,7 @@ public:
 	//atomic<bool> completedStateMap[MAX_THREAD_POOL_SIZE];
 	//atomic<int> completedThread;
 
-	NVMVeriWorkerInfo WorkerInfo[MAX_THREAD_POOL_SIZE]; 
+	PMTestWorkerInfo WorkerInfo[MAX_THREAD_POOL_SIZE]; 
 
 	int assignTo;
 
@@ -210,8 +210,8 @@ public:
 	unordered_map<string, VariableInfo> VariableNameAddressMap;
 
 	/* Default constructor, call init/term */
-	NVMVeri();
-	~NVMVeri();
+	PMTest();
+	~PMTest();
 
 	/* Initialize each worker */
 	bool initVeri();
@@ -275,5 +275,5 @@ extern "C" void C_initVeri(void **, int);
 extern "C" void C_sendTrace(void *);
 extern "C" void C_exitVeri(void *);
 
-#endif // !NVMVERI_KERNEL_CODE
-#endif // __NVMVERI_HH__
+#endif // !PMTEST_KERNEL_CODE
+#endif // __PMTEST_HH__

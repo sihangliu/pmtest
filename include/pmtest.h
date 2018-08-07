@@ -1,9 +1,9 @@
-#ifndef __NVMVERI_H__
-#define __NVMVERI_H__
+#ifndef __PMTEST_H__
+#define __PMTEST_H__
 
 //#define METADATA_PACKET_LENGTH 10
 
-#ifndef NVMVERI_KERNEL_CODE
+#ifndef PMTEST_KERNEL_CODE
 
 #include "global.h"
 
@@ -18,7 +18,7 @@ void C_getVeriDefault(void *);
 void C_initThread();
 void C_getNewMetadataPtr();
 
-/* NVMVeri */
+/* PMTest */
 void *C_createMetadataVector(void);
 void C_deleteMetadataVector(void *);
 void C_createMetadata_Assign(void *, void *, size_t, const char[], unsigned int);
@@ -41,6 +41,6 @@ void C_sendTrace(void *);
 void C_exitVeri(void *);
 
 
-#endif // !NVMVERI_KERNEL_CODE
+#endif // !PMTEST_KERNEL_CODE
 
-#endif // __NVMVERI_H__
+#endif // __PMTEST_H__

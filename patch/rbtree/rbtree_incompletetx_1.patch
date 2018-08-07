@@ -5,38 +5,38 @@ index 075bd88..50929cd 100755
 @@ -208,14 +208,14 @@ int main(int argc, const char *argv[]) {
  			/* new_store_item is transactional! */
  			metadataPtr = metadataVectorPtr[i];
- 			NVTest_START;
+ 			PMTest_START;
 -			if (strcmp("hashmap_atomic", type))
--				NVTest_CHECKER_START;
+-				PMTest_CHECKER_START;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	NVTest_CHECKER_START;
++			// 	PMTest_CHECKER_START;
  			TX_BEGIN(pop) {
  			map_insert(mapc, D_RW(root)->map, rand(),
  					new_store_item().oid);
  			} TX_END
 -			if (strcmp("hashmap_atomic", type))
--				NVTest_CHECKER_END;
+-				PMTest_CHECKER_END;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	NVTest_CHECKER_END;
- 			NVTest_END;
++			// 	PMTest_CHECKER_END;
+ 			PMTest_END;
  			C_execVeri(p, metadataPtr);
  		}
 @@ -251,13 +251,13 @@ int main(int argc, const char *argv[]) {
  	for (int i = 0; i < nkeys; ++i) {
  		metadataPtr = metadataVectorPtr[i];
- 		NVTest_START;
+ 		PMTest_START;
 -		if (strcmp("hashmap_atomic", type))
--			NVTest_CHECKER_START;
+-			PMTest_CHECKER_START;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	NVTest_CHECKER_START;
++		// 	PMTest_CHECKER_START;
  
  		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
  	
 -		if (strcmp("hashmap_atomic", type))
--			NVTest_CHECKER_END;
+-			PMTest_CHECKER_END;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	NVTest_CHECKER_END;
- 		NVTest_END;
++		// 	PMTest_CHECKER_END;
+ 		PMTest_END;
  		C_execVeri(p, metadataPtr);
  
 diff --git a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
@@ -47,7 +47,7 @@ index e185ad6..eaeb9ec 100644
  {
  	int ret = 0;
  
-+	NVTest_CHECKER_START;
++	PMTest_CHECKER_START;
  	TX_BEGIN(pop) {
  		TOID(struct tree_map_node) n = TX_ZNEW(struct tree_map_node);
  		PM_EQU(D_RW(n)->key, key);
@@ -57,7 +57,7 @@ index e185ad6..eaeb9ec 100644
  		TX_SET(RB_FIRST(map), color, COLOR_BLACK);
 +		return ret;
  	} TX_END
-+	NVTest_CHECKER_END;
++	PMTest_CHECKER_END;
  
  	return ret;
  }

@@ -5,38 +5,38 @@ index 075bd88..50929cd 100755
 @@ -208,14 +208,14 @@ int main(int argc, const char *argv[]) {
  			/* new_store_item is transactional! */
  			metadataPtr = metadataVectorPtr[i];
- 			NVTest_START;
+ 			PMTest_START;
 -			if (strcmp("hashmap_atomic", type))
--				NVTest_CHECKER_START;
+-				PMTest_CHECKER_START;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	NVTest_CHECKER_START;
++			// 	PMTest_CHECKER_START;
  			TX_BEGIN(pop) {
  			map_insert(mapc, D_RW(root)->map, rand(),
  					new_store_item().oid);
  			} TX_END
 -			if (strcmp("hashmap_atomic", type))
--				NVTest_CHECKER_END;
+-				PMTest_CHECKER_END;
 +			// if (strcmp("hashmap_atomic", type))
-+			// 	NVTest_CHECKER_END;
- 			NVTest_END;
++			// 	PMTest_CHECKER_END;
+ 			PMTest_END;
  			C_execVeri(p, metadataPtr);
  		}
 @@ -251,13 +251,13 @@ int main(int argc, const char *argv[]) {
  	for (int i = 0; i < nkeys; ++i) {
  		metadataPtr = metadataVectorPtr[i];
- 		NVTest_START;
+ 		PMTest_START;
 -		if (strcmp("hashmap_atomic", type))
--			NVTest_CHECKER_START;
+-			PMTest_CHECKER_START;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	NVTest_CHECKER_START;
++		// 	PMTest_CHECKER_START;
  
  		PMEMoid item = map_remove(mapc, D_RW(root)->map, keys[i]);
  	
 -		if (strcmp("hashmap_atomic", type))
--			NVTest_CHECKER_END;
+-			PMTest_CHECKER_END;
 +		// if (strcmp("hashmap_atomic", type))
-+		// 	NVTest_CHECKER_END;
- 		NVTest_END;
++		// 	PMTest_CHECKER_END;
+ 		PMTest_END;
  		C_execVeri(p, metadataPtr);
  
 diff --git a/nvml/src/examples/libpmemobj/tree_map/btree_map.c b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
@@ -47,7 +47,7 @@ index 57c3b35..1a1819f 100644
  	uint64_t key, PMEMoid value)
  {
  	struct tree_map_node_item item = {key, value};
-+	NVTest_CHECKER_START;
++	PMTest_CHECKER_START;
  	TX_BEGIN(pop) {
  		if (btree_map_is_empty(pop, map)) {
  			btree_map_insert_empty(map, item);
@@ -56,7 +56,7 @@ index 57c3b35..1a1819f 100644
  		}
  	} TX_END
 +	return 0;
-+	NVTest_CHECKER_END;
++	PMTest_CHECKER_END;
  
  	return 0;
  }

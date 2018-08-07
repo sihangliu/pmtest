@@ -8,7 +8,7 @@ index 711e6fe..937e14d 100644
  
 -	pmemobj_persist(pop, D_RW(hashmap), sizeof(*D_RW(hashmap)));
 +	// pmemobj_persist(pop, D_RW(hashmap), sizeof(*D_RW(hashmap)));
- 	NVTest_isPersistent(D_RW(hashmap), sizeof(*D_RW(hashmap)));
+ 	PMTest_isPersistent(D_RW(hashmap), sizeof(*D_RW(hashmap)));
  }
  
 diff --git a/nvml/src/examples/libpmemobj/map/data_store.c b/nvml/src/examples/libpmemobj/map/data_store.c
@@ -24,7 +24,7 @@ index 075bd88..5cc2e07 100755
  		metadataVectorPtr[i] = C_createMetadataVector();
  	}
  
-+	NVTest_START;
++	PMTest_START;
  	gettimeofday(&tv_start, 0);
  	
  	//TX_BEGIN(pop) {
@@ -35,16 +35,16 @@ index 075bd88..5cc2e07 100755
  		for (int i = 0; i < nops; ++i) {
  			/* new_store_item is transactional! */
  			metadataPtr = metadataVectorPtr[i];
--			NVTest_START;
+-			PMTest_START;
 +
  			if (strcmp("hashmap_atomic", type))
- 				NVTest_CHECKER_START;
+ 				PMTest_CHECKER_START;
  			TX_BEGIN(pop) {
 @@ -216,7 +219,7 @@ int main(int argc, const char *argv[]) {
  			} TX_END
  			if (strcmp("hashmap_atomic", type))
- 				NVTest_CHECKER_END;
--			NVTest_END;
+ 				PMTest_CHECKER_END;
+-			PMTest_END;
 +
  			C_execVeri(p, metadataPtr);
  		}
@@ -53,7 +53,7 @@ index 075bd88..5cc2e07 100755
  	//	map_ctx_free(mapc);
  	//	aborted = 1;
  	//} TX_END
-+	NVTest_END;
++	PMTest_END;
  
  
  	gettimeofday(&tv_end, 0);

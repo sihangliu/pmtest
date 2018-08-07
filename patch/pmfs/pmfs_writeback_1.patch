@@ -8,6 +8,6 @@ index 6919ea5..926912c 100644
  		PM_EQU(le->gen_id, cpu_to_le16(trans->gen_id));
 -		pmfs_flush_buffer(le, LOGENTRY_SIZE, true);
 +		pmfs_flush_buffer(le, LOGENTRY_SIZE, false);
- 		NVTest_isPersistent(le, LOGENTRY_SIZE);
+ 		PMTest_isPersistent(le, LOGENTRY_SIZE);
  	}
  }

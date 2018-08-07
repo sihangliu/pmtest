@@ -11,5 +11,5 @@ index 711e6fe..2471ba6 100644
 +	// pmemobj_persist(pop, &D_RW(hashmap)->buckets_tmp,
 +	// 		sizeof(D_RW(hashmap)->buckets_tmp));
  	
- 	NVTest_isPersistent(&D_RW(hashmap)->buckets, sizeof(D_RW(hashmap)->buckets));
- 	NVTest_isPersistent(&D_RW(hashmap)->buckets_tmp, sizeof(D_RW(hashmap)->buckets_tmp));
+ 	PMTest_isPersistent(&D_RW(hashmap)->buckets, sizeof(D_RW(hashmap)->buckets));
+ 	PMTest_isPersistent(&D_RW(hashmap)->buckets_tmp, sizeof(D_RW(hashmap)->buckets_tmp));

@@ -9,4 +9,4 @@ index 637369d..2d5426c 100644
 +		TX_ADD_FIELD(hashmap, count);
  		
  		TOID(struct entry) e = TX_NEW(struct entry);
- 		NVTest_assign(&(D_RW(e)->key), sizeof(struct entry));
+ 		PMTest_assign(&(D_RW(e)->key), sizeof(struct entry));

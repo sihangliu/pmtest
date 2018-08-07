@@ -1,27 +1,27 @@
-#include "nvmveri.hh"
+#include "pmtest.hh"
 #include <stdarg.h>
 
 #define COLOR_RED "\x1B[31m"
 #define COLOR_YELLOW "\x1B[33m"
 #define COLOR_RESET "\x1B[0m"
 
-//size_t NVMVeri::VeriNumber;
+//size_t PMTest::VeriNumber;
 /*
-queue<vector<Metadata *> *> NVMVeri::VeriQueue[MAX_THREAD_POOL_SIZE];
-mutex NVMVeri::VeriQueueMutex[MAX_THREAD_POOL_SIZE];
-condition_variable NVMVeri::VeriQueueCV[MAX_THREAD_POOL_SIZE];
+queue<vector<Metadata *> *> PMTest::VeriQueue[MAX_THREAD_POOL_SIZE];
+mutex PMTest::VeriQueueMutex[MAX_THREAD_POOL_SIZE];
+condition_variable PMTest::VeriQueueCV[MAX_THREAD_POOL_SIZE];
 
-vector<VeriResult> NVMVeri::ResultVector[MAX_THREAD_POOL_SIZE];
-mutex NVMVeri::ResultVectorMutex[MAX_THREAD_POOL_SIZE];
+vector<VeriResult> PMTest::ResultVector[MAX_THREAD_POOL_SIZE];
+mutex PMTest::ResultVectorMutex[MAX_THREAD_POOL_SIZE];
 
-atomic<bool> NVMVeri::termSignal[MAX_THREAD_POOL_SIZE];
-atomic<bool> NVMVeri::getResultSignal[MAX_THREAD_POOL_SIZE];
+atomic<bool> PMTest::termSignal[MAX_THREAD_POOL_SIZE];
+atomic<bool> PMTest::getResultSignal[MAX_THREAD_POOL_SIZE];
 
-atomic<bool> NVMVeri::completedStateMap[MAX_THREAD_POOL_SIZE];
-atomic<int> NVMVeri::completedThread;
+atomic<bool> PMTest::completedStateMap[MAX_THREAD_POOL_SIZE];
+atomic<int> PMTest::completedThread;
 */
 
-#ifndef NVMVERI_KERNEL_CODE
+#ifndef PMTEST_KERNEL_CODE
 const char MetadataTypeStr[20][30] = {
 	"_ASSIGN", "_FLUSH", "_COMMIT", "_BARRIER", "_FENCE",
 	"_PERSIST", "_ORDER",
@@ -33,20 +33,20 @@ __thread void *metadataPtr;
 //void *metadataManagerPtr;
 __thread int thread_id;
 __thread int existVeriInstance = 0;
-__thread int nvmveri_cur_idx;
+__thread int pmtest_cur_idx;
 __thread void **metadataVectorPtr;
 void* veriInstancePtr;
 
 ThreadInfo thread_info;
 
 
-NVMVeri::NVMVeri()
+PMTest::PMTest()
 {
 	initVeri();
 }
 
 
-NVMVeri::~NVMVeri()
+PMTest::~PMTest()
 {
 	termVeri();
 }
@@ -61,11 +61,11 @@ void error_msg(const char *format, ...)
 }
 
 
-bool NVMVeri::initVeri()
+bool PMTest::initVeri()
 {
 	// create worker
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
-		WorkerInfo[i].WorkerThreadPool = new thread(&NVMVeri::VeriWorker, this, i);
+		WorkerInfo[i].WorkerThreadPool = new thread(&PMTest::VeriWorker, this, i);
 	}
 
 	for (int i = 0; i < MAX_THREAD_POOL_SIZE; i++) {
@@ -88,7 +88,7 @@ bool NVMVeri::initVeri()
 }
 
 
-bool NVMVeri::termVeri()
+bool PMTest::termVeri()
 {
 	// printf("ask to stop\n");
 
@@ -116,7 +116,7 @@ bool NVMVeri::termVeri()
 
 
 // execute verification of input
-bool NVMVeri::execVeri(FastVector<Metadata *> *input)
+bool PMTest::execVeri(FastVector<Metadata *> *input)
 {
 	//printf("@execVeri\n");
 	unique_lock<mutex> lock(VeriQueueMutex[assignTo]);
@@ -132,7 +132,7 @@ bool NVMVeri::execVeri(FastVector<Metadata *> *input)
 
 // get the result of all previous inputs' verification
 //
-bool NVMVeri::getVeri(FastVector<VeriResult> &output)
+bool PMTest::getVeri(FastVector<VeriResult> &output)
 {
 	// printf("start getVeri\n");
 
@@ -194,7 +194,7 @@ bool NVMVeri::getVeri(FastVector<VeriResult> &output)
 }
 
 
-void NVMVeri::VeriWorker(int id)
+void PMTest::VeriWorker(int id)
 {
 	while (WorkerInfo[id].termSignal == true);
 
@@ -274,12 +274,12 @@ inline int VeriProc_Assign(Metadata *cur, interval_set_addr &ExcludeInfo, interv
 			cur->size,
 			cur->file_name,
 			cur->line_num);
-	#ifdef NVMVERI_EXCLUDE
+	#ifdef PMTEST_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
-	#endif // NVMVERI_EXCLUDE
+	#endif // PMTEST_EXCLUDE
 		PersistInfo += addrinterval;
 		OrderInfo += make_pair(addrinterval, timestamp_atleast(timestamp));
 		if (transactionCount > 0) {
@@ -316,13 +316,13 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 			cur->size,
 			cur->file_name,
 			cur->line_num);
-	#ifdef NVMVERI_EXCLUDE
+	#ifdef PMTEST_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
-	#endif // NVMVERI_EXCLUDE
-	#ifdef NVMVERI_WARN
+	#endif // PMTEST_EXCLUDE
+	#ifdef PMTEST_WARN
 		auto iter = PersistInfo.find(addrinterval);
 		if (iter == PersistInfo.end()) {
 			char filename_temp[FILENAME_LEN + 1];
@@ -340,7 +340,7 @@ inline int VeriProc_Flush(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 			PersistInfo -= addrinterval;
 	#else
 		PersistInfo -= addrinterval;
-	#endif // NVMVERI_WARN
+	#endif // PMTEST_WARN
 		OrderInfo += make_pair(addrinterval, timestamp_exactly(timestamp));
 	}
 	return 0;
@@ -368,12 +368,12 @@ inline int VeriProc_Persist(Metadata *cur, interval_set_addr &ExcludeInfo, inter
 			cur->size,
 			cur->file_name,
 			cur->line_num);
-	#ifdef NVMVERI_EXCLUDE
+	#ifdef PMTEST_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
-	#endif // NVMVERI_EXCLUDE
+	#endif // PMTEST_EXCLUDE
 
 		auto iter = PersistInfo.find(addrinterval);
 
@@ -413,7 +413,7 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 			cur->size_late,
 			cur->file_name,
 			cur->line_num);
-	#ifdef NVMVERI_EXCLUDE
+	#ifdef PMTEST_EXCLUDE
 		auto it = ExcludeInfo.find(addrinterval);
 		if (it != ExcludeInfo.end()) {
 			return -2;
@@ -422,7 +422,7 @@ inline int VeriProc_Order(Metadata *cur, interval_set_addr &ExcludeInfo, interva
 		if (it != ExcludeInfo.end()) {
 			return -2;
 		}
-	#endif // NVMVERI_EXCLUDE
+	#endif // PMTEST_EXCLUDE
 
 		// check maximum timestamp of the "early" address range is strictly smaller than the minimum timestamp of the "late" address range
 		if (within(addrinterval, OrderInfo) && within(addrinterval_late, OrderInfo)) {
@@ -513,7 +513,7 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 			size_t startaddr = (size_t)(cur->addr);
 			size_t endaddr = startaddr + cur->size;
 			discrete_interval<size_t> addrinterval = interval<size_t>::right_open(startaddr, endaddr);
-		#ifdef NVMVERI_WARN
+		#ifdef PMTEST_WARN
 			auto iter = TransactionAddInfo.find(addrinterval);
 			if (iter != TransactionAddInfo.end()) {
 				char filename_temp[FILENAME_LEN + 1];
@@ -527,7 +527,7 @@ inline void VeriProc_TransactionAdd(Metadata *cur, interval_set_addr &Transactio
 					addrinterval.lower(),
 					addrinterval.upper());
 			}
-		#endif // NVMVERI_WARN
+		#endif // PMTEST_WARN
 			TransactionAddInfo += addrinterval;
 		}
 	}
@@ -567,7 +567,7 @@ inline void VeriProc_Include(Metadata *cur, interval_set_addr &ExcludeInfo)
 	}
 }
 
-void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
+void PMTest::VeriProc(FastVector<Metadata *> *veriptr)
 {
 	// usually sizeof(size_t) = 8 on 64-bit system
 	interval_set_addr ExcludeInfo;
@@ -656,26 +656,26 @@ void NVMVeri::VeriProc(FastVector<Metadata *> *veriptr)
 
 void *C_createVeriInstance()
 {
-	NVMVeri *result = new NVMVeri();
+	PMTest *result = new PMTest();
 	veriInstancePtr = result;
 	return (void *)result;
 }
 
 void C_deleteVeriInstance(void *veriInstance)
 {
-	NVMVeri *in = (NVMVeri *)veriInstance;
+	PMTest *in = (PMTest *)veriInstance;
 	delete in;
 }
 
 void C_execVeri(void *veriInstance, void *metadata_vector)
 {
-	NVMVeri *in = (NVMVeri *)veriInstance;
+	PMTest *in = (PMTest *)veriInstance;
 	in->execVeri((FastVector<Metadata *> *)metadata_vector);
 }
 
 void C_getVeri(void *veriInstance, void *veriResult)
 {
-	NVMVeri *in = (NVMVeri *)veriInstance;
+	PMTest *in = (PMTest *)veriInstance;
 	FastVector<VeriResult> r;
 	in->getVeri(r);
 	// TODO: cast veriResult
@@ -684,7 +684,7 @@ void C_getVeri(void *veriInstance, void *veriResult)
 
 void C_getVeriDefault(void *veriInstance)
 {
-	NVMVeri *in = (NVMVeri *)veriInstance;
+	PMTest *in = (PMTest *)veriInstance;
 	FastVector<VeriResult> r;
 	in->getVeri(r);
 	// TODO: cast veriResult
@@ -711,12 +711,12 @@ void C_initThread() {
 	thread_id = thread_info.cur_thread_id;
 	++(thread_info.cur_thread_id);
 	existVeriInstance = 0;
-	nvmveri_cur_idx = 0;
+	pmtest_cur_idx = 0;
 }
 
 void C_getNewMetadataPtr() {
-	metadataPtr = metadataVectorPtr[nvmveri_cur_idx];
-	nvmveri_cur_idx++;
+	metadataPtr = metadataVectorPtr[pmtest_cur_idx];
+	pmtest_cur_idx++;
 }
 
 void C_createMetadata_Assign(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
@@ -903,7 +903,7 @@ void C_createMetadata_TransactionAdd(void *metadata_vector, void *addr, size_t s
 
 void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
-#ifdef NVMVERI_EXCLUDE
+#ifdef PMTEST_EXCLUDE
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _EXCLUDE;
@@ -918,12 +918,12 @@ void C_createMetadata_Exclude(void *metadata_vector, void *addr, size_t size, co
 		LOG_NOTE("create metadata exclude %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-#endif // NVMVERI_EXCLUDE
+#endif // PMTEST_EXCLUDE
 }
 
 void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, const char file_name[], unsigned int line_num)
 {
-#ifdef NVMVERI_EXCLUDE
+#ifdef PMTEST_EXCLUDE
 	if (existVeriInstance) {
 		Metadata *m = new Metadata;
 		m->type = _INCLUDE;
@@ -938,20 +938,20 @@ void C_createMetadata_Include(void *metadata_vector, void *addr, size_t size, co
 		LOG_NOTE("create metadata include %p, %d, %s, %u\n", m->addr, m->size, m->file_name, m->line_num);
 		((FastVector<Metadata *> *)metadata_vector)->push_back(m);
 	}
-#endif // NVMVERI_EXCLUDE
+#endif // PMTEST_EXCLUDE
 }
 
 void C_registerVariable(char* name, void* addr, size_t size)
 {
 	string variableName(name);
 	variableName += std::to_string(thread_id);
-	if (((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.find(variableName) == ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.end()) {
+	if (((PMTest*)veriInstancePtr)->VariableNameAddressMap.find(variableName) == ((PMTest*)veriInstancePtr)->VariableNameAddressMap.end()) {
 		printf("Register name=%s, addr=%p, size=%lu, ", name, addr, size);
 		printf("variableName=%s\n", variableName.c_str());
 		VariableInfo new_var;
 		new_var.addr = addr;
 		new_var.size = size;
-		((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName] = new_var; //std::pair<void*, int>(addr, (int)size);
+		((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName] = new_var; //std::pair<void*, int>(addr, (int)size);
 	}
 }
 
@@ -959,7 +959,7 @@ void C_unregisterVariable(char* name)
 {
 	string variableName(name);
 	variableName += std::to_string(thread_id);
-	((NVMVeri*)veriInstancePtr)->VariableNameAddressMap.erase(variableName);
+	((PMTest*)veriInstancePtr)->VariableNameAddressMap.erase(variableName);
 }
 
 void* C_getVariable(char* name, size_t* size)
@@ -967,19 +967,19 @@ void* C_getVariable(char* name, size_t* size)
 	string variableName(name);
 	variableName += std::to_string(thread_id);
 	//printf("%s\n", variableName.c_str());
-	*size = ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
-	return ((NVMVeri*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
+	*size = ((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
+	return ((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
 }
 
 
 void C_initVeri(void **veriInstance, int metadataVectorLen)
 {
-	*veriInstance = (void *)(new NVMVeri());
+	*veriInstance = (void *)(new PMTest());
 	metadataVectorPtr = (void **)(new FastVector<FastVector<Metadata *> *>);
 	for (int i = 0; i < metadataVectorLen; i++) {
 		((FastVector<FastVector<Metadata *> *> *)metadataVectorPtr)->push_back(new FastVector<Metadata *>);
 	}
-	nvmveri_cur_idx = 0;
+	pmtest_cur_idx = 0;
 	auto p = (FastVector<FastVector<Metadata *> *> *)metadataVectorPtr;
 	metadataPtr = (*p)[0];
 	
@@ -989,15 +989,15 @@ void C_initVeri(void **veriInstance, int metadataVectorLen)
 void C_sendTrace(void *veriInstance)
 {
 	auto p = (FastVector<FastVector<Metadata *> *> *)metadataVectorPtr;
-	if (nvmveri_cur_idx >= p->size()) {
+	if (pmtest_cur_idx >= p->size()) {
 		printf(COLOR_RED "SENDTRACE ERROR: " COLOR_RESET "All metadata traces have been sent.\n");
 	}
 	else {
-		NVMVeri *in = (NVMVeri *)veriInstance;
-		in->execVeri((*p)[nvmveri_cur_idx]);
-		nvmveri_cur_idx++;
-		if (nvmveri_cur_idx < p->size()) {
-			metadataPtr = (*p)[nvmveri_cur_idx];
+		PMTest *in = (PMTest *)veriInstance;
+		in->execVeri((*p)[pmtest_cur_idx]);
+		pmtest_cur_idx++;
+		if (pmtest_cur_idx < p->size()) {
+			metadataPtr = (*p)[pmtest_cur_idx];
 		}
 		else {
 			metadataPtr = NULL;
@@ -1013,9 +1013,9 @@ void C_exitVeri(void *veriInstance)
 		delete (*p)[i];
 	}
 	delete p;
-	NVMVeri *in = (NVMVeri *)veriInstance;
+	PMTest *in = (PMTest *)veriInstance;
 	delete in;
 }
 
 
-#endif // !NVMVERI_KERNEL_CODE
+#endif // !PMTEST_KERNEL_CODE

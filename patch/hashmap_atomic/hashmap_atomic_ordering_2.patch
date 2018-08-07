@@ -18,5 +18,5 @@ index 711e6fe..f4f0ec8 100644
 +	pmemobj_persist(pop, &D_RW(hashmap)->count_dirty,
 +			sizeof(D_RW(hashmap)->count_dirty));
  
- 	NVTest_isPersistedBefore(&D_RW(hashmap)->count_dirty, sizeof(D_RW(hashmap)->count_dirty), &D_RW(hashmap)->count, sizeof(D_RW(hashmap)->count));
+ 	PMTest_isPersistedBefore(&D_RW(hashmap)->count_dirty, sizeof(D_RW(hashmap)->count_dirty), &D_RW(hashmap)->count, sizeof(D_RW(hashmap)->count));
  

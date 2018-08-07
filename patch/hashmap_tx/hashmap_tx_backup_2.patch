@@ -19,10 +19,10 @@ index b0ceffa..4391970 100644
  			ERR("free undo log too large");
  			return pmemobj_tx_abort_err(ENOMEM);
  		}
--		NVTest_exclude(entry, sizeof(*entry));
-+		NVTest_transactionAdd(entry, sizeof(*entry));
+-		PMTest_exclude(entry, sizeof(*entry));
++		PMTest_transactionAdd(entry, sizeof(*entry));
  		PM_EQU((*entry), (oid.off)); /* freud : making an entry in the undo log */
--		NVTest_include(entry, sizeof(*entry));
+-		PMTest_include(entry, sizeof(*entry));
 +
  		lane->pop->persist(lane->pop, entry, sizeof(*entry));
  	} else {

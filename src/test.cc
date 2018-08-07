@@ -1,5 +1,5 @@
-#include "nvmveri.hh"
-#include "nvmveri.h"
+#include "pmtest.hh"
+#include "pmtest.h"
 
 #include <utility>
 
@@ -16,37 +16,37 @@ void transaction()
 /****************************test1*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 2);
-	NVTest_START;
+	PMTest_init(p, 2);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_isPersistent((void *)(&arr[0]), 4);
-	NVTest_isPersistent((void *)(&arr[0]), 0);
-	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
-
-
-	NVTest_sendTrace(p);
-
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_isPersistent((void *)(&arr[0]), 4);
-	NVTest_isPersistent((void *)(&arr[0]), 0);
-	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_isPersistent((void *)(&arr[0]), 4);
+	PMTest_isPersistent((void *)(&arr[0]), 0);
+	PMTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
 
 
-	NVTest_sendTrace(p);
-	NVTest_sendTrace(p);
+	PMTest_sendTrace(p);
 
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_isPersistent((void *)(&arr[0]), 4);
+	PMTest_isPersistent((void *)(&arr[0]), 0);
+	PMTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[0]), 4);
+
+
+	PMTest_sendTrace(p);
+	PMTest_sendTrace(p);
+
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -56,23 +56,23 @@ void transaction()
 /****************************test2*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_isPersistent((void *)(&arr[0]), 4);
-	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
-	NVTest_assign((void *)(&arr[0]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_isPersistent((void *)(&arr[0]), 4);
+	PMTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -82,24 +82,24 @@ void transaction()
 /****************************test3*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_isPersistent((void *)(&arr[0]), 4);
-	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_isPersistent((void *)(&arr[0]), 4);
+	PMTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -109,21 +109,21 @@ void transaction()
 /****************************test4*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_isPersistent((void *)(&arr[4]), 4);
-	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_isPersistent((void *)(&arr[4]), 4);
+	PMTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -132,21 +132,21 @@ void transaction()
 /****************************test5*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_isPersistent((void *)(&arr[0]), 4);
-	NVTest_isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_isPersistent((void *)(&arr[0]), 4);
+	PMTest_isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -155,21 +155,21 @@ void transaction()
 /****************************test6*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_isPersistedBefore((void *)(&arr[0]), 4, (void *)(&arr[4]), 4);
 
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -178,19 +178,19 @@ void transaction()
 /****************************test7*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_isPersistent((void *)(&arr[0]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_isPersistent((void *)(&arr[0]), 4);
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -199,21 +199,21 @@ void transaction()
 /****************************test8*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_assign((void *)(&arr[4]), 4);
-	NVTest_flush((void *)(&arr[0]), 4);
-	NVTest_fence();
-	NVTest_isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
+	PMTest_assign((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_assign((void *)(&arr[4]), 4);
+	PMTest_flush((void *)(&arr[0]), 4);
+	PMTest_fence();
+	PMTest_isPersistedBefore((void *)(&arr[4]), 4, (void *)(&arr[0]), 4);
 
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -222,20 +222,20 @@ void transaction()
 /****************************test9*****************************/
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
-	NVTest_assign((void *)(128), 8);
-	NVTest_assign((void *)(256), 8);
-	NVTest_flush((void *)(128), 8);
-	NVTest_fence();
-	NVTest_isPersistent((void *)(128), 8);
-	NVTest_isPersistent((void *)(256), 8);
+	PMTest_assign((void *)(128), 8);
+	PMTest_assign((void *)(256), 8);
+	PMTest_flush((void *)(128), 8);
+	PMTest_fence();
+	PMTest_isPersistent((void *)(128), 8);
+	PMTest_isPersistent((void *)(256), 8);
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
@@ -331,8 +331,8 @@ void tx_wrapper()
 
 	timer.startTimer();
 
-	NVTest_init(p, 1);
-	NVTest_START;
+	PMTest_init(p, 1);
+	PMTest_START;
 
 	struct fuc{
 		int a;
@@ -342,18 +342,18 @@ void tx_wrapper()
 
 
 	for (int i = 0; i < 1; i++) {
-		NVTest_CHECKER_START;
-		//NVTest_exclude(&fc, sizeof(fc));
-		NVTest_assign(&fc.a, sizeof(fc.a));
-		NVTest_assign(&fc.b, sizeof(fc.b));
-		NVTest_CHECKER_END;
+		PMTest_CHECKER_START;
+		//PMTest_exclude(&fc, sizeof(fc));
+		PMTest_assign(&fc.a, sizeof(fc.a));
+		PMTest_assign(&fc.b, sizeof(fc.b));
+		PMTest_CHECKER_END;
 	}
 	
 
-	NVTest_sendTrace(p);
-	NVTest_END;
-	NVTest_getResult(p);
-	NVTest_exit(p);
+	PMTest_sendTrace(p);
+	PMTest_END;
+	PMTest_getResult(p);
+	PMTest_exit(p);
 	
 	timer.endTimer();
 	printf("Total time for %d tasks = %llu(us)\n\n", LOOP_CNT, timer.getTime());
