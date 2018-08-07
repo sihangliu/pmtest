@@ -1,0 +1,13 @@
+diff --git a/PMFS-new/journal.c b/PMFS-new/journal.c
+index 6919ea5..926912c 100644
+--- a/PMFS-new/journal.c
++++ b/PMFS-new/journal.c
+@@ -670,7 +670,7 @@ static inline void pmfs_commit_logentry(struct super_block *sb,
+ 		barrier();
+ 		/* Atomically make the log entry valid */
+ 		PM_EQU(le->gen_id, cpu_to_le16(trans->gen_id));
+-		pmfs_flush_buffer(le, LOGENTRY_SIZE, true);
++		pmfs_flush_buffer(le, LOGENTRY_SIZE, false);
+ 		NVTest_isPersistent(le, LOGENTRY_SIZE);
+ 	}
+ }

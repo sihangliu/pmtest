@@ -21,9 +21,6 @@ int read_transaction(FastVector<Metadata *> *tx, int fd)
 {
 	// open the virtual file with default name "/proc/nvmveri"
 
-	printf("start reading transaction %p\n", tx);
-
-
 	int sleeptime = 1, sleeptime_max = 512;
 	while(true) {
 		Metadata *buf = new Metadata;
@@ -68,7 +65,6 @@ int main(int argc, char *argv[])
 
 	while (true) {
 		FastVector<Metadata *> *tx = new FastVector<Metadata *>;
-		printf("transaction head %p\n", tx);
 		int flag = read_transaction(tx, fd);
 		tx_vector.push_back(tx);
 		if (flag == -1) break;

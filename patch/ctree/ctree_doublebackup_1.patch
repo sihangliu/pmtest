@@ -1,0 +1,12 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+index 17aebf5..cb53f58 100755
+--- a/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/ctree_map.c
+@@ -169,6 +169,7 @@ ctree_map_insert_leaf(struct tree_map_entry *p,
+ 	PM_EQU(D_RW(new_node)->entries[!d], *p);
+ 
+ 	pmemobj_tx_add_range_direct(p, sizeof(*p));
++	pmemobj_tx_add_range_direct(p, sizeof(*p));
+ 	
+ 	PM_EQU(p->key, 0);
+ 	PM_EQU(p->slot, new_node.oid);

@@ -18,7 +18,7 @@ void C_getVeriDefault(void *);
 void C_initThread();
 void C_getNewMetadataPtr();
 
-/* Nvmveri */
+/* NVMVeri */
 void *C_createMetadataVector(void);
 void C_deleteMetadataVector(void *);
 void C_createMetadata_Assign(void *, void *, size_t, const char[], unsigned int);

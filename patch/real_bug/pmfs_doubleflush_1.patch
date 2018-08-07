@@ -1,0 +1,24 @@
+diff --git a/PMFS-new/file.c b/PMFS-new/file.c
+index d3285eb..7007145 100644
+--- a/PMFS-new/file.c
++++ b/PMFS-new/file.c
+@@ -193,8 +193,8 @@ int pmfs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+ 
+ 	PMFS_START_TIMING(fsync_t, fsync_time);
+ 	/* if the file is not mmap'ed, there is no need to do clflushes */
+-	if (mapping_mapped(mapping) == 0)
+-		goto persist;
++	// if (mapping_mapped(mapping) == 0)
++	// 	goto persist;
+ 
+ 	end += 1; /* end is inclusive. We like our indices normal please ! */
+ 
+@@ -243,7 +243,7 @@ int pmfs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+ 
+ 		start += nr_flush_bytes;
+ 	} while (start < end);
+-persist:
++// persist:
+ 	PERSISTENT_MARK();
+ 	// PERSISTENT_BARRIER(); /* not required, usercode is responsible */
+ 	PMFS_END_TIMING(fsync_t, fsync_time);

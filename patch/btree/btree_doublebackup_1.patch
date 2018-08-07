@@ -1,0 +1,12 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/btree_map.c b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+index 57c3b35..913c226 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/btree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/btree_map.c
+@@ -170,6 +170,7 @@ btree_map_insert_node(TOID(struct tree_map_node) node, int p,
+ 		PM_MEMMOVE(&D_RW(node)->slots[p + 1], &D_RW(node)->slots[p],
+ 		sizeof(TOID(struct tree_map_node)) * ((BTREE_ORDER - 1 - p)));
+ 	}
++	TX_ADD(node);
+ 	PM_EQU(D_RW(node)->slots[p], left);
+ 	PM_EQU(D_RW(node)->slots[p + 1], right);
+ 	btree_map_insert_item_at(node, p, item);

@@ -1,0 +1,12 @@
+diff --git a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+index e185ad6..ae992fb 100644
+--- a/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
++++ b/nvml/src/examples/libpmemobj/tree_map/rbtree_map.c
+@@ -195,6 +195,7 @@ rbtree_map_rotate(TOID(struct rbtree_map) map,
+ 	TOID(struct tree_map_node) s = D_RO(map)->sentinel;
+ 
+ 	TX_ADD(node);
++	TX_ADD(node);
+ 	TX_ADD(child);
+ 
+ 	PM_EQU(D_RW(node)->slots[!c], D_RO(child)->slots[c]);
