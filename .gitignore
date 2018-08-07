@@ -1,9 +1,10 @@
 build/
+src/*.o
+src/*.o.*
 .*.swp
 *~
 *.o
 nvmveri_socket
-.*
 *.mod.*
 *.ko
 Module.symvers

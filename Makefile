@@ -4,7 +4,7 @@ endif
 
 CC			:= -gcc
 CXX			:= -g++-4.8
-CFLAGS		:= -fPIC -std=c11 -DNUM_CORES=$(NUM_CORES)
+CFLAGS		:= -fPIC -std=c11 -DPMTEST_EXCLUDE -DNUM_CORES=$(NUM_CORES)
 CXXFLAGS	:= -std=c++11 -fPIC -DPMTEST_EXCLUDE -DNUM_CORES=$(NUM_CORES) #-pedantic-errors -Wall -Wextra -Werror
 LDFLAGS		:= -L/usr/lib -lstdc++ -lm -pthread #-lbacktrace -ldl
 INCLUDE		:= -Iinclude/
@@ -26,7 +26,7 @@ UNIT_TEST_OBJECT		:= $(addprefix $(OBJ_DIR)/, main.o pmtest.o test.o common.o)
 KERNEL_CLIENT_TARGET	:= pmtest_kernel_client
 KERNEL_CLIENT_OBJECT	:= $(addprefix $(OBJ_DIR)/, kernel_client.o pmtest.o common.o)
 
-all: build $(APP_DIR)/$(UNIT_TEST_TARGET) $(APP_DIR)/$(KERNEL_CLIENT_TARGET) buildlib
+all: build test kernel buildlib
 
 buildlib: $(DYNAMICLINK_OBJECT)
 	@mkdir -p $(@D)
@@ -54,22 +54,19 @@ build:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
 
-debug: CXXFLAGS += -DDEBUG -g -DDEBUG_FLAG=1
+debug: CXXFLAGS += -DDEBUG -g -DDEBUG_FLAG=0
 debug: all
 
 release: CXXFLAGS += -O3
 release: all
 
-warning: CXXFLAGS += -O3 -DPMTEST_WARN -DDEBUG -g -DDEBUG_FLAG=1
+warning: CXXFLAGS += -O3 -DPMTEST_WARN -DDEBUG -g
 warning: all
-
-exclude: CXXFLAGS += -O3 -DPMTEST_EXCLUDE -DDEBUG -g -DDEBUG_FLAG=0
-exclude: all
 
 clean:
 	-@rm -rf $(BUILD)
 
-.PHONY: all build buildlib clean debug kernel release
+.PHONY: all build buildlib clean debug test kernel warning release
 # g++-4.8 -std=c++11 -c common.cc -I../include -o common.o
 # g++-4.8 -std=c++11 -c pmtest.cc -I../include -o pmtest.o
 # gcc -c main.c -I../include -o main.o
