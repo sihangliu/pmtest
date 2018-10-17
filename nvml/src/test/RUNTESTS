@@ -1,0 +1,392 @@
+#!/bin/bash
+#
+# Copyright 2014-2016, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in
+#       the documentation and/or other materials provided with the
+#       distribution.
+#
+#     * Neither the name of the copyright holder nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# RUNTESTS -- setup the environment and run each test
+#
+
+#
+# usage -- print usage message and exit
+#
+usage()
+{
+	[ "$1" ] && echo Error: $1
+	cat >&2 <<EOF
+Usage: $0 [ -hnv ] [ -b build-type ] [ -t test-type ] [ -f fs-type ]
+	    [ -o timeout ] [ -s test-file ] [ -m memcheck ] [-p pmemcheck ] [ -e helgrind ] [ -d drd ] [ -c ] [tests...]
+-h		print this help message
+-n		dry run
+-v		be verbose
+-b build-type	run only specified build type
+		build-type: debug, nondebug, static-debug, static-nondebug, all (default)
+-t test-type	run only specified test type
+		test-type: check (default), short, long
+-f fs-type	run tests only on specified file systems
+		fs-type: pmem, non-pmem, any, none, all (default)
+-o timeout	set timeout for test execution
+		timeout: floating point number with an optional suffix: 's' for seconds
+		(the default), 'm' for minutes, 'h' for hours or 'd' for days.
+		Default value is 3 minutes.
+-s test-file	run only specified test file
+		test-file: all (default), TEST0, TEST1, ...
+-m memcheck	run tests with memcheck
+		memcheck: auto (default, enable/disable based on test requirements),
+		force-enable (enable when test does not require memcheck, but
+		obey test's explicit memcheck disable)
+-p pmemcheck	run tests with pmemcheck
+		pmemcheck: auto (default, enable/disable based on test requirements),
+		force-enable (enable when test does not require pmemcheck, but
+		obey test's explicit pmemcheck disable)
+-e helgrind	run tests with helgrind
+		helgrind: auto (default, enable/disable based on test requirements),
+		force-enable (enable when test does not require helgrind, but
+		obey test's explicit helgrind disable)
+-d drd		run tests with drd
+		drd: auto (default, enable/disable based on test requirements),
+		force-enable (enable when test does not require drd, but
+		obey test's explicit drd disable)
+-c		check pool files with pmempool check utility
+EOF
+	exit 1
+}
+
+#
+# runtest -- given the test directory name, run tests found inside it
+#
+runtest() {
+	export UNITTEST_QUIET=1
+	[ -f "$1/TEST0" ] || {
+		echo FAIL: $1: test not found. >&2
+		exit 1
+	}
+	[ -x "$1/TEST0" ] || {
+		echo FAIL: $1: test not executable. >&2
+		exit 1
+	}
+
+	cd $1
+
+	#
+	# make list of fs-types and build-types to test
+	#
+	fss=$fstype
+	[ "$fss" = all ] && fss="none pmem non-pmem any"
+	builds=$buildtype
+	[ "$builds" = all ] && builds="debug nondebug static-debug static-nondebug"
+	runscripts=$testfile
+	[ "$runscripts" = all ] && runscripts=`ls -1 TEST* | grep -v -i -e "\.ps1" | sort -V`
+
+	# for each fs-type being tested...
+	for fs in $fss
+	do
+		# don't bother trying when fs-type isn't available...
+		[ "$fs" = pmem -a -z "$PMEM_FS_DIR" ] && {
+			pmem_skip=1
+			continue
+		}
+
+		[ "$fs" = non-pmem -a -z "$NON_PMEM_FS_DIR" ] && {
+			non_pmem_skip=1
+			continue
+		}
+
+		[ "$fs" = any -a -z "$PMEM_FS_DIR" -a -z "$NON_PMEM_FS_DIR" ] && {
+			continue
+		}
+
+		[ "$verbose" ] && echo RUNTESTS: Testing fs-type: $fs...
+		# for each build-type being tested...
+		for build in $builds
+		do
+			[ "$verbose" ] && echo RUNTESTS: Testing build-type: $build...
+			# for each TEST script found...
+			for runscript in $runscripts
+			do
+				if [ "$dryrun" ]
+				then
+					echo "(in ./$1) TEST=$testtype FS=$fs BUILD=$build ./$runscript"
+				# set timeout for "check" tests
+				elif [ "$use_timeout" -a "$testtype" = "check" ]
+				then
+					[ "$verbose" ] && echo "RUNTESTS: Running: (in ./$1) TEST=$testtype FS=$fs BUILD=$build ./$runscript"
+					CHECK_TYPE=$checktype CHECK_POOL=$check_pool VERBOSE=$verbose\
+						TEST=$testtype FS=$fs BUILD=$build timeout --foreground $killopt $RUNTEST_TIMEOUT ./$runscript
+				else
+					[ "$verbose" ] && echo "RUNTESTS: Running: (in ./$1) TEST=$testtype FS=$fs BUILD=$build ./$runscript"
+					CHECK_TYPE=$checktype CHECK_POOL=$check_pool VERBOSE=$verbose\
+						TEST=$testtype FS=$fs BUILD=$build ./$runscript
+				fi
+
+				retval=$?
+				errmsg='failed'
+				[ $retval = 124 -o $retval = 137 ] && errmsg='timed out'
+
+				[ $retval != 0 ] && {
+					[ -t 2 ] && command -v tput >/dev/null && errmsg="$(tput setaf 1)$errmsg$(tput sgr0)"
+					echo "RUNTESTS: stopping: $1/$runscript $errmsg, TEST=$testtype FS=$fs BUILD=$build" >&2
+					exit 1
+				}
+			done
+		done
+	done
+
+	cd ..
+}
+
+[ -f testconfig.sh ] || {
+	cat >&2 <<EOF
+RUNTESTS: stopping because no testconfig.sh is found.
+          to create one:
+               cp testconfig.sh.example testconfig.sh
+          and edit testconfig.sh to describe the local machine configuration.
+EOF
+	exit 1
+}
+
+. ./testconfig.sh
+
+#
+# defaults...
+#
+buildtype=all
+testtype=check
+fstype=all
+testconfig="./testconfig.sh"
+killopt="-k 10s"
+export RUNTEST_TIMEOUT='3m'
+use_timeout="ok"
+testfile=all
+check_pool=0
+checktype="none"
+
+#
+# command-line argument processing...
+#
+args=`getopt nvb:t:f:o:s:m:e:p:d:c $*`
+[ $? != 0 ] && usage
+set -- $args
+for arg
+do
+	receivetype=auto
+	case "$arg"
+	in
+	-n)
+		dryrun=1
+		shift
+		;;
+	-v)
+		verbose=1
+		shift
+		;;
+	-b)
+		buildtype="$2"
+		shift 2
+		case "$buildtype"
+		in
+		debug|nondebug|static-debug|static-nondebug|all)
+			;;
+		*)
+			usage "bad build-type: $buildtype"
+			;;
+		esac
+		;;
+	-t)
+		testtype="$2"
+		shift 2
+		case "$testtype"
+		in
+		check|short|long)
+			;;
+		*)
+			usage "bad test-type: $testtype"
+			;;
+		esac
+		;;
+	-f)
+		fstype="$2"
+		shift 2
+		case "$fstype"
+		in
+		none|pmem|non-pmem|any|all)
+			;;
+		*)
+			usage "bad fs-type: $fstype"
+			;;
+		esac
+		;;
+	-m)
+		receivetype="$2"
+		shift 2
+		case "$receivetype"
+		in
+		auto)
+			;;
+		force-enable)
+			if [ "$checktype" != "none" ]
+			then
+				usage "cannot force-enable two test types at the same time"
+			else
+				checktype="memcheck"
+			fi
+			;;
+		*)
+			usage "bad memcheck: $receivetype"
+			;;
+		esac
+		;;
+	-p)
+		receivetype="$2"
+		shift 2
+		case "$receivetype"
+		in
+		auto)
+			;;
+		force-enable)
+			if [ "$checktype" != "none" ]
+			then
+				usage "cannot force-enable two test types at the same time"
+			else
+				checktype="pmemcheck"
+			fi
+			;;
+		*)
+			usage "bad pmemcheck: $receivetype"
+			;;
+		esac
+		;;
+	-e)
+		receivetype="$2"
+		shift 2
+		case "$receivetype"
+		in
+		auto)
+			;;
+		force-enable)
+			if [ "$checktype" != "none" ]
+			then
+				usage "cannot force-enable two test types at the same time"
+			else
+				checktype="helgrind"
+			fi
+			;;
+		*)
+			usage "bad helgrind: $receivetype"
+			;;
+		esac
+		;;
+	-d)
+		receivetype="$2"
+		shift 2
+		case "$receivetype"
+		in
+		auto)
+			;;
+		force-enable)
+			if [ "$checktype" != "none" ]
+			then
+				usage "cannot force-enable two test types at the same time"
+			else
+				checktype="drd"
+			fi
+			;;
+		*)
+			usage "bad drd: $receivetype"
+			;;
+		esac
+		;;
+	-o)
+		export RUNTEST_TIMEOUT="$2"
+		shift 2
+		;;
+	-s)
+		testfile="$2"
+		shift 2
+		;;
+	-c)
+		check_pool=1
+		shift
+		;;
+	--)
+		shift
+		break
+		;;
+	esac
+done
+
+
+[ "$verbose" ] && {
+	echo -n Options:
+	[ "$dryrun" ] && echo -n ' -n'
+	[ "$verbose" ] && echo -n ' -v'
+	echo
+	echo "    build-type: $buildtype"
+	echo "    test-type: $testtype"
+	echo "    fs-type: $fstype"
+	echo "    check-type: $checktype"
+	if [ "$check_pool" ]
+	then
+		check_pool_str="yes"
+	else
+		check_pool_str="no"
+	fi
+	echo "    check-pool: $check_pool_str"
+	echo Tests: $*
+}
+
+# check if timeout supports "-k" option
+timeout -k 1s 1s true &>/dev/null
+if [ $? != 0 ]; then
+	unset killopt
+fi
+
+# check if timeout can be run in the foreground
+timeout --foreground 1s true &>/dev/null
+if [ $? != 0 ]; then
+	unset use_timeout
+fi
+
+if [ "$1" ]; then
+	for test in $*
+	do
+		runtest $test
+	done
+else
+	# no arguments means run them all
+	for testdir in */TEST0
+	do
+		runtest `dirname $testdir`
+	done
+fi
+[ "$pmem_skip" ] && echo "SKIPPED fs-type \"pmem\" runs: testconfig.sh doesn't set PMEM_FS_DIR"
+[ "$non_pmem_skip" ] && echo "SKIPPED fs-type \"non-pmem\" runs: testconfig.sh doesn't set NON_PMEM_FS_DIR"
+exit 0

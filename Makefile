@@ -28,6 +28,30 @@ KERNEL_CLIENT_OBJECT	:= $(addprefix $(OBJ_DIR)/, kernel_client.o pmtest.o common
 
 all: build test kernel buildlib
 
+nvml:
+	cd nvml && ./build.sh
+
+nvml-clean:
+	cd nvml && ./clean.sh
+
+nvml-example:
+	cd nvml/src/examples/libpmemobj/ && make
+
+nvml-example-clean:
+	cd nvml/src/examples/libpmemobj/ && make clean
+
+nvml-exec:
+	@ echo ./data_store $(arg) /mnt/pmem/pmtest 100
+	@ rm -f /mnt/pmem/pmtest
+	@ cd nvml/src/examples/libpmemobj/map/ && ./data_store $(arg) /mnt/pmem/pmtest 100
+
+nvml-btree:
+	@ ./patch/patch.sh . ./patch/real_bug/pmdk_btree.patch
+	@ make nvml-example > /dev/null 2>&1
+	@ make nvml-exec arg=btree
+	@ ./patch/patch.sh -R . ./patch/real_bug/pmdk_btree.patch
+	@ make nvml-example > /dev/null 2>&1
+
 buildlib: $(DYNAMICLINK_OBJECT)
 	@mkdir -p $(@D)
 	ar -cvq $(LIB_DIR)/libpmtest.a $(DYNAMICLINK_OBJECT)
@@ -66,7 +90,7 @@ warning: all
 clean:
 	-@rm -rf $(BUILD)
 
-.PHONY: all build buildlib clean debug test kernel warning release
+.PHONY: all build buildlib clean debug test kernel warning release nvml nvml-clean nvml-example nvml-example-clean nvml-btree
 # g++-4.8 -std=c++11 -c common.cc -I../include -o common.o
 # g++-4.8 -std=c++11 -c pmtest.cc -I../include -o pmtest.o
 # gcc -c main.c -I../include -o main.o
