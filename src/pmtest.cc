@@ -967,9 +967,14 @@ void* C_getVariable(char* name, size_t* size)
 {
 	string variableName(name);
 	variableName += std::to_string(thread_id);
-	//printf("%s\n", variableName.c_str());
-	*size = ((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
-	return ((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
+	// if not found, return NULL
+	if (((PMTest*)veriInstancePtr)->VariableNameAddressMap.find(variableName) == ((PMTest*)veriInstancePtr)->VariableNameAddressMap.end()) {
+		*size = 0;
+		return NULL;
+	} else {
+		*size = ((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName].size;
+		return ((PMTest*)veriInstancePtr)->VariableNameAddressMap[variableName].addr;
+	}
 }
 
 

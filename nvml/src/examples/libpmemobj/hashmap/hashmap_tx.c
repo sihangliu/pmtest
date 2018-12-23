@@ -159,6 +159,7 @@ hm_tx_rebuild(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap, size_t new_len)
 		}
 
 		PM_EQU((D_RW(hashmap)->buckets), (buckets_new));
+		//C_registerVariable("buckets", &D_RW(hashmap)->buckets, sizeof(D_RW(hashmap)->buckets));
 		TX_FREE(buckets_old);
 	} TX_ONABORT {
 		fprintf(stderr, "%s: transaction aborted: %s\n", __func__,
@@ -169,6 +170,11 @@ hm_tx_rebuild(PMEMobjpool *pop, TOID(struct hashmap_tx) hashmap, size_t new_len)
 		 */
 	} TX_END
 
+	// Testing registerVariable functions
+	//size_t tmp_buckets_size;
+	//void* tmp_buckets_addr = C_getVariable("buckets", &tmp_buckets_size);
+	//printf("buckets: addr=%p, size=%d\n", tmp_buckets_addr, (int)tmp_buckets_size);
+	//C_unregisterVariable("buckets");
 }
 
 /*

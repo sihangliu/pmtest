@@ -9,3 +9,4 @@ nvmveri_socket
 *.ko
 Module.symvers
 modules.order
+.vscode
