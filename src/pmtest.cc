@@ -945,6 +945,7 @@ void C_registerVariable(char* name, void* addr, size_t size)
 {
 	string variableName(name);
 	variableName += std::to_string(thread_id);
+	// if exist, then do nothing
 	if (((PMTest*)veriInstancePtr)->VariableNameAddressMap.find(variableName) == ((PMTest*)veriInstancePtr)->VariableNameAddressMap.end()) {
 		printf("Register name=%s, addr=%p, size=%lu, ", name, addr, size);
 		printf("variableName=%s\n", variableName.c_str());
