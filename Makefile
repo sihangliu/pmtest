@@ -34,6 +34,9 @@ nvml:
 nvml-clean:
 	cd nvml && ./clean.sh
 
+nvml-install:
+	cd nvml && make install
+
 nvml-example:
 	cd nvml/src/examples/libpmemobj/ && make
 
