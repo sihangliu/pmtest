@@ -122,7 +122,10 @@ For convenience, you may want to install the shared libraries, run:
 ```
 $ sudo make nvml-install
 ```
-
+Then you may also need to update the linker bindings with:
+```
+$ ldconfig -v
+```
 Or you can also directly use the original scripts and Makefile they provided under `pmtest/nvml/`. For more information, please refer to `pmtest/nvml/README.md`.
 
 ## Testing and reproducing bugs
