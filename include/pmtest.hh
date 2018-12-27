@@ -247,7 +247,7 @@ public:
 extern "C" void C_initThread();
 extern "C" void C_getNewMetadataPtr();
 
-/* Nvmveri */
+/* PMTest */
 extern "C" void *C_createVeriInstance();
 extern "C" void C_deleteVeriInstance(void *);
 extern "C" void C_execVeri(void *, void *);

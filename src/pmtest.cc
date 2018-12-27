@@ -652,7 +652,7 @@ void PMTest::VeriProc(FastVector<Metadata *> *veriptr)
 	}
 }
 
-/* C programming interface for Nvmveri */
+/* C programming interface for PMTest */
 
 void *C_createVeriInstance()
 {
