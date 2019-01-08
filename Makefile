@@ -28,29 +28,32 @@ KERNEL_CLIENT_OBJECT	:= $(addprefix $(OBJ_DIR)/, kernel_client.o pmtest.o common
 
 all: build test kernel buildlib
 
-nvml:
-	cd nvml && ./build.sh
+submodule:
+	cd whisper && ./script.py -d
 
-nvml-clean:
-	cd nvml && ./clean.sh
+# nvml:
+# 	cd nvml && ./build.sh
 
-nvml-example:
-	cd nvml/src/examples/libpmemobj/ && make
+# nvml-clean:
+# 	cd nvml && ./clean.sh
 
-nvml-example-clean:
-	cd nvml/src/examples/libpmemobj/ && make clean
+# nvml-example:
+# 	cd nvml/src/examples/libpmemobj/ && make
 
-nvml-exec:
-	@ echo ./data_store $(arg) /mnt/pmem/pmtest 100
-	@ rm -f /mnt/pmem/pmtest
-	@ cd nvml/src/examples/libpmemobj/map/ && ./data_store $(arg) /mnt/pmem/pmtest 100
+# nvml-example-clean:
+# 	cd nvml/src/examples/libpmemobj/ && make clean
 
-nvml-btree:
-	@ ./patch/patch.sh . ./patch/real_bug/pmdk_btree.patch
-	@ make nvml-example > /dev/null 2>&1
-	@ make nvml-exec arg=btree
-	@ ./patch/patch.sh -R . ./patch/real_bug/pmdk_btree.patch
-	@ make nvml-example > /dev/null 2>&1
+# nvml-exec:
+# 	@ echo ./data_store $(arg) /mnt/pmem/pmtest 100
+# 	@ rm -f /mnt/pmem/pmtest
+# 	@ cd nvml/src/examples/libpmemobj/map/ && ./data_store $(arg) /mnt/pmem/pmtest 100
+
+# nvml-btree:
+# 	@ ./patch/patch.sh . ./patch/real_bug/pmdk_btree.patch
+# 	@ make nvml-example > /dev/null 2>&1
+# 	@ make nvml-exec arg=btree
+# 	@ ./patch/patch.sh -R . ./patch/real_bug/pmdk_btree.patch
+# 	@ make nvml-example > /dev/null 2>&1
 
 buildlib: $(DYNAMICLINK_OBJECT)
 	@mkdir -p $(@D)
