@@ -9,7 +9,7 @@ This repository is organized as follows:
 
 * `pmtest/src/`: the source code of our implementation.
 * `pmtest/include/`: the header files.
-* `pmtest/nvml/`: the NVM library from Intel, now changes its name to [PMDK](https://pmem.io/). We use the same version as [WHISPER](https://github.com/swapnilh/whisper) to demonstrate the functionality of our tool.
+* `pmtest/nvml/`: the NVM library from Intel, now changes its name to [PMDK](https://pmem.io/). We use the same version as [WHISPER](https://github.com/swapnilh/whisper) to demonstrate the functionality of our tool. If you are looking for benchmarks other than nvml for testing purpose, We also provide a [full Whisper benchmark suite](https://github.com/warsier/whisper) with PMTest injection.
 * `pmtest/patch/`: the patches for reproducing bugs (both synthetic and real-world) in `nvml`.
 
 ### Prerequisites
