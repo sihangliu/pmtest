@@ -3,6 +3,18 @@
 [Sihang Liu](https://www.sihangliu.com), Yizhou Wei, [Jishen Zhao](https://cseweb.ucsd.edu/~jzhao/), [Aasheesh Kolli](https://aasheeshkolli.com/), and [Samira Khan](http://www.cs.virginia.edu/~smk9u/) <br/>
 International Conference on Architectural Support for Programming Languages and Operating Systems [(ASPLOS), 2019](https://asplos-conference.org/) 
 
+## Table of Contents
+
+* [Publication](#publication)
+* [Installation](#installation)
+  * [Prerequisites](#prerequisites)
+    * [Dependencies of PMTest](#dependencies-of-pmtest)
+    * [Dependencies of NVML](#dependencies-of-nvml)
+    * [Linux persistent memory mapping](#linux-persistent-memory-mapping)
+  * [Build PMTest](#build-pmtest)
+  * [Build NVML](#build-nvml)
+* [Testing and reproducing bugs](#testing-and-reproducing-bugs)
+
 ## Installation
 
 This repository is organized as follows:
