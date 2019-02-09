@@ -156,7 +156,7 @@ $ make nvml-exec arg=ctree
 ```
 This will create a directory named `/mnt/pmem/pmtest/` to store program data.
 
-`pmtest/patch/` folder contains the git patches that we create for generating bugs (either extra ERROR or WARNING) inside these examples. Note that the original examples have no ERROR.
+`pmtest/patch/` folder contains the git patches that we create for generating bugs (either extra ERROR or WARNING) inside these examples. For detailed information about each bug, please refer to the [README](https://github.com/sihangliu/pmtest/blob/master/patch/README.md) file of the patches. Note that the original examples have no ERROR.
 
 
 As a fast demonstration, you may use
