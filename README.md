@@ -6,7 +6,7 @@ International Conference on Architectural Support for Programming Languages and 
 
 * [Introduction to Pmtest](#introduction-to-pmtest)
   * [Abstract](#abstract)
-  * [PMTest Installation](#pmtest-installation)
+  * [Overview of PMTest Interface](#overview-of-pmtest-interface)
 * [Installation](#pmtest-installation)
   * [Prerequisites](#prerequisites)
     * [Dependencies of PMTest](#dependencies-of-pmtest)
