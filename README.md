@@ -1,12 +1,13 @@
-## Publication
-**PMTest: A Fast and Flexible Testing Framework for Persistent Memory Programs** <br/>
+## PMTest: A Fast and Flexible Testing Framework for Persistent Memory Programs
 [Sihang Liu](https://www.sihangliu.com), Yizhou Wei, [Jishen Zhao](https://cseweb.ucsd.edu/~jzhao/), [Aasheesh Kolli](https://aasheeshkolli.com/), and [Samira Khan](http://www.cs.virginia.edu/~smk9u/) <br/>
-International Conference on Architectural Support for Programming Languages and Operating Systems [(ASPLOS), 2019](https://asplos-conference.org/) 
+International Conference on Architectural Support for Programming Languages and Operating Systems [(ASPLOS), 2019](https://asplos-conference.org/)
 
 ## Table of Contents
 
-* [Publication](#publication)
-* [Installation](#installation)
+* [Introduction to Pmtest](#introduction-to-pmtest)
+  * [Abstract](#abstract)
+  * [PMTest Installation](#pmtest-installation)
+* [Installation](#pmtest-installation)
   * [Prerequisites](#prerequisites)
     * [Dependencies of PMTest](#dependencies-of-pmtest)
     * [Dependencies of NVML](#dependencies-of-nvml)
@@ -15,7 +16,17 @@ International Conference on Architectural Support for Programming Languages and 
   * [Build NVML](#build-nvml)
 * [Testing and reproducing bugs](#testing-and-reproducing-bugs)
 
-## Installation
+## Introduction to PMTest
+
+### Abstract
+Recent non-volatile memory technologies such as 3D XPoint and NVDIMMs have enabled persistent memory (PM) systems that can manipulate persistent data directly in memory. This advancement of memory technology has spurred the development of a new set of crash-consistent software (CCS) for PM - applications that can recover persistent data from memory in a consistent state in the event of a crash (e.g., power failure). CCS developed for persistent memory ranges from kernel modules to user-space libraries and custom applications. However, ensuring crash consistency in CCS is difficult and error-prone. Programmers typically employ low-level hardware primitives or transactional libraries to enforce ordering and durability guarantees that are required for ensuring crash consistency. Unfortunately, hardware can reorder instructions at runtime, making it difficult for the programmers to test whether the implementation enforces the correct ordering and durability guarantees.
+
+We believe that there is an urgent need for developing a testing framework that helps programmers identify crash consistency bugs in their CCS. We find that prior testing tools lack generality, i.e., they work only for one specific CCS or memory persistency model and/or introduce significant performance overhead. To overcome these drawbacks, we propose PMTest, a crash consistency testing framework that is both flexible and fast. PMTest provides flexibility by providing two basic assertion-like software checkers to test two fundamental characteristics of all CCS: the ordering and durability guarantee. These checkers can also serve as the building blocks of other application-specific, high-level checkers. PMTest enables fast testing by deducing the persist order without exhausting all possible orders. In the evaluation with eight programs, PMTest not only identified 45 synthetic crash consistency bugs, but also detected 3 new bugs in a file system (PMFS) and in applications developed using a transactional library (PMDK), while on average being 7.1× faster than the state-of-the-art tool.
+
+### Overview of PMTest Interface
+PMTest incorporates a flexible software interface that is C and C++ compatible. PMTest have four types of functions. The first category is for initializing and enabling the testing functionalities of the framework. Programmers can select the region for testing by wrapping the code with a pair of PMTest_START and PMTest_END functions. The second category of functions allows programmers to operate on persistent objects. By default, all accesses to PM between PMTest_START and PMTest_END are tracked by PMTest. Programmers may exclude objects from tracking using PMTest_EXCLUDE() function. Already excluded objects can be tracked again using PMTest_INCLUDE(). To allow programmers to check the persistency status of a variable outside its scope (e.g., outside the function where it is declared), we provide three functions: PMTest_REG_VAR, PMTest_UNREG_VAR, and PMTest_GET_VAR that allow programmers to register the address of a persistent object with a name and check its persistency status later. The third category of functions enables the communication from the test program to the checking engine. Programmers can divide a program into independent sections (e.g., transactions) using PMTest_SEND_TRACE for better testing speed. Once the execution of a section is complete, PMTest can start testing it on a separate thread while the program is executing the next section. The function PMTest_GET_RESULT blocks the program execution until all previously generated traces have been tested. The last category of functions are checkers, including two low-level checkers: isOrderedBefore() and isPersist(), and the high-level checkers for transactions. The high-level checkers for PMDK test three issues: (i) if a transaction has completed, (ii) if the persistent objects within the transaction have been added to the undo log before modification, and (iii) if there are unnecessary writebacks and redundant logs that constitute the performance bugs.
+
+## PMTest Installation
 
 This repository is organized as follows:
 
