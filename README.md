@@ -26,6 +26,28 @@ We believe that there is an urgent need for developing a testing framework that 
 ### Overview of PMTest Interface
 PMTest incorporates a flexible software interface that is C and C++ compatible. PMTest have four types of functions. The first category is for initializing and enabling the testing functionalities of the framework. Programmers can select the region for testing by wrapping the code with a pair of PMTest_START and PMTest_END functions. The second category of functions allows programmers to operate on persistent objects. By default, all accesses to PM between PMTest_START and PMTest_END are tracked by PMTest. Programmers may exclude objects from tracking using PMTest_EXCLUDE() function. Already excluded objects can be tracked again using PMTest_INCLUDE(). To allow programmers to check the persistency status of a variable outside its scope (e.g., outside the function where it is declared), we provide three functions: PMTest_REG_VAR, PMTest_UNREG_VAR, and PMTest_GET_VAR that allow programmers to register the address of a persistent object with a name and check its persistency status later. The third category of functions enables the communication from the test program to the checking engine. Programmers can divide a program into independent sections (e.g., transactions) using PMTest_SEND_TRACE for better testing speed. Once the execution of a section is complete, PMTest can start testing it on a separate thread while the program is executing the next section. The function PMTest_GET_RESULT blocks the program execution until all previously generated traces have been tested. The last category of functions are checkers, including two low-level checkers: isOrderedBefore() and isPersist(), and the high-level checkers for transactions. The high-level checkers for PMDK test three issues: (i) if a transaction has completed, (ii) if the persistent objects within the transaction have been added to the undo log before modification, and (iii) if there are unnecessary writebacks and redundant logs that constitute the performance bugs.
 
+| **Function Name** | **Description** |
+|-------------------|-----------------|
+| `PMTest_INIT` | Initialize PMTest |
+| `PMTest_EXIT` | Exit and clean up PMTest |
+| `PMTest_THREAD_INIT` | Initialize per thread PMTest tracking |
+| `PMTest_START` | Enable PMTest tracking and testing |
+| `PMTest_END` | Disable PMTest tracking and testing |
+| `PMTest_EXCLUDE` | Remove a persistent object from testing scope |
+| `PMTest_INCLUDE` | Add a persistent object back to testing scope |
+| `PMTest_REG_VAR` | Register the address and size of a variable name |
+| `PMTest_UNREG_VAR` | Unregister a variable name |
+| `PMTest_GET_VAR` | Get the address and size of a variable by its name |
+| `PMTest_SEND_TRACE` | Send the current trace to PMTest checking engine and start a new trace |
+| `PMTest_GET_RESULT` | Block the program execution until all existing traces have been tested |
+| `isPersist` | Check if a persistent object has been persisted |
+| `isOrderedBefore` | Check the order of two persists |
+| `TX_CHECKER_START` | Start checking transactions |
+| `TX_CHECKER_END` | End checking transactions |
+
+
+
+
 ## PMTest Installation
 
 This repository is organized as follows:
